@@ -85,7 +85,7 @@ interface Frontmatter {
   [key: string]: string;
 }
 
-function splitFrontmatter(src: string): { meta: Frontmatter; body: string } {
+export function splitFrontmatter(src: string): { meta: Frontmatter; body: string } {
   const meta: Frontmatter = {};
   if (!src.startsWith("---")) return { meta, body: src };
   const end = src.indexOf("\n---", 3);

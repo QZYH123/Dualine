@@ -2,172 +2,123 @@
  * Verify every gloss anchor and explicit passage ref points at a real file
  * and a line range inside that file.
  *
- *   npx tsx scripts/check-gloss.ts
+ *   npx tsx scripts/check-gloss.ts [projects-dir]
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  allPassages,
-  parseGloss,
-  parseRef,
-  type CodeRef,
-  type Inline,
-} from "../src/lib/gloss.ts";
+  checkRefs,
+  collectRefs,
+  isValidProjectId,
+  projectsRoot,
+  refLabel,
+} from "../server/validate.js";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const EXAMPLES = join(ROOT, "examples");
-
-interface LocatedRef {
-  loc: string;
-  ref: CodeRef;
-}
-
-function refLabel(ref: CodeRef): string {
-  return ref.start === ref.end
-    ? `${ref.file}#L${ref.start}`
-    : `${ref.file}#L${ref.start}-L${ref.end}`;
-}
-
-function sameRef(a: CodeRef, b: CodeRef): boolean {
-  return a.file === b.file && a.start === b.start && a.end === b.end;
-}
-
-function lineCount(src: string): number {
-  if (src.length === 0) return 0;
-  const lines = src.split(/\r?\n/);
-  if (lines[lines.length - 1] === "") lines.pop();
-  return lines.length;
-}
-
-function anchorsIn(inlines: Inline[]): Extract<Inline, { kind: "anchor" }>[] {
-  const out: Extract<Inline, { kind: "anchor" }>[] = [];
-  for (const node of inlines) {
-    if (node.kind === "anchor") {
-      out.push(node);
-      out.push(...anchorsIn(node.children));
-    }
-  }
-  return out;
-}
-
-function bodyOf(src: string): string {
-  if (!src.startsWith("---")) return src;
-  const end = src.indexOf("\n---", 3);
-  return end === -1 ? src : src.slice(end + 4);
-}
-
-/** Paragraph-leading `@[path#L1-L9]` markers, in document order. */
-function explicitRefsFromSource(src: string): CodeRef[] {
-  const refs: CodeRef[] = [];
-  for (const block of bodyOf(src).split(/\n\s*\n/)) {
-    const m = /^@\[([^\]]+)\]/.exec(block.trim());
-    if (!m) continue;
-    const ref = parseRef(m[1]);
-    if (ref) refs.push(ref);
-  }
-  return refs;
-}
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const DEFAULT_EXAMPLES = resolve(REPO_ROOT, "examples");
 
 function shortlyFixturePaths(): Set<string> {
-  const src = readFileSync(join(ROOT, "src/fixtures/shortly.ts"), "utf8");
+  const src = readFileSync(join(REPO_ROOT, "src/fixtures/shortly.ts"), "utf8");
   const keys = new Set<string>();
+  for (const m of src.matchAll(/from\s+"[^"]+\/(src\/[^"?]+)\?raw"/g)) {
+    keys.add(m[1]);
+  }
   for (const m of src.matchAll(/"(src\/[^"]+)":\s/g)) {
     keys.add(m[1]);
   }
   return keys;
 }
 
-function collectRefs(src: string): LocatedRef[] {
-  const { doc } = parseGloss(src);
-  const out: LocatedRef[] = [];
-
-  for (const a of anchorsIn(doc.lead)) {
-    out.push({ loc: a.id, ref: a.ref });
+function displayPath(abs: string, root: string): string {
+  const fromCwd = relative(process.cwd(), abs);
+  if (fromCwd && !fromCwd.startsWith("..") && !fromCwd.includes(`..${sep}`)) {
+    return fromCwd.split(sep).join("/");
   }
+  return relative(root, abs).split(sep).join("/");
+}
 
-  const passages = allPassages(doc);
-  for (const p of passages) {
-    for (const a of p.anchors) {
-      out.push({ loc: `${p.chapterId}.${a.id}`, ref: a.ref });
+function resolveRoot(): string {
+  const arg = process.argv.slice(2).find((a) => !a.startsWith("-"));
+  return arg ? resolve(arg) : projectsRoot();
+}
+
+function glossEntries(root: string): { id: string; glossPath: string }[] {
+  const out: { id: string; glossPath: string }[] = [];
+  for (const name of readdirSync(root).sort()) {
+    const dir = join(root, name);
+    let st;
+    try {
+      st = statSync(dir);
+    } catch {
+      continue;
+    }
+    if (!st.isDirectory()) continue;
+    const glossPath = join(dir, "gloss.md");
+    if (existsSync(glossPath) && statSync(glossPath).isFile()) {
+      out.push({ id: name, glossPath });
     }
   }
-
-  let pi = 0;
-  for (const ref of explicitRefsFromSource(src)) {
-    while (
-      pi < passages.length &&
-      !(passages[pi].ref && sameRef(passages[pi].ref!, ref))
-    ) {
-      pi += 1;
-    }
-    const p = passages[pi];
-    const loc = p
-      ? `${p.chapterId}.${p.id}`
-      : `@[${refLabel(ref)}]`;
-    if (p) pi += 1;
-    out.push({ loc, ref });
-  }
-
   return out;
 }
 
-function underProject(projectDir: string, file: string): string | null {
-  const root = resolve(projectDir);
-  const abs = resolve(root, file);
-  if (abs === root || abs.startsWith(root + sep)) return abs;
-  return null;
-}
-
-function glossFiles(): string[] {
-  if (!existsSync(EXAMPLES)) return [];
-  return readdirSync(EXAMPLES)
-    .sort()
-    .map((name) => join(EXAMPLES, name, "gloss.md"))
-    .filter((p) => existsSync(p) && statSync(p).isFile());
-}
-
 function main(): number {
+  const root = resolveRoot();
+  if (!existsSync(root) || !statSync(root).isDirectory()) {
+    console.error(`check:gloss: projects dir not found: ${root}`);
+    return 2;
+  }
+
+  const entries = glossEntries(root);
+  if (entries.length === 0) {
+    console.log(
+      `0 glosses checked under ${root} — expected ${root}/<id>/gloss.md`,
+    );
+    return 1;
+  }
+
   const fixturePaths = shortlyFixturePaths();
-  const files = glossFiles();
+  const useShortlyGuard = resolve(root) === DEFAULT_EXAMPLES;
   let problems = 0;
   let warnings = 0;
   let refsChecked = 0;
 
-  for (const glossPath of files) {
-    const projectDir = dirname(glossPath);
-    const projectId = relative(EXAMPLES, projectDir);
-    const glossRel = relative(ROOT, glossPath).split("\\").join("/");
+  for (const { id, glossPath } of entries) {
+    const rel = displayPath(glossPath, root);
+
+    if (!isValidProjectId(id)) {
+      console.log(
+        `${rel}: id "${id}" is not servable (use lowercase letters, digits, - or _)`,
+      );
+      problems += 1;
+    }
+
     const src = readFileSync(glossPath, "utf8");
     const located = collectRefs(src);
     refsChecked += located.length;
+    const found = checkRefs(dirname(glossPath), located);
 
-    for (const { loc, ref } of located) {
-      const abs = underProject(projectDir, ref.file);
-      const label = `${glossRel}: ${loc} → ${refLabel(ref)}`;
+    for (const problem of found) {
+      console.log(`${rel}: ${problem.message}`);
+      problems += 1;
+    }
 
-      if (!abs || !existsSync(abs) || !statSync(abs).isFile()) {
-        console.log(`${label} (file missing)`);
-        problems += 1;
-      } else {
-        const n = lineCount(readFileSync(abs, "utf8"));
-        if (ref.start < 1 || ref.end > n) {
-          console.log(`${label} (file has ${n} lines)`);
-          problems += 1;
-        }
-      }
-
-      if (projectId === "shortly" && !fixturePaths.has(ref.file)) {
-        console.log(`${label} (warning: not in shortly fixture)`);
+    if (useShortlyGuard && id === "shortly") {
+      for (const { loc, ref } of located) {
+        if (fixturePaths.has(ref.file)) continue;
+        console.log(
+          `${rel}: ${loc} → ${refLabel(ref)} (warning: not in shortly fixture)`,
+        );
         warnings += 1;
       }
     }
   }
 
-  const glossN = files.length;
+  const glossN = entries.length;
   const glossWord = glossN === 1 ? "gloss" : "glosses";
   const problemWord = problems === 1 ? "problem" : "problems";
-  const warnPart = warnings > 0 ? `, ${warnings} warning${warnings === 1 ? "" : "s"}` : "";
+  const warnPart =
+    warnings > 0 ? `, ${warnings} warning${warnings === 1 ? "" : "s"}` : "";
   console.log(
     `${glossN} ${glossWord} checked, ${refsChecked} refs, ${problems} ${problemWord}${warnPart}`,
   );
