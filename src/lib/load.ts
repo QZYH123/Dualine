@@ -2,64 +2,57 @@
  * Project loading.
  *
  * Which project to read comes from the URL: `/?project=<id>`. Without it, the
- * first project the API lists is opened; with no API at all, the bundled
- * sample (shortly) is read so the screen is always viewable.
+ * first project the API lists is opened. The bundled sample (shortly) is used
+ * only when there is no API *and* it is what was asked for — never as a quiet
+ * stand-in for a missing real project.
  *
- * The API is thin — see server/ — and is pointed at a folder of projects with
- * GLOSS_PROJECTS_DIR. In dev, Vite proxies /api to it and answers 502 when it
+ * GET /api/projects is the catalog: it also says whether the projects folder
+ * is missing or merely empty. GET /api/projects/:id is the gloss + files.
+ *
+ * In dev (and `vite preview`), Vite proxies /api and answers 502 when the API
  * is not running, which we treat as "unreachable" rather than "not found".
- *
- * API contract — GET /api/projects/:id →
- *   { id: string, name: string, tagline: string, lang: string,
- *     gloss: string,                        // gloss.md source
- *     files: { [path: string]: string },    // contents keyed by project-relative path
- *     warnings: string[] }                  // anchors that point at nothing
  */
 import { buildProject, type Project } from "./gloss";
 import { loadShortlyFixture } from "../fixtures/shortly";
+import {
+  afterDetail,
+  afterList,
+  requestedProjectId as projectIdFromSearch,
+  SAMPLE_ID,
+  type Catalog,
+  type FetchResult,
+  type ProjectPayload,
+} from "./load-decision";
 
-export const SAMPLE_ID = "shortly";
+export { SAMPLE_ID };
+export type { Catalog } from "./load-decision";
 
-interface ProjectPayload {
-  id: string;
-  name?: string;
-  tagline?: string;
-  lang?: string;
-  gloss: string;
-  files: Record<string, string>;
-  warnings?: string[];
-}
-
-interface ListPayload {
-  projects: { id: string }[];
+/** `/?project=<id>` — null means "whatever is there". */
+export function requestedProjectId(search: string = window.location.search): string | null {
+  return projectIdFromSearch(search);
 }
 
 export type LoadResult =
   | { kind: "project"; project: Project; source: "api" | "sample" }
-  | { kind: "not-found"; id: string }
-  | { kind: "empty" }
+  | { kind: "not-found"; id: string; catalog: Catalog }
+  | { kind: "empty"; catalog: Catalog }
+  | { kind: "no-dir"; catalog: Catalog }
   | { kind: "unreachable"; id: string };
 
-/** `/?project=<id>` — null means "whatever is there". */
-export function requestedProjectId(search: string = window.location.search): string | null {
-  const id = new URLSearchParams(search).get("project")?.trim() ?? "";
-  return id ? id : null;
-}
-
-class Unreachable extends Error {}
-
-async function getJson<T>(url: string): Promise<{ status: number; body: T | null }> {
+async function getJson(url: string): Promise<FetchResult> {
   let res: Response;
   try {
     res = await fetch(url, { headers: { accept: "application/json" } });
   } catch {
-    throw new Unreachable();
+    return { unreachable: true };
   }
-  // The dev proxy answers 502 for a dead API; a real API never sends these.
-  if (res.status === 502 || res.status === 503 || res.status === 504) throw new Unreachable();
-  let body: T | null = null;
+  // The proxy answers 502 for a dead API; a real API never sends these.
+  if (res.status === 502 || res.status === 503 || res.status === 504) {
+    return { unreachable: true };
+  }
+  let body: unknown = null;
   try {
-    body = (await res.json()) as T;
+    body = await res.json();
   } catch {
     body = null;
   }
@@ -67,36 +60,25 @@ async function getJson<T>(url: string): Promise<{ status: number; body: T | null
 }
 
 export async function loadProject(requested: string | null): Promise<LoadResult> {
-  const sample = (): LoadResult => ({
-    kind: "project",
-    project: loadShortlyFixture(),
-    source: "sample",
-  });
-
-  try {
-    let id = requested;
-    if (id === null) {
-      const list = await getJson<ListPayload>("/api/projects");
-      const first = list.body?.projects?.[0]?.id;
-      if (!first) return { kind: "empty" };
-      id = first;
-    }
-
-    const { status, body } = await getJson<ProjectPayload>(
-      `/api/projects/${encodeURIComponent(id)}`,
-    );
-    if (status === 200 && body && typeof body.gloss === "string" && body.files) {
-      return {
-        kind: "project",
-        project: buildProject(body.id ?? id, body.gloss, body.files),
-        source: "api",
-      };
-    }
-    return { kind: "not-found", id };
-  } catch (err) {
-    if (!(err instanceof Unreachable)) throw err;
-    // No API. The sample is the honest answer only when it is what was asked for.
-    if (requested === null || requested === SAMPLE_ID) return sample();
-    return { kind: "unreachable", id: requested };
+  const list = await getJson("/api/projects");
+  const listed = afterList(requested, list);
+  if (listed.kind === "sample") {
+    return { kind: "project", project: loadShortlyFixture(), source: "sample" };
   }
+  if (listed.kind !== "continue") return listed;
+
+  const detail = await getJson(`/api/projects/${encodeURIComponent(listed.id)}`);
+  const decided = afterDetail(requested, listed.id, listed.catalog, detail);
+  if (decided.kind === "sample") {
+    return { kind: "project", project: loadShortlyFixture(), source: "sample" };
+  }
+  if (decided.kind === "project") {
+    const body: ProjectPayload = decided.payload;
+    return {
+      kind: "project",
+      project: buildProject(body.id, body.gloss, body.files),
+      source: "api",
+    };
+  }
+  return decided;
 }
