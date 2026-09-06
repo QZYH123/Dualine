@@ -85,6 +85,20 @@ describe("afterDetail", () => {
     if (got.kind === "project") assert.equal(got.payload.gloss, "# Hi\n");
   });
 
+  test("200 payload warnings are preserved on payload", () => {
+    const payload = {
+      id: "shortly",
+      gloss: "# Hi\n",
+      files: { "src/a.ts": "x" },
+      warnings: ["missing: src/nope.ts", "range: src/a.ts:99"],
+    };
+    const got = afterDetail(null, "shortly", okCatalog, { status: 200, body: payload });
+    assert.equal(got.kind, "project");
+    if (got.kind === "project") {
+      assert.deepEqual(got.payload.warnings, ["missing: src/nope.ts", "range: src/a.ts:99"]);
+    }
+  });
+
   test("404 is not-found and keeps the catalog for the notice list", () => {
     const got = afterDetail("my-app", "my-app", okCatalog, {
       status: 404,

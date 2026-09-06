@@ -33,11 +33,17 @@ export function requestedProjectId(search: string = window.location.search): str
 }
 
 export type LoadResult =
-  | { kind: "project"; project: Project; source: "api" | "sample" }
+  | { kind: "project"; project: Project; source: "api" | "sample"; warnings: string[] }
   | { kind: "not-found"; id: string; catalog: Catalog }
   | { kind: "empty"; catalog: Catalog }
   | { kind: "no-dir"; catalog: Catalog }
   | { kind: "unreachable"; id: string };
+
+function payloadWarnings(body: ProjectPayload): string[] {
+  const raw = body.warnings;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((w): w is string => typeof w === "string");
+}
 
 async function getJson(url: string): Promise<FetchResult> {
   let res: Response;
@@ -63,14 +69,14 @@ export async function loadProject(requested: string | null): Promise<LoadResult>
   const list = await getJson("/api/projects");
   const listed = afterList(requested, list);
   if (listed.kind === "sample") {
-    return { kind: "project", project: loadShortlyFixture(), source: "sample" };
+    return { kind: "project", project: loadShortlyFixture(), source: "sample", warnings: [] };
   }
   if (listed.kind !== "continue") return listed;
 
   const detail = await getJson(`/api/projects/${encodeURIComponent(listed.id)}`);
   const decided = afterDetail(requested, listed.id, listed.catalog, detail);
   if (decided.kind === "sample") {
-    return { kind: "project", project: loadShortlyFixture(), source: "sample" };
+    return { kind: "project", project: loadShortlyFixture(), source: "sample", warnings: [] };
   }
   if (decided.kind === "project") {
     const body: ProjectPayload = decided.payload;
@@ -78,6 +84,7 @@ export async function loadProject(requested: string | null): Promise<LoadResult>
       kind: "project",
       project: buildProject(body.id, body.gloss, body.files),
       source: "api",
+      warnings: payloadWarnings(body),
     };
   }
   return decided;
