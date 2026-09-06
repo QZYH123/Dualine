@@ -538,3 +538,53 @@ Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-pr
 - Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback.
 - Local-only. No push, no merge to main. Not claiming publish-done.
 
+
+---
+
+## Round 9 — user-perspective polish (2026-09-06 UTC+8)
+
+Probe already done at `audit-shots/round9/probe-findings.json` (R5–R8 still pass). This round did not re-run the full probe. Write pass: Grok Build on `feature/gloss-reader-v1` @ `cfe429b` plus this round's commits. No Reader split. A2 notice/path refactor not reopened. Dual Esc / bridge / L3 / first-open tour skipped. Not claiming publish-done / ship-ready.
+
+### Journey notes
+
+1. **R5–R8 still hold** — Probe recorded pin then chapter jump unpins; shortly L18 reverse on chapter 一 `L18–59`; mid-width pin+select; 999 gate; bare `/` catalog-default hint; explicit `audit-bad` count-only; `npm run check` pinned to examples; pack omits lockfile; empty / project-as-root / invalid-id real root + child-id tip; engines `^20.19.0 || >=22.12.0`; API down on `/` shows `示例`; Esc unpins; README Run is install → check → `dev:all`; catalog switch stays honest; mid-session API death without reload keeps the loaded project. Retest smoke: shortly live, bare `/` hint, live recover of `audit-many`.
+
+2. **R9-1 tip clarity (medium)** — The unreachable notice already named `npm run dev:all` and whispered `起来后刷新这一页`, but 「起来后」 had no subject. The only control is `返回` → `/` (home, not this URL), so a reader who started the API still had to already know to refresh the tab. Cheap: tip `API 起来后再刷新这一页`. Hint stays the command. `返回` stays home. No poll, no auto-recover, no retry-this-id.
+
+3. **R5-5e `$HOME` (promoted)** — Only `~/` expanded. A quoted `$HOME/glosses` resolved as `$PWD/$HOME/glosses`. `resolveProjectsDir` now expands a leading `$HOME` the same way as `~`; `$HOMELESS` is left as a relative path. README own-project paragraph and the env table say so. Prefer an absolute path still.
+
+4. **R5-6b `GLOSS_API` (promoted)** — Split `api`+`dev` was in the API table but not in Run. One calm line: if you start them apart, set `GLOSS_API` to the API origin so Vite still proxies `/api`. `dev:all` remains the documented path.
+
+5. **R5-6f localhost vs loopback** — Optional one-liner in Run: `localhost` and `127.0.0.1` are the same machine. Live open of README's `http://localhost:5173/?project=shortly` still reaches shortly. Mix is URL vs bind, not a broken host.
+
+6. **Not this round** — Dual Esc, bridge-while-pinned, L3 EN subtitle, first-open tour, Reader split, A2. Pack extract one-liner still reaches `install` → `dev:all` (check lives in Run); left as info.
+
+### Round 9 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R5–R8 smoke | — | **pass** (probe) | pin+chapter; L18 teaching span; mid-width; 999; bare `/`; check pin; pack; empty/as-root/id; engines; sample chip; Esc; Run check; catalog switch; mid-session no poll | not re-probed; retest smoke green |
+| R9-1 | medium | **fixed** | Unreachable tip `起来后刷新这一页` had no subject; `返回` is home, not retry | `NOTICE_UNREACHABLE_TIP` = `API 起来后再刷新这一页`. Hint stays `npm run dev:all`. `返回` stays `/` |
+| R5-5e | low→fixed | **fixed** | Literal `$HOME` in `GLOSS_PROJECTS_DIR` was not expanded; only `~/` was | `resolveProjectsDir` expands `$HOME` / `$HOME/` like `~`; `$HOMELESS` does not. README says so |
+| R5-6b | low→fixed | **fixed** | Split `api`+`dev` needed a `GLOSS_API` whisper in Run | one calm line in README Run; table already listed it |
+| R5-6f | note | **fixed** | README localhost vs `127.0.0.1` mix | one-liner: they are the same machine. Live localhost open still reaches shortly |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | skip; chip stays primary |
+| R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | skip; essay lead is enough |
+| R5-5 / R2-2e | low | deferred | Bridge drops after a few px of pinned prose scroll | skip; do not fight sync |
+| R5-6 / R2-7d | low | deferred | Rail label `目录` whisper contrast | skip |
+| R5-7 | low | deferred | Pin chip can cover the last visible lines of a long focus span | still polish |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+| R9-pack-extract-docs | info | deferred | Publish extract one-liner is install → `dev:all`; Run also has `check` | extract still reaches a session; check stays in Run |
+
+### Round 9 re-test (Grok Build)
+
+- Project check: typecheck + gloss check (`1 gloss checked, 37 refs, 0 problems`) + **72/72** tests green (unreachable tip names API + 刷新这一页; `$HOME` expand assertions inside the existing `resolveProjectsDir` test).
+- **R9-1:** `?project=audit-many` with API aborted: title `API 未运行，读不到这个项目`, hint `npm run dev:all`, tip `API 起来后再刷新这一页`, `返回` still `/` (`retest/01-unreachable-tip.png`). `返回` while down lands on bundled shortly with `示例` (`retest/02-back-stays-home.png`). Same URL with API up is audit-many (`retest/03-audit-many-live.png`).
+- **R5-5e:** `$HOME` / `$HOME/glosses` expand to the home directory; `$HOMELESS` stays cwd-relative.
+- **R5-6b:** README Run mentions `GLOSS_API` next to split `api`+`dev`.
+- **R5-6f:** Run says `localhost` and `127.0.0.1` are the same machine; `http://localhost:5173/?project=shortly` still opens shortly (`retest/05-localhost-open.png`).
+- Smoke: shortly live, no sample chip; bare `/` still `audit-bad` + catalog-default hint.
+- Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3. Pack extract vs Run `check` left as info.
+- Local-only. No push, no merge to main. Not claiming publish-done.
+
+
