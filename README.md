@@ -34,7 +34,7 @@ npm run preview:all    # web on http://localhost:4173, API on 127.0.0.1:8787
 
 `vite preview` proxies `/api` like the dev server. Without the API, `npm run preview` shows the bundled sample. Reading any other project still needs the API; this is a local-first tool, not a hosted app.
 
-Designed for viewports ≥ 1100px wide; the contents rail appears at ≥ 1320px.
+Designed for viewports ≥ 1100px wide; the contents rail appears at ≥ 1320px. Below about 1000px the reader says so instead of stacking the two pages. Between 1000px and 1320px, a compact chapter control in the masthead stands in for the rail.
 
 ## Read your own project
 
@@ -151,8 +151,8 @@ examples/shortly/       sample project: gloss.md + src/
 
 - The gloss is written by hand. Nothing here generates prose from code; that is the point of v1 — get the reading right first.
 - One project per screen; switching is by URL. There is no picker and no remote clone. When a named project is missing, the notice lists whatever else the API can see in the folder.
-- The reader does not surface the API's `warnings`; run `check:gloss`.
-- Narrow viewports are not a goal yet. Below 1100px the two pages do not fit.
+- Narrow viewports are not a goal yet. Below about 1000px a notice asks for a wider window rather than stacking the two pages.
+- Broken anchors appear as a one-line strip under the masthead; `check:gloss` still prints the full list.
 
 ## Publish
 

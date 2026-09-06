@@ -8,7 +8,8 @@ import {
   type CodeRef,
   type Project,
 } from "../lib/gloss";
-import { Masthead } from "./Masthead";
+import { warningStripText } from "../lib/notice";
+import { Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
 import { CodePane } from "./CodePane";
@@ -17,6 +18,8 @@ import { useReadingSync } from "./useReadingSync";
 interface ReaderProps {
   project: Project;
   highlighter: HighlighterCore;
+  source: "api" | "sample";
+  warnings: string[];
 }
 
 function readToken(name: string, fallback: number): number {
@@ -24,8 +27,9 @@ function readToken(name: string, fallback: number): number {
   return Number.isFinite(v) ? v : fallback;
 }
 
-export function Reader({ project, highlighter }: ReaderProps) {
+export function Reader({ project, highlighter, source, warnings }: ReaderProps) {
   const { doc, files } = project;
+  const warnText = warningStripText(warnings);
 
   const passages = useMemo(() => allPassages(doc), [doc]);
   const refById = useMemo(() => resolveRefs(doc), [doc]);
@@ -63,11 +67,11 @@ export function Reader({ project, highlighter }: ReaderProps) {
   const tokens = useMemo(
     () => ({
       codeLine: readToken("--code-line", 22),
-      header: readToken("--header-h", 56),
+      header: readToken("--mast-h", 56) + (warnText ? readToken("--warn-strip-h", 32) : 0),
       readingLine: readToken("--reading-line", 0.32),
       alignDuration: readToken("--dur-align", 460),
     }),
-    [],
+    [warnText],
   );
 
   useReadingSync(
@@ -151,44 +155,61 @@ export function Reader({ project, highlighter }: ReaderProps) {
 
   return (
     <>
-      <Masthead
-        name={project.name}
-        tagline={project.tagline}
-        chapter={currentChapter}
-        pinned={pinnedAnchorId !== null}
-      />
-      <main className="reader">
-        <Rail chapters={doc.chapters} currentChapterId={currentChapterId} onSelect={onSelectChapter} />
-
-        <article className="prose" ref={proseRef}>
-          <Prose
-            doc={doc}
-            currentPassageId={currentPassageId}
-            hoverAnchorId={hoverAnchorId}
-            pinnedAnchorId={pinnedAnchorId}
-            onAnchorHover={setHoverAnchorId}
-            onAnchorClick={onAnchorClick}
-          />
-        </article>
-
-        <div className="gutter" ref={gutterRef} aria-hidden="true">
-          <div className="bridge" ref={bridgeRef} />
+      <div className="notice viewport-notice" role="status">
+        <div>
+          <Wordmark as="p" />
+          <p className="notice__title">对照需要更宽的窗口</p>
+          <p className="notice__hint">≥ 1100px</p>
         </div>
-
-        <CodePane
-          file={activeFile}
-          focus={activeRef}
-          hover={hoverRef}
-          hits={activeFile ? reverse.get(activeFile.path) : undefined}
+      </div>
+      <div className="session">
+        <Masthead
+          name={project.name}
+          tagline={project.tagline}
+          chapter={currentChapter}
+          chapters={doc.chapters}
           pinned={pinnedAnchorId !== null}
-          highlighter={highlighter}
-          viewportRef={viewportRef}
-          codeRef={codeRef}
-          onUnpin={unpin}
-          onLineHover={setHoverAnchorId}
-          onLineClick={jumpToAnchor}
+          sample={source === "sample"}
+          onSelectChapter={onSelectChapter}
         />
-      </main>
+        {warnText && (
+          <p className="warn-strip" role="status">
+            {warnText}
+          </p>
+        )}
+        <main className="reader">
+          <Rail chapters={doc.chapters} currentChapterId={currentChapterId} onSelect={onSelectChapter} />
+
+          <article className="prose" ref={proseRef}>
+            <Prose
+              doc={doc}
+              currentPassageId={currentPassageId}
+              hoverAnchorId={hoverAnchorId}
+              pinnedAnchorId={pinnedAnchorId}
+              onAnchorHover={setHoverAnchorId}
+              onAnchorClick={onAnchorClick}
+            />
+          </article>
+
+          <div className="gutter" ref={gutterRef} aria-hidden="true">
+            <div className="bridge" ref={bridgeRef} />
+          </div>
+
+          <CodePane
+            file={activeFile}
+            focus={activeRef}
+            hover={hoverRef}
+            hits={activeFile ? reverse.get(activeFile.path) : undefined}
+            pinned={pinnedAnchorId !== null}
+            highlighter={highlighter}
+            viewportRef={viewportRef}
+            codeRef={codeRef}
+            onUnpin={unpin}
+            onLineHover={setHoverAnchorId}
+            onLineClick={jumpToAnchor}
+          />
+        </main>
+      </div>
     </>
   );
 }

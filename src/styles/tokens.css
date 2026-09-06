@@ -49,7 +49,9 @@
   --code-line: 22px;
 
   /* layout */
-  --header-h: 56px;
+  --mast-h: 56px;
+  --warn-strip-h: 32px;
+  --header-h: 56px; /* mast + optional warnings strip; see html:has(.warn-strip) */
   --rail-w: 176px;
   --prose-measure: 612px;
   --prose-pad: 48px;

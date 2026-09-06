@@ -7,7 +7,9 @@ import {
   type Catalog,
   type LoadResult,
 } from "./lib/load";
+import { noticeShowsBack } from "./lib/notice";
 import { Reader } from "./reader/Reader";
+import { Wordmark } from "./reader/Masthead";
 
 export default function App() {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
@@ -34,7 +36,14 @@ export default function App() {
   }
 
   if (loaded.kind === "project") {
-    return <Reader project={loaded.project} highlighter={highlighter} />;
+    return (
+      <Reader
+        project={loaded.project}
+        highlighter={highlighter}
+        source={loaded.source}
+        warnings={loaded.warnings}
+      />
+    );
   }
 
   return <Notice result={loaded} />;
@@ -56,6 +65,7 @@ function Notice({ result }: { result: Exclude<LoadResult, { kind: "project" }> }
   return (
     <div className="loading notice" role="status">
       <div>
+        <Wordmark as="p" />
         <p className="notice__title">{title}</p>
         <p className="notice__hint">{hint}</p>
         {tip && <p className="notice__tip">{tip}</p>}
@@ -69,9 +79,11 @@ function Notice({ result }: { result: Exclude<LoadResult, { kind: "project" }> }
             ))}
           </ul>
         )}
-        <a className="notice__back" href="/">
-          返回
-        </a>
+        {noticeShowsBack(result.kind) && (
+          <a className="notice__back" href="/">
+            返回
+          </a>
+        )}
       </div>
     </div>
   );
