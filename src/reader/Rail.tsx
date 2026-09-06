@@ -10,7 +10,7 @@ interface RailProps {
 export const Rail = memo(function Rail({ chapters, currentChapterId, onSelect }: RailProps) {
   return (
     <nav className="rail" aria-label="章节">
-      <p className="rail__label">Contents</p>
+      <p className="rail__label">目录</p>
       <ol className="rail__list">
         {chapters.map((c) => (
           <li key={c.id}>
