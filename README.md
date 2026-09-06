@@ -51,7 +51,7 @@ There is no file picker, on purpose. The API reads a **folder of projects** from
 GLOSS_PROJECTS_DIR=~/glosses npm run dev:all
 ```
 
-Then open `http://localhost:5173/?project=my-app`. The catalog is sorted by id; with no `?project=`, the first listed id opens. That is not always shortly — use the query for a specific project (e.g. `?project=shortly`). Files are read on every request, so edit `gloss.md`, reload, and the anchors move with you. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
+Then open `http://localhost:5173/?project=my-app`. The catalog is sorted by id; with no `?project=`, the first listed id opens. That is not always shortly — use the query for a specific project (e.g. `?project=shortly`). The wordmark goes to `/`, which is that same first id. If that project has broken anchors, the warn strip says so and adds a quiet line that this is the catalog default. Files are read on every request, so edit `gloss.md`, reload, and the anchors move with you. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
 
 Before reading, check that every anchor lands:
 
@@ -96,14 +96,14 @@ Write like a good commentary: name the real structures, say why they exist, and 
 ## Check
 
 ```sh
-npm run check          # typecheck + check:gloss + test
+npm run check          # typecheck + this repo's examples via check:gloss + test
 npm test               # node:test suites under tests/
 npm run check:gloss    # every anchor → a real file and a line range inside it
 npm run build          # production bundle in dist/
 npm run preview:all    # after build: dist on :4173 + API on :8787
 ```
 
-`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
+`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. `npm run check` always validates this repo's `examples/`, even if `GLOSS_PROJECTS_DIR` is set in the shell — use `npm run check:gloss -- ~/glosses` (or the env) for your own folder. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
 
 ## API
 
@@ -154,15 +154,15 @@ examples/shortly/       sample project: gloss.md + src/
 - The gloss is written by hand. Nothing here generates prose from code; that is the point of v1 — get the reading right first.
 - One project per screen; switching is by URL. There is no picker and no remote clone. When a named project is missing, the notice lists whatever else the API can see in the folder.
 - Narrow viewports are not a goal yet. Below about 1000px a notice asks for a wider window rather than stacking the two pages.
-- Broken anchors appear as a one-line strip under the masthead; click the count to expand the list. `check:gloss` still prints the full list.
+- Broken anchors appear as a one-line strip under the masthead; click the count to expand the list. When `/` opened the first listed project, the strip also says so and points at `?project=<id>`. `check:gloss` still prints the full list.
 
 ## Publish
 
 MIT. Version `0.1.0`. `private: true` — this is a local app, not an npm library.
 
 ```sh
-npm pack               # source tarball: reader, server, examples, tests
+npm pack               # source tarball: reader, server, examples, tests (no lockfile)
 npm run build          # static assets in dist/ (gitignored)
 ```
 
-The production bundle still talks to the local API for any project that is not the bundled sample. Bind remains `127.0.0.1` unless `HOST` is set. Tag `v0.1.0` when you want a release; do not expect a hosted service.
+The tarball is source, not a library — there is no `bin`. Extract it (`tar xf gloss-0.1.0.tgz && cd package && npm install && npm run dev:all`) or clone this repo for a pinned `package-lock.json`. `npm pack` never includes the lockfile; `npm install` then resolves the ranges in `package.json`. The production bundle still talks to the local API for any project that is not the bundled sample. Bind remains `127.0.0.1` unless `HOST` is set. Tag `v0.1.0` when you want a release; do not expect a hosted service.

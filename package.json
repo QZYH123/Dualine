@@ -12,7 +12,6 @@
     "LICENSE",
     "README.md",
     "index.html",
-    "package-lock.json",
     "vite.config.ts",
     "tsconfig.json",
     "tsconfig.app.json",
@@ -33,7 +32,7 @@
     "dev:all": "concurrently -k -n web,api -c blue,yellow \"npm run dev\" \"npm run api\"",
     "preview:all": "concurrently -k -n web,api -c blue,yellow \"npm run preview\" \"npm run api\"",
     "test": "node --import tsx --test tests/*.test.ts",
-    "check": "npm run typecheck && npm run check:gloss && npm test"
+    "check": "npm run typecheck && GLOSS_PROJECTS_DIR= npm run check:gloss && npm test"
   },
   "dependencies": {
     "react": "^19.2.0",

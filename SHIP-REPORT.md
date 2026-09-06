@@ -69,10 +69,12 @@ The catalog is sorted by id. With no `?project=`, the first listed id opens — 
 Checks and production bundle:
 
 ```sh
-npm run check            # typecheck + check:gloss + test
+npm run check            # typecheck + this repo's examples via check:gloss + test
 npm run build            # dist/
 npm run preview:all      # dist on :4173 + API on :8787 (after build)
 ```
+
+`npm run check` always points `check:gloss` at this repo's `examples/`, even if `GLOSS_PROJECTS_DIR` is set. Own folders: `npm run check:gloss -- ~/glosses`.
 
 `vite preview` now proxies `/api` the same way as `vite dev`. Without the API, `/` (or `?project=shortly`) shows the bundled sample; any other `?project=` says the API is not running.
 
@@ -81,17 +83,17 @@ npm run preview:all      # dist on :4173 + API on :8787 (after build)
 Pack / tag (not done here, and nothing was published):
 
 ```sh
-npm pack                 # source tarball, MIT, no dist/ or node_modules
+npm pack                 # source tarball, MIT, no dist/ or node_modules (no lockfile)
 git tag v0.1.0           # when you want a release
 ```
 
-`package.json` is `"private": true`. There is no npm library publish story.
+`package.json` is `"private": true`. There is no npm library publish story and no `bin`. `npm pack` never includes `package-lock.json`; clone the repo for pinned deps, or extract the tarball and `npm install` against the published ranges.
 
 ## 4. Remaining known limits
 
 - Gloss prose is written by hand. Nothing generates it from code.
 - One project per screen; switching is by URL. Error screens may list other projects in the folder. There is still no picker and no remote clone.
-- Broken anchors show as a one-line strip under the masthead (click the count to expand). `check:gloss` still prints the full list.
+- Broken anchors show as a one-line strip under the masthead (click the count to expand). When `/` opened the first listed id, the strip also names that default and points at `?project=<id>`. `check:gloss` still prints the full list.
 - Narrow viewports are not a goal. Below ~1000px the reader asks for a wider window (≥1100px) instead of stacking; the contents rail appears at ≥1320px.
 - Production JS is a single ~746 kB chunk (Shiki). Acceptable for local use; not split.
 - The bundled sample is only `examples/shortly/` files imported via Vite `?raw`. A gloss that points outside those files will not match the fixture (the CLI warns when checking `examples/`).
@@ -112,4 +114,4 @@ Ran on this machine after the changes, before this report:
   - preview without API, `?project=my-app` → API 未运行； `/` → bundled sample
   - `GET /api/health` through the preview proxy returns `{ ok, root, rootStatus }`
 
-`npm pack --dry-run` lists source, examples, tests, LICENSE, README — not `node_modules`, not `dist`, not operator prompt files.
+`npm pack --dry-run` lists source, examples, tests, LICENSE, README — not `node_modules`, not `dist`, not `package-lock.json`, not operator prompt files.
