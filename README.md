@@ -22,11 +22,11 @@ npm run check        # typecheck + this repo's examples
 npm run dev:all      # web on http://localhost:5173, API on 127.0.0.1:8787
 ```
 
-Then open the URL. This repo's `examples/` only has shortly, so `/` is that paired read. A folder of several projects still opens the first listed id — use `?project=shortly` (or another id) when you mean a specific one.
+Then open the URL. `localhost` and `127.0.0.1` are the same machine. This repo's `examples/` only has shortly, so `/` is that paired read. A folder of several projects still opens the first listed id — use `?project=shortly` (or another id) when you mean a specific one.
 
 The two start together and stop together (`Ctrl-C` once). If the API's port is taken it says so and both sides exit; run with another port — `PORT=8790 npm run dev:all` — and the web side follows automatically.
 
-`npm run dev` alone also works: the reader falls back to the bundled sample project (the one under `examples/shortly/`) when there is no API to ask, and the terminal shows a single quiet line about it instead of a stack trace. `npm run api` runs the API alone.
+`npm run dev` alone also works: the reader falls back to the bundled sample project (the one under `examples/shortly/`) when there is no API to ask, and the terminal shows a single quiet line about it instead of a stack trace. `npm run api` runs the API alone. If you start them apart, set `GLOSS_API` to the API origin so Vite still proxies `/api`.
 
 To serve the production bundle the same way — static files plus the local API:
 
@@ -66,11 +66,11 @@ Before reading, check that every anchor lands:
 npm run check:gloss -- ~/glosses        # or GLOSS_PROJECTS_DIR=~/glosses npm run check:gloss
 ```
 
-When the screen has nothing to face it says so in one line — 找不到项目, 找不到项目目录, API 未运行, or 这个目录下没有项目 — with the path (or the recovery command) underneath, instead of quietly showing the sample. `API 未运行` points at `npm run dev:all` and asks you to refresh once it is up; `返回` is home, not a retry of the same id. If the API can list other projects in the folder, those names appear as links. The sample is used only when the API is unreachable *and* you did not ask for a different project.
+When the screen has nothing to face it says so in one line — 找不到项目, 找不到项目目录, API 未运行, or 这个目录下没有项目 — with the path (or the recovery command) underneath, instead of quietly showing the sample. `API 未运行` points at `npm run dev:all` and says to refresh this page once the API is up; `返回` is home, not a retry of the same id. If the API can list other projects in the folder, those names appear as links. The sample is used only when the API is unreachable *and* you did not ask for a different project.
 
 The API binds to `127.0.0.1` and serves file contents from the folder you point it at; keep it local. If you must expose it, `HOST=0.0.0.0` is explicit.
 
-`GLOSS_PROJECTS_DIR` is trimmed, then resolved from the current working directory (`./foo` becomes `$PWD/foo`). A leading `~/` expands to the home directory. Prefer an absolute path. Unset or blank falls back to this repo's `examples/`, not the current directory. A Windows drive path pasted on Linux or macOS is not converted; the notice names what was pasted and asks for a path on this system.
+`GLOSS_PROJECTS_DIR` is trimmed, then resolved from the current working directory (`./foo` becomes `$PWD/foo`). A leading `~/` or `$HOME/` expands to the home directory. Prefer an absolute path. Unset or blank falls back to this repo's `examples/`, not the current directory. A Windows drive path pasted on Linux or macOS is not converted; the notice names what was pasted and asks for a path on this system.
 
 ## Writing a gloss
 
@@ -122,7 +122,7 @@ npm run preview:all    # after build: dist on :4173 + API on :8787
 
 | env | default | |
 |---|---|---|
-| `GLOSS_PROJECTS_DIR` | this repo's `examples/` when unset or blank | folder of projects, one subfolder each; a set value is trimmed, `~/` is expanded, then resolved from the current working directory — prefer an absolute path |
+| `GLOSS_PROJECTS_DIR` | this repo's `examples/` when unset or blank | folder of projects, one subfolder each; a set value is trimmed, a leading `~/` or `$HOME/` is expanded, then resolved from the current working directory — prefer an absolute path |
 | `PORT` | `8787` | API port; the Vite proxy follows it |
 | `HOST` | `127.0.0.1` | API bind address |
 | `GLOSS_API` | `http://127.0.0.1:$PORT` | where Vite proxies `/api` in `dev` and `preview` |
