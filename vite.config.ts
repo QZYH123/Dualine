@@ -33,6 +33,24 @@ const customLogger: Logger = {
 const apiTarget =
   process.env.GLOSS_API || `http://127.0.0.1:${process.env.PORT || 8787}`;
 
+const apiProxy = {
+  "/api": {
+    target: apiTarget,
+    changeOrigin: true,
+    configure(
+      proxy: { on: (event: "error", fn: (...args: unknown[]) => void) => void },
+    ) {
+      proxy.on("error", (_err: unknown, _req: unknown, res: unknown) => {
+        if (res && typeof res === "object" && "req" in res && !(res as ServerResponse).headersSent) {
+          const httpRes = res as ServerResponse;
+          httpRes.writeHead(502, { "Content-Type": "application/json" });
+          httpRes.end(JSON.stringify({ error: "api unreachable" }));
+        }
+      });
+    },
+  },
+};
+
 export default defineConfig({
   plugins: [react()],
   customLogger,
@@ -40,20 +58,11 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true,
-    proxy: {
-      "/api": {
-        target: apiTarget,
-        changeOrigin: true,
-        configure(proxy) {
-          proxy.on("error", (_err, _req, res) => {
-            if (res && "req" in res && !(res as ServerResponse).headersSent) {
-              const httpRes = res as ServerResponse;
-              httpRes.writeHead(502, { "Content-Type": "application/json" });
-              httpRes.end(JSON.stringify({ error: "api unreachable" }));
-            }
-          });
-        },
-      },
-    },
+    proxy: apiProxy,
+  },
+  preview: {
+    port: 4173,
+    host: true,
+    proxy: apiProxy,
   },
 });
