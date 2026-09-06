@@ -95,7 +95,7 @@ git tag v0.1.0           # when you want a release
 - One project per screen; switching is by URL. Error screens may list other projects in the folder. There is still no picker and no remote clone.
 - Broken anchors show as a one-line strip under the masthead (click the count to expand). When `/` opened the first listed id, the strip also names that default and points at `?project=<id>`. `check:gloss` still prints the full list.
 - Narrow viewports are not a goal. Below ~1000px the reader asks for a wider window (≥1100px) instead of stacking; the contents rail appears at ≥1320px.
-- Production JS is a single ~746 kB chunk (Shiki). Acceptable for local use; not split.
+- Production JS is a single ~749.30 kB chunk (Shiki). Acceptable for local use; not split.
 - The bundled sample is only `examples/shortly/` files imported via Vite `?raw`. A gloss that points outside those files will not match the fixture (the CLI warns when checking `examples/`).
 - `HOST=0.0.0.0` serves local file contents; keep the API loopback unless you mean it.
 

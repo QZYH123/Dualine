@@ -37,6 +37,8 @@ npm run preview:all    # web on http://localhost:4173, API on 127.0.0.1:8787
 
 `vite preview` proxies `/api` like the dev server. Without the API, `npm run preview` shows the bundled sample. Reading any other project still needs the API; this is a local-first tool, not a hosted app.
 
+Production JS is a single ~749.30 kB chunk (mostly Shiki). The bundled sample is only `examples/shortly/` files imported via Vite `?raw`.
+
 Designed for viewports ≥ 1100px wide; the contents rail appears at ≥ 1320px. Below about 1000px the reader says so instead of stacking the two pages. Between 1000px and 1320px, a compact chapter control in the masthead stands in for the rail.
 
 ## Read your own project
