@@ -184,7 +184,7 @@ describe("lineCount / refLabel / readTextFile / projectsRoot", () => {
     }
   });
 
-  test("resolveProjectsDir trims, expands ~, and leaves Windows paths as pasted", () => {
+  test("resolveProjectsDir trims, expands ~ and $HOME, and leaves Windows paths as pasted", () => {
     const spaced = join(tmp, "with spaces");
     mkdirSync(spaced);
     assert.equal(resolveProjectsDir(`  ${spaced}  `), resolve(spaced));
@@ -192,6 +192,11 @@ describe("lineCount / refLabel / readTextFile / projectsRoot", () => {
     assert.equal(resolveProjectsDir("~"), homedir());
     assert.equal(resolveProjectsDir("~/glosses"), resolve(homedir(), "glosses"));
     assert.equal(resolveProjectsDir("  ~/glosses  "), resolve(homedir(), "glosses"));
+    assert.equal(resolveProjectsDir("$HOME"), homedir());
+    assert.equal(resolveProjectsDir("$HOME/glosses"), resolve(homedir(), "glosses"));
+    assert.equal(resolveProjectsDir("  $HOME/glosses  "), resolve(homedir(), "glosses"));
+    assert.equal(resolveProjectsDir("$HOME/"), homedir());
+    assert.equal(resolveProjectsDir("$HOMELESS"), resolve("$HOMELESS"));
     assert.equal(resolveProjectsDir("C:/Users/foo/glosses"), "C:/Users/foo/glosses");
     assert.equal(resolveProjectsDir("C:\\Users\\foo\\glosses"), "C:\\Users\\foo\\glosses");
 

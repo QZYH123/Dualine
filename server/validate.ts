@@ -65,14 +65,15 @@ export function isValidProjectId(id: string): boolean {
 }
 
 /**
- * Trim, expand a leading `~/`, and resolve from cwd.
+ * Trim, expand a leading `~/` or `$HOME/`, and resolve from cwd.
  * A Windows drive/UNC path is left as pasted so the notice can name it —
  * POSIX `resolve` would otherwise hide it under `$PWD`.
  */
 export function resolveProjectsDir(raw: string): string {
   const s = raw.trim();
-  if (s === "~") return homedir();
+  if (s === "~" || s === "$HOME") return homedir();
   if (s.startsWith("~/")) return resolve(homedir(), s.slice(2));
+  if (s.startsWith("$HOME/")) return resolve(homedir(), s.slice("$HOME/".length));
   if (looksLikeWindowsPath(s)) return s;
   return resolve(s);
 }
