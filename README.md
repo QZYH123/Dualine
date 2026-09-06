@@ -18,12 +18,41 @@ Requires Node 20+.
 
 ```sh
 npm install
-npm run dev:all      # web on http://localhost:5173, API on :8787
+npm run dev:all      # web on http://localhost:5173, API on 127.0.0.1:8787
 ```
 
-Or separately: `npm run dev` (frontend only — falls back to the bundled sample project when the API is not running) and `npm run api`.
+The two start together and stop together (`Ctrl-C` once). If the API's port is taken it says so and both sides exit; run with another port — `PORT=8790 npm run dev:all` — and the web side follows automatically.
+
+`npm run dev` alone also works: the reader falls back to the bundled sample project (the one under `examples/shortly/`) when there is no API to ask, and the terminal shows a single quiet line about it instead of a stack trace. `npm run api` runs the API alone.
 
 Designed for viewports ≥ 1100px wide; the contents rail appears at ≥ 1320px.
+
+## Read your own project
+
+There is no file picker, on purpose. The API reads a **folder of projects** from disk, and the URL says which one to face:
+
+```
+~/glosses/                ← GLOSS_PROJECTS_DIR
+  my-app/                 ← project id: lowercase letters, digits, - or _
+    gloss.md              ← the prose (see "Writing a gloss")
+    src/…                 ← the code the prose points at
+```
+
+```sh
+GLOSS_PROJECTS_DIR=~/glosses npm run dev:all
+```
+
+Then open `http://localhost:5173/?project=my-app`. With no `?project=`, the first project in the folder is opened. Files are read on every request, so edit `gloss.md`, reload, and the anchors move with you. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
+
+Before reading, check that every anchor lands:
+
+```sh
+npm run check:gloss -- ~/glosses        # or GLOSS_PROJECTS_DIR=~/glosses npm run check:gloss
+```
+
+When the screen has nothing to face it says so in one line — 找不到项目, API 未运行, or 这个目录下没有项目 — with the path to look at underneath, instead of quietly showing the sample.
+
+The API binds to `127.0.0.1` and serves file contents from the folder you point it at; keep it local. If you must expose it, `HOST=0.0.0.0` is explicit.
 
 ## Writing a gloss
 
@@ -49,25 +78,55 @@ Lead paragraph, shown under the title.
 - `##` — chapter (numbered automatically 一、二、三…).
 - Every paragraph faces one span: its first anchor, or an explicit `@[src/x.ts#L1-L9]` at the start, or — if it has neither — the span of the previous paragraph.
 - `` `code` ``, `**strong**`, `*em*` work as usual. Write a space between CJK and Latin.
+- Paths are relative to the project folder and must stay inside it. Line numbers are 1-based and inclusive.
 
-Validate anchors against the files: `npm run check:gloss` (or read `warnings` from the API).
+Write like a good commentary: name the real structures, say why they exist, and point at the lines. Every claim that matters should have an anchor.
+
+## Check
+
+```sh
+npm run check          # typecheck + check:gloss + test
+npm test               # node:test suites under tests/
+npm run check:gloss    # every anchor → a real file and a line range inside it
+npm run build          # production bundle in dist/
+```
+
+`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken, `2` when the folder does not exist. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
 
 ## API
 
-`GET /api/projects` · `GET /api/projects/:id` → `{ id, name, tagline, lang, gloss, files, warnings }` · `GET /api/health`.
-Projects are discovered under `examples/` (override with `GLOSS_PROJECTS_DIR`).
+| | |
+|---|---|
+| `GET /api/health` | `{ ok: true }` |
+| `GET /api/projects` | `{ projects: [{ id, name, tagline, lang }] }` |
+| `GET /api/projects/:id` | `{ id, name, tagline, lang, gloss, files, warnings }` — `gloss` is the Markdown source, `files` maps project-relative paths to contents |
+
+| env | default | |
+|---|---|---|
+| `GLOSS_PROJECTS_DIR` | `examples/` | folder of projects, one subfolder each |
+| `PORT` | `8787` | API port; the Vite proxy follows it |
+| `HOST` | `127.0.0.1` | API bind address |
+| `GLOSS_API` | `http://127.0.0.1:$PORT` | where Vite proxies `/api` in dev |
+
+Project ids must match `^[a-z0-9][a-z0-9-_]*$`; anything else is `400`. Paths in a gloss that escape the project folder (including through symlinks) are refused, and binary files are never sent.
 
 ## Layout
 
 ```
 src/
-  lib/gloss.ts          document model + gloss.md parser
+  lib/gloss.ts          document model + gloss.md parser (browser and server)
   lib/highlight.ts      Shiki, one restrained theme
-  lib/load.ts           API → fixture fallback
+  lib/load.ts           ?project= → API → sample fallback
   reader/               Masthead · Rail · Prose · CodePane · useReadingSync
   styles/tokens.css     paper, ink, 朱 — the whole visual system
   styles/reader.css
-server/                 the API (node:http, tsx)
+  fixtures/shortly.ts   the sample, bundled from examples/shortly via ?raw
+server/
+  index.ts              the API (node:http, tsx)
+  projects.ts           folder → project: discovery, file walk, limits
+  validate.ts           anchors → files → line ranges; shared with check:gloss
+scripts/check-gloss.ts  the CLI validator
+tests/                  node:test — parser, validator, loader, API
 examples/shortly/       sample project: gloss.md + src/
 ```
 
@@ -76,3 +135,10 @@ examples/shortly/       sample project: gloss.md + src/
 - **Paper & ink**, one accent: 朱 (cinnabar), the colour classical commentaries were written in. It marks only what is *tied*: anchors, the current passage, the faced lines, the bridge.
 - **Type**: Source Serif 4 + Noto Serif SC for prose (designed as a pair), IBM Plex Mono for code and chrome.
 - **Motion** only when it clarifies the mapping: the code sliding into alignment, nothing else.
+
+## Not yet
+
+- The gloss is written by hand. Nothing here generates prose from code; that is the point of v1 — get the reading right first.
+- One project per screen; switching is by URL. There is no list, no picker, no remote clone.
+- The reader does not surface the API's `warnings`; run `check:gloss`.
+- Narrow viewports are not a goal yet. Below 1100px the two pages do not fit.
