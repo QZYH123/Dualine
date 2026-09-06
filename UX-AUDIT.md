@@ -336,3 +336,45 @@ Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-pr
 - R1–R3: 999 gate, 目录, sticky nums, Esc whisper, warn expand, 1200 select, 朱 wordmark.
 - Still deferred: L3, R2-1, R2-2e, R2-7d.
 - Not claiming publish-done.
+
+
+---
+
+## Round 5 — reading ritual (2026-09-06 UTC+8)
+
+Read-only probe at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for `shortly`, `audit-many`, `audit-long`). Authoritative notes: `audit-shots/round5-reading/FINDINGS.md`. Write pass: Grok Build on `feature/gloss-reader-v1`. Screenshots: `audit-shots/round5-reading/` (probe) and `audit-shots/round5/retest/` (after fix). Not claiming publish-done / ship-ready.
+
+### Journey notes
+
+1. **Pin / unpin / Esc** — Before first pin, no Esc chrome. After pin: masthead `已固定 Esc` plus code chip `已固定 Esc 释放`. Esc, chip click, and second click on the same anchor all unpin. Duplicate Esc teachers (R5-3) are mild chrome noise; left as intentional redundancy after Round 3.
+2. **Scroll sync + reverse** — Unpinned sync still moves `code.style.top`, chapter, and file. Reverse mouse and L2 keyboard (Enter/Space on `.line.has-gloss`) pin after scroll settle. Hover hint `L… · 回到正文 ↩` is honest about the span. Narrowest-span reverse (`hitAtLine`) is unchanged.
+3. **Chapter rail + mid-width select** — @1440 rail `目录` + 8 items; @≤1320 rail hides and masthead `<select>` appears. Pin + select still fit through 1100. **Ritual break before the write pass:** jumping chapter while pinned kept the old pin (new prose, frozen old span).
+4. **Fatigue** — Prose 17px / 1.9 / ~612px still calm after a chapter tour. Remaining edges are local (dual Esc, rail whisper, chip occlusion, bridge-while-pinned).
+
+### Round 5 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R5-1 | medium | **fixed** | Chapter jump (rail or mid-width select) while pinned kept the old pin: prose moved, code frozen on the previous span | `unpin()` at the start of `onSelectChapter` (same handler for rail + select) |
+| R5-2 | medium | **fixed** | `server.ts` L18 reverse preferred chapter 八 (`#L18` one-liner) over chapter 一 `L18–59` | shortly gloss: chapter 八 缩短接口 is now `src/server.ts#L19-L30` (handler body). `hitAtLine` untouched. L18 → 一; L19 → 八 |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | chip stays primary; masthead whisper stays from R3 |
+| R5-4 | low | deferred | No in-chrome pin/Esc tip before first pin | same as R2-1; essay lead is enough |
+| R5-5 | low | deferred | Bridge drops after a few px of pinned prose scroll | R2-2e; do not fight sync |
+| R5-6 | low | deferred | Rail label `目录` whisper contrast | R2-7d |
+| R5-7 | low | deferred | Pin chip can cover the last visible code lines | polish only if users complain |
+| R5-8 | — | ok | L2 keyboard reverse still present | closed in Round 4 |
+| R5-9 | — | ok | Unpinned scroll sync; pin holds code | no change |
+| R5-10 | — | ok | Mid-width pin + select; 999 gate | R4-2 still holds |
+| R5-11 | — | ok | ~2 min reading fatigue | no redesign |
+| R5-12 | — | ok | Pin via prose; unpin via Esc / chip / toggle | no change |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+
+### Round 5 re-test (Grok Build)
+
+- Project check: typecheck + gloss check (37 refs, 0 problems) + **68/68** tests green (one new shortly reverse-index assertion).
+- **R5-1 rail @1440:** pin chapter 一 `L18–59` → rail 五 存下来 → pin/chip/masthead Esc clear; code follows `store.ts` L29 (`03-rail-while-pinned.png`).
+- **R5-1 select @1200:** pin → `<select>` 四 短码从哪里来 → pin clears; code follows `slug.ts` L1 (`05-select-while-pinned.png`).
+- **R5-2:** hover on `server.ts` L18 hints `L18–59 · 回到正文`; click reverse-pins chapter 一 `三个 HTTP 接口` / span `L18–59`. L19 reverse still reaches chapter 八 / `L19–30`.
+- Smoke: Esc unpin; L2 Enter reverse-pin; 1100 pin + select no overflow; 999 gate 「对照需要更宽的窗口」.
+- Still deferred: R5-3 dual Esc, R5-4 / R2-1 first-open tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3.
+- Local-only. No push, no merge to main. Not claiming publish-done.
