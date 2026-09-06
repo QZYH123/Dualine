@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, type RefObject } from "react";
+import { memo, useMemo, useRef, useState, type RefObject } from "react";
 import type { HighlighterCore } from "shiki/core";
 import { hitAtLine, type CodeRef, type GlossHit, type ProjectFile } from "../lib/gloss";
 import { tokenize, type TokenLine } from "../lib/highlight";
@@ -51,6 +51,7 @@ export const CodePane = memo(function CodePane({
 
   // Whether the current hover originated on the code side (drives the hint).
   const [codeHover, setCodeHover] = useState<GlossHit | null>(null);
+  const dragOrigin = useRef<{ x: number; y: number } | null>(null);
 
   const [dir, name] = splitPath(file?.path ?? "");
   const inFocus = focus && file && focus.file === file.path ? focus : null;
@@ -107,9 +108,33 @@ export const CodePane = memo(function CodePane({
                   key={n}
                   className={cls}
                   data-line={n}
-                  onMouseEnter={() => enter(hit)}
-                  onClick={hit ? () => onLineClick(hit.anchorId) : undefined}
+                  role={hit ? "button" : undefined}
+                  tabIndex={hit ? 0 : undefined}
                   title={hit ? "回到解释这段代码的正文" : undefined}
+                  aria-label={hit ? `第 ${n} 行，回到正文` : undefined}
+                  onMouseEnter={() => enter(hit)}
+                  onMouseDown={
+                    hit
+                      ? (e) => {
+                          dragOrigin.current = { x: e.clientX, y: e.clientY };
+                        }
+                      : undefined
+                  }
+                  onClick={
+                    hit
+                      ? (e) => clickGlossLine(hit.anchorId, onLineClick, dragOrigin.current, e)
+                      : undefined
+                  }
+                  onKeyDown={
+                    hit
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onLineClick(hit.anchorId);
+                          }
+                        }
+                      : undefined
+                  }
                 >
                   <span className="line__num">{n}</span>
                   <span className="line__text">
@@ -143,6 +168,18 @@ export const CodePane = memo(function CodePane({
     </aside>
   );
 });
+
+function clickGlossLine(
+  anchorId: string,
+  onLineClick: (id: string) => void,
+  origin: { x: number; y: number } | null,
+  e: { clientX: number; clientY: number },
+) {
+  if (origin && Math.hypot(e.clientX - origin.x, e.clientY - origin.y) > 5) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && (sel.toString() ?? "").length > 0) return;
+  onLineClick(anchorId);
+}
 
 function rangeLabel(ref: CodeRef): string {
   return ref.start === ref.end ? `L${ref.start}` : `L${ref.start}–${ref.end}`;

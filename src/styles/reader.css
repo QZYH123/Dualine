@@ -821,6 +821,19 @@ button {
   cursor: pointer;
 }
 
+.line.has-gloss:focus-visible {
+  outline: none;
+  background: var(--zhu-wash-strong);
+}
+
+.line.has-gloss:focus-visible .line__num {
+  color: var(--zhu);
+}
+
+.line.has-gloss:focus-visible .line__num::before {
+  opacity: 1;
+}
+
 .line.has-gloss .line__num {
   color: var(--ink-3);
 }
