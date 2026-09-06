@@ -46,11 +46,13 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions) {
   const pinnedY = useRef<number | null>(null);
   const pinnedScrollY = useRef<number | null>(null);
 
-  // Apply the stored transform immediately when the code element remounts
+  // Apply the stored offset immediately when the code element remounts
   // (file switch) so the new file appears already aligned.
+  // Use `top`, not `transform` — a transform on `.code` would pin sticky
+  // line numbers to the file instead of the pane.
   useLayoutEffect(() => {
     const code = refs.code.current;
-    if (code) code.style.transform = `translate3d(0, ${lastTransform.current}px, 0)`;
+    if (code) code.style.top = `${lastTransform.current}px`;
   });
 
   useEffect(() => {
@@ -146,7 +148,7 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions) {
       translate += manualOffset.current;
 
       lastTransform.current = translate;
-      code.style.transform = `translate3d(0, ${translate}px, 0)`;
+      code.style.top = `${translate}px`;
 
       // 3. The bridge: a hairline from the passage to its lines.
       const spanCentreY = viewportRect.top + translate + spanTopInCode + o.codeLineHeight / 2;

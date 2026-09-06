@@ -272,14 +272,25 @@ button {
   top: var(--header-h);
   height: calc(100vh - var(--header-h));
   padding: 96px 20px 40px 28px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+.rail::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rail::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+  border-radius: 3px;
 }
 
 .rail__label {
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--ink-4);
   margin: 0 0 18px 0;
 }
@@ -671,12 +682,11 @@ button {
   line-height: var(--code-line);
   color: var(--code-fg);
   tab-size: 2;
-  will-change: transform;
   animation: code-in var(--dur-fade) var(--ease-out) both;
 }
 
 .code.is-aligning {
-  transition: transform var(--dur-align) var(--ease-settle);
+  transition: top var(--dur-align) var(--ease-settle);
 }
 
 @keyframes code-in {
@@ -697,19 +707,25 @@ button {
 }
 
 .line__num {
+  position: sticky;
+  left: 0;
+  z-index: 1;
   padding-right: 18px;
   text-align: right;
   font-size: 11px;
   color: var(--ink-4);
   user-select: none;
-  transition: color var(--dur-fade) var(--ease-out);
+  background-color: var(--paper-code);
+  transition:
+    color var(--dur-fade) var(--ease-out),
+    background-color var(--dur-fade) var(--ease-out);
 }
 
 .line__text {
   transition: opacity var(--dur-fade) var(--ease-out);
 }
 
-.line::before {
+.line__num::before {
   content: "";
   position: absolute;
   left: 0;
@@ -718,6 +734,7 @@ button {
   width: 2px;
   background: var(--zhu);
   opacity: 0;
+  z-index: 2;
   transition: opacity var(--dur-fade) var(--ease-out);
 }
 
@@ -734,16 +751,21 @@ button {
   background: var(--zhu-wash);
 }
 
-.line.is-focus::before {
-  opacity: 1;
-}
-
 .line.is-focus .line__num {
   color: var(--zhu);
+  background-color: color-mix(in srgb, var(--zhu) 7%, var(--paper-code));
+}
+
+.line.is-focus .line__num::before {
+  opacity: 1;
 }
 
 .line.is-hover {
   background: var(--zhu-wash-strong);
+}
+
+.line.is-hover .line__num {
+  background-color: color-mix(in srgb, var(--zhu) 14%, var(--paper-code));
 }
 
 .code__end {
@@ -931,7 +953,7 @@ html:has(.warn-strip) {
   font-family: var(--font-mono);
   font-size: 11.5px;
   letter-spacing: 0.02em;
-  color: var(--ink-3);
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
