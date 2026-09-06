@@ -1,0 +1,13 @@
+---
+description: Visual and interaction taste for the prose↔code reader
+globs: "**/*.{tsx,ts,css,html,jsx,vue,svelte}"
+alwaysApply: false
+---
+
+# Design bar
+
+- One clear reading ritual: prose and code stay visually linked (hover, scroll-sync, or anchors)—never two unrelated columns.
+- Comfortable long-read: generous measure for prose, readable code pane, restrained chrome.
+- Distinct type pairing; limited palette with one accent; consistent spacing scale.
+- Motion only when it clarifies the mapping between text and code.
+- Every screen should feel intentional at a glance.
