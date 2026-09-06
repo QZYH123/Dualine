@@ -15,5 +15,5 @@
     "composite": true,
     "types": ["node"]
   },
-  "include": ["server", "scripts", "tests", "src/lib/gloss.ts", "src/lib/load-decision.ts", "src/lib/notice.ts"]
+  "include": ["server", "scripts", "tests", "src/lib/gloss.ts", "src/lib/load-decision.ts", "src/lib/notice.ts", "src/lib/paths.ts"]
 }

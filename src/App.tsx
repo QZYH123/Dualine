@@ -4,10 +4,9 @@ import { getHighlighter } from "./lib/highlight";
 import {
   loadProject,
   requestedProjectId,
-  type Catalog,
   type LoadResult,
 } from "./lib/load";
-import { noDirTip, noticeShowsBack } from "./lib/notice";
+import { noticeCopy, noticeShowsBack } from "./lib/notice";
 import { Reader } from "./reader/Reader";
 import { Wordmark } from "./reader/Masthead";
 
@@ -58,9 +57,7 @@ export default function App() {
  */
 function Notice({ result }: { result: Exclude<LoadResult, { kind: "project" }> }) {
   const catalog = "catalog" in result ? result.catalog : undefined;
-  const title = noticeTitle(result);
-  const hint = noticeHint(result);
-  const tip = noticeTip(result);
+  const { title, hint, tip } = noticeCopy(result);
   const projects = catalog?.projects ?? [];
 
   return (
@@ -88,49 +85,4 @@ function Notice({ result }: { result: Exclude<LoadResult, { kind: "project" }> }
       </div>
     </div>
   );
-}
-
-function noticeTitle(result: Exclude<LoadResult, { kind: "project" }>): string {
-  switch (result.kind) {
-    case "not-found":
-      return `找不到项目 “${result.id}”`;
-    case "unreachable":
-      return "API 未运行，读不到这个项目";
-    case "empty":
-      return "这个目录下没有项目";
-    case "no-dir":
-      return result.catalog.rootStatus === "not-directory"
-        ? "项目路径不是一个目录"
-        : "找不到项目目录";
-  }
-}
-
-function noticeHint(result: Exclude<LoadResult, { kind: "project" }>): string {
-  switch (result.kind) {
-    case "not-found":
-      return projectPath(result.catalog, result.id);
-    case "unreachable":
-      return "npm run dev:all";
-    case "empty":
-      return projectPath(result.catalog, "<id>");
-    case "no-dir":
-      return result.catalog.root ?? "GLOSS_PROJECTS_DIR";
-  }
-}
-
-function noticeTip(result: Exclude<LoadResult, { kind: "project" }>): string | null {
-  switch (result.kind) {
-    case "not-found":
-      return result.catalog.projects.length > 0 ? "这个目录里还有" : "每个项目一个子文件夹，内含 gloss.md";
-    case "unreachable":
-      return null;
-    case "empty":
-      return "每个项目一个子文件夹，内含 gloss.md";
-    case "no-dir":
-      return noDirTip(result.catalog.root);
-  }
-}
-
-function projectPath(catalog: Catalog, id: string): string {
-  return catalog.root ? `${catalog.root}/${id}/gloss.md` : `GLOSS_PROJECTS_DIR/${id}/gloss.md`;
 }

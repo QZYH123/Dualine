@@ -9,7 +9,7 @@ import {
   type CodeRef,
   type Inline,
 } from "../src/lib/gloss.js";
-import { looksLikeWindowsPath } from "../src/lib/notice.js";
+import { looksLikeWindowsPath } from "../src/lib/paths.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 

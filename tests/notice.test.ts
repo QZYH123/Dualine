@@ -4,12 +4,12 @@ import {
   CATALOG_DEFAULT_HINT,
   NOTICE_NO_DIR_TIP,
   NOTICE_WINDOWS_PATH_TIP,
-  looksLikeWindowsPath,
   noDirTip,
   noticeShowsBack,
   warningStripExpandable,
   warningStripText,
 } from "../src/lib/notice.js";
+import { looksLikeWindowsPath } from "../src/lib/paths.js";
 
 describe("noticeShowsBack", () => {
   test("true for not-found and unreachable; false for empty and no-dir", () => {
