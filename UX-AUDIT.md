@@ -161,3 +161,15 @@ Do **H1, H2, M1, M2, M4** first (user-visible, small diffs, no architecture chur
 
 Keep architecture. Conventional commits on feature/gloss-reader-v1. No push. Run the project check script before finishing.
 
+
+## Phase 3 re-test (executor, after Grok)
+
+- Project check script: typecheck + gloss check (37 refs, 0 problems) + 63/63 tests green.
+- Home 1440: bridge + focus OK; sample chip absent when API live (correct).
+- Scroll to chapter 2 / index.ts; reverse click pins.
+- Missing project: wordmark + path + shortly link + back.
+- Width: 1320 chapter select on / rail off; at 999px gate shows wider-window notice (retest/07-w999.png).
+- API down: masthead shows sample chip (retest/06-sample-chip.png); other project gets API notice + back.
+- Remaining open: L1 Contents label. Deferred: L2 keyboard reverse, L3 EN sample subtitle.
+- Desktop journeys feel solid; mobile intentionally gated — not claiming publish-done.
+
