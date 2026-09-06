@@ -9,3 +9,6 @@ dist/
 !.env.example
 fable-run.log
 .cursor/chats/
+*.tsbuildinfo
+fable-prompt.txt
+run-fable.sh
