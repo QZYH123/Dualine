@@ -786,7 +786,7 @@ button {
   }
 }
 
-/* ───────────────────────── loading ───────────────────────── */
+/* ───────────────────────── loading · notice ───────────────────────── */
 
 .loading {
   height: 100vh;
@@ -796,4 +796,39 @@ button {
   font-size: 13px;
   letter-spacing: 0.2em;
   color: var(--ink-4);
+}
+
+/* Nothing to face: the same quiet centre, with one line that says where to look. */
+.notice {
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.notice__title {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.notice__hint {
+  margin: 12px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-4);
+}
+
+.notice__back {
+  display: inline-block;
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--ink-3);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 1px;
+  transition: color var(--dur-fade) var(--ease-out);
+}
+
+.notice__back:hover {
+  color: var(--zhu);
 }
