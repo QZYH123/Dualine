@@ -2,7 +2,7 @@
 
 Branch `feature/gloss-reader-v1`. Version `0.1.0`. Not pushed, not merged to `main`.
 
-Publishable enough: usable locally, documented, checked, packaged cleanly.
+Usable locally, documented, checked, packaged cleanly. Not pushed, not merged, not a hosted app.
 
 ## 1. Architecture
 
@@ -10,16 +10,16 @@ The six module boundaries from v1 were kept. No framework rewrite and no change 
 
 | Module | Path | Decision |
 |---|---|---|
-| reader | `src/reader/*` | **Keep.** Ritual, sync, chrome untouched aside from a quiet empty code pane. |
+| reader | `src/reader/*` | **Keep.** Ritual and sync unchanged. Quiet chrome was added later (sample chip, warn strip, chapter select, Esc whisper, keyboard reverse on glossed lines) without a layout redesign. |
 | gloss model | `src/lib/gloss.ts` | **Keep.** Parser + document model, shared by browser and server. Not split. |
 | fixtures | `src/fixtures/shortly.ts`, `examples/shortly/` | **Keep.** Bundled sample for `npm run dev` / preview without an API. |
 | server | `server/index.ts`, `server/projects.ts` | **Tighten.** `handle()` takes an explicit root; catalog reports `root` + `rootStatus`. |
-| validate | `server/validate.ts` | **Keep as SSOT.** CLI `check:gloss` and API `warnings` still share `checkRefs` / `collectRefs`. Added `inspectRoot()` next to `projectsRoot()`. |
+| validate | `server/validate.ts` | **Keep as SSOT.** CLI `check:gloss` and API `warnings` still share `checkRefs` / `collectRefs`. `inspectRoot()` / `resolveProjectsDir()` sit next to `projectsRoot()`. |
 | load | `src/lib/load.ts` | **Tighten.** I/O stays here; policy moved to `src/lib/load-decision.ts` so node:test can cover fallback without Vite `?raw` fixtures. |
 
 What was not done: splitting `useReadingSync`, rewriting the API as a framework, adding a project picker as a product surface.
 
-The client never imports `server/`. The server imports only `src/lib/gloss.ts` for parse/model. Load policy is duplicated as a *type* of `rootStatus` (`ok` \| `missing` \| `not-directory`) on both sides so the browser does not take a filesystem dependency.
+The client never imports `server/`. The server imports `src/lib/gloss.ts` for parse/model and `src/lib/notice.ts` for the Windows-path shape check (browser-safe; no `node:fs`). Load policy is duplicated as a *type* of `rootStatus` (`ok` \| `missing` \| `not-directory`) on both sides so the browser does not take a filesystem dependency.
 
 Fallback rule (the load-decision contract):
 
@@ -44,7 +44,7 @@ Commits on this branch after the previous README polish:
 | `1efaf54` `docs: document catalog errors, preview:all, and packing` | README |
 | *(this file)* | Ship report |
 
-Tests went from 39 to 60 (`node:test`). New coverage: load decisions, `handle()` against explicit roots, `inspectRoot`, `check:gloss` via `runCheck`.
+Tests went from 39 to 60 (`node:test`) at the time of this report, and have grown since (see §5). Coverage includes load decisions, `handle()` against explicit roots, `inspectRoot`, `check:gloss` via `runCheck`, and path-normalization cases.
 
 ## 3. How to run and how to publish
 
@@ -98,12 +98,12 @@ git tag v0.1.0           # when you want a release
 
 Ran on this machine after the changes, before this report:
 
-- `npm run check` — typecheck, `check:gloss` (`1 gloss checked, 37 refs, 0 problems`), **60 tests pass**.
+- `npm run check` — typecheck, `check:gloss` (`1 gloss checked, 37 refs, 0 problems`), tests under `tests/` (count has grown since the first ship pass; run `npm test` for the current total).
 - `npm run build` — `tsc -b && vite build` succeeded; output in `dist/` (gitignored).
 - Headless Chrome against `npm run preview:all` / `npm run preview`:
   - `/` with API → shortly reader
   - `/?project=nope` → 找不到项目, path, catalog link to shortly
-  - empty `GLOSS_PROJECTS_DIR` → 这个目录下没有项目
+  - blank / unset `GLOSS_PROJECTS_DIR` → repo `examples/` (shortly), not a cwd-empty notice; a real empty folder still says 这个目录下没有项目
   - missing dir → 找不到项目目录 (including with `?project=my-app`, no sample)
   - preview without API, `?project=my-app` → API 未运行； `/` → bundled sample
   - `GET /api/health` through the preview proxy returns `{ ok, root, rootStatus }`

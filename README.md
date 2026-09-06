@@ -63,7 +63,7 @@ When the screen has nothing to face it says so in one line — 找不到项目, 
 
 The API binds to `127.0.0.1` and serves file contents from the folder you point it at; keep it local. If you must expose it, `HOST=0.0.0.0` is explicit.
 
-`GLOSS_PROJECTS_DIR` is resolved from the current working directory (`./foo` becomes `$PWD/foo`). Prefer an absolute path. Unset or blank falls back to this repo's `examples/`, not the current directory.
+`GLOSS_PROJECTS_DIR` is trimmed, then resolved from the current working directory (`./foo` becomes `$PWD/foo`). A leading `~/` expands to the home directory. Prefer an absolute path. Unset or blank falls back to this repo's `examples/`, not the current directory. A Windows drive path pasted on Linux or macOS is not converted; the notice names what was pasted and asks for a path on this system.
 
 ## Writing a gloss
 
@@ -115,7 +115,7 @@ npm run preview:all    # after build: dist on :4173 + API on :8787
 
 | env | default | |
 |---|---|---|
-| `GLOSS_PROJECTS_DIR` | this repo's `examples/` when unset or blank | folder of projects, one subfolder each; a set value is resolved from the current working directory — prefer an absolute path |
+| `GLOSS_PROJECTS_DIR` | this repo's `examples/` when unset or blank | folder of projects, one subfolder each; a set value is trimmed, `~/` is expanded, then resolved from the current working directory — prefer an absolute path |
 | `PORT` | `8787` | API port; the Vite proxy follows it |
 | `HOST` | `127.0.0.1` | API bind address |
 | `GLOSS_API` | `http://127.0.0.1:$PORT` | where Vite proxies `/api` in `dev` and `preview` |

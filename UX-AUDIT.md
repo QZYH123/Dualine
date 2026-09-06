@@ -136,7 +136,7 @@ None for the designed desktop ritual. Reading on >=1100px with dev:all feels sol
 | M3 | fixed | One-line sticky strip under the masthead; reading is not blocked. |
 | M4 | fixed | Gloss · 对照 wordmark above notice titles (including the viewport gate). |
 | L1 | fixed | Rail label is 目录; aria-label stays 章节. |
-| L2 | deferred | Glossed code lines not keyboard-activatable. |
+| L2 | fixed | Round 4: glossed lines are keyboard-activatable (role=button, Enter/Space). |
 | L3 | deferred | voice choice; do not rush |
 | L4 | fixed | Covered by the H1 gate. |
 
@@ -274,4 +274,65 @@ Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-pr
 - audit-bad: strip stays 32px, centered, caret; click lists both warnings; click again collapses; header height unchanged.
 - Wordmark focus ~103px wide, 朱; rail 朱 ring. Catalog links still work.
 - Still deferred: L2, L3, R2-1, R2-2e, R2-7d.
+- Not claiming publish-done.
+
+
+---
+
+## Round 4 — dig harder from user shoes (2026-09-06 UTC+8)
+
+Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for `shortly`, `audit-many`, `audit-long`, `audit-bad`) plus temporary APIs for spaces / `~/` / whitespace / Windows-style roots. Screenshots: `audit-shots/round4/` (untracked).
+
+### Journey notes
+
+1. **Home/path — weird inputs** — Spaces in the folder name work (`/tmp/gloss with spaces` opened `mini`). Trailing slash normalizes. Leading/trailing whitespace around a valid absolute path was **not** trimmed: `"  /tmp/gloss-projects  "` became `$PWD/  /tmp/gloss-projects  ` and the notice showed that fake path. Quoted `~/gloss-r4-tilde` was cwd-prefixed to `$PWD/~/gloss-r4-tilde` (shell-unexpanded `~` is a real footgun; README examples use `~/`). A Windows drive path pasted on Linux was likewise buried under `$PWD/C:/…`. Tip still said “绝对路径” without naming Windows. Cheap honest fixes: trim, expand `~` / `~/`, leave drive/UNC paths as pasted, and a calm Windows tip. Do not invent WSL conversion.
+
+2. **Reading — long session + mid width** — After pinning and scrolling every chapter at 1440, masthead stayed one line (wordmark · shortly · tagline · 已固定 Esc · chapter). At 1150 and 1100, chapter label hides, `<select>` appears, pin + select sit together with ~245px gap; no overflow. Warn strip lives under the masthead, not inside it. No masthead redesign.
+
+3. **Code pane — selection / copy / highlight** — `user-select` is `auto` on line text (`none` only on numbers). Programmatic select + `execCommand('copy')` works. A drag across a glossed line selected the text and did **not** pin (Chrome withholds click after a real drag). Still cheap to ignore click when the selection is a Range, so a smaller drag cannot reverse-pin by accident. Hover on a glossed line lights the matching anchor and the ↩ hint; leaving to the title clears both. Unpin clears the pin chip. Chapter jump from a hovered line does not leave a stale hover on the new file. (After unpin with the pointer still on a prose anchor, `is-hover` / `is-focus` on that span is expected, not a leak.)
+
+4. **Prose — very long paragraph** — Token `--prose-measure: 612px`; longest shortly passage ~544px at 1440 (~32 CJK chars at 17px, leading 1.9, justify). At 1150 the same passage is ~430px — tighter wrap, still readable. Not clearly uncomfortable; no measure tweak.
+
+5. **Sample vs real** — API live on shortly from `examples/` (via `/tmp/gloss-projects/shortly`): no 示例 chip. API down on `/` and `?project=shortly`: chip `示例` visible, tagline hidden by `:has(.masthead__chip)`. Other id: `API 未运行` + `npm run dev:all` + 返回. Remaining chrome (eyebrow 对照笔记, dual pane) is the product, not a live-disk lie.
+
+6. **Docs** — README already said blank env → `examples/` and described the warn strip. SHIP-REPORT still said 60 tests, blank env → empty-dir notice, and “chrome untouched”. Aligned both; kept local-first, no publish-done claim.
+
+7. **L2 vs L3** — L2 is a small, clean diff (role=button, tabIndex=0, Enter/Space, keep mouse path, 朱 `:focus-visible`, calm `aria-label` 第 n 行，回到正文). L3 (EN subtitle on the Chinese lead) would fight voice; left deferred.
+
+8. **R1–R3 smoke** — Narrow gate at 999, 目录 rail, sticky nums, Esc unpin + masthead Esc, warn expand, 1200 chapter select, 朱 wordmark: still green. Probe crashed on `.wordmark` matching both the hidden viewport-notice mark and the session link — locator issue, not a product bug.
+
+### Round 4 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R4-1c | medium | fixed | Whitespace around a valid path was not trimmed; notice showed `$PWD/  /tmp/…` | `resolveProjectsDir` trims before resolve |
+| R4-1d | medium | fixed | Quoted `~/…` cwd-prefixed, notice looked like a missing real folder | expand `~` and `~/` to homedir |
+| R4-1e | low | fixed | Windows drive path cwd-prefixed; tip did not name Windows | leave drive/UNC as pasted; tip 「这是 Windows 路径；请改成当前系统上的绝对路径」 |
+| R4-1a | — | ok | Spaces in path | no change |
+| R4-1b | — | ok | Trailing slash already normalized | no change |
+| R4-2 | — | ok | Mid-width pin + chapter select not cramped | no masthead CSS |
+| R4-3a | — | ok | Code text is selectable / copyable | `user-select: auto` |
+| R4-3b | low | fixed | Drag-select on a glossed line could still reverse-pin on a small drag | click no-ops when the selection is a Range |
+| R4-3d | — | ok | Hover clears on leave; unpin / chapter jump do not leak | no sync rewrite |
+| R4-4 | — | ok | Long paragraph measure comfortable at 1440; tighter but readable at 1150 | no measure tweak |
+| R4-5 | — | ok | 示例 chip honest (present iff sample; absent when API live) | no change |
+| R4-6 | low | fixed | SHIP-REPORT vs README: test count, blank env, chrome “untouched” | docs aligned; local-first |
+| L2 / R2-6c | low | fixed | Glossed lines mouse-only | role=button, tabIndex=0, Enter/Space, 朱 focus ring |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+| R2-1 | low | deferred | No first-open in-chrome tip | essay lead already says the code follows |
+| R2-2e | low | deferred | Bridge drops while pinned after scroll | intentional |
+| R2-7d | low | deferred | Rail label whisper contrast | fine for a label |
+
+### Round 4 re-test
+
+- Project check: typecheck + gloss check (37 refs, 0 problems) + **67/67** tests green.
+- Whitespace around `/tmp/gloss-projects` opens shortly; hint is the real absolute path.
+- `~/…` (quoted) expands to `$HOME/…` and opens when that folder exists.
+- `C:/Users/foo/glosses` notice: hint is the pasted drive path (not `$PWD/C:/…`); tip names Windows.
+- Spaces in path and trailing slash still open.
+- Glossed line: Tab focuses (朱 number tick + wash); Enter/Space reverse-pin after the same scroll-settle as a mouse click; drag-select copies text and does not pin.
+- Mid-width 1150 pin + select: no overflow. Long passage measure unchanged.
+- Sample chip: absent with live API on shortly; present when API down on `/`.
+- R1–R3: 999 gate, 目录, sticky nums, Esc whisper, warn expand, 1200 select, 朱 wordmark.
+- Still deferred: L3, R2-1, R2-2e, R2-7d.
 - Not claiming publish-done.
