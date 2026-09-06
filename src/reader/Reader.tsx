@@ -150,12 +150,13 @@ export function Reader({ project, highlighter, source, warnings }: ReaderProps) 
   );
 
   const onSelectChapter = useCallback((chapterId: string) => {
+    unpin();
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.getElementById(chapterId)?.scrollIntoView({
       behavior: reduced ? "auto" : "smooth",
       block: "start",
     });
-  }, []);
+  }, [unpin]);
 
   return (
     <>
