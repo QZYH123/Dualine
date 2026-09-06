@@ -78,7 +78,9 @@ describe("noticeCopy unreachable", () => {
     assert.equal(copy.title, "API 未运行，读不到这个项目");
     assert.equal(copy.hint, "npm run dev:all");
     assert.equal(copy.tip, NOTICE_UNREACHABLE_TIP);
-    assert.match(NOTICE_UNREACHABLE_TIP, /刷新/);
+    assert.match(NOTICE_UNREACHABLE_TIP, /API/);
+    assert.match(NOTICE_UNREACHABLE_TIP, /刷新这一页/);
+    assert.equal(noticeShowsBack("unreachable"), true);
   });
 });
 

@@ -22,8 +22,8 @@ export const NOTICE_NO_DIR_TIP = "把 GLOSS_PROJECTS_DIR 设成文件夹的绝�
 export const NOTICE_EMPTY_TIP =
   "每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md";
 
-/** API down: the command is the recovery; the page does not poll. */
-export const NOTICE_UNREACHABLE_TIP = "起来后刷新这一页";
+/** API down: name the recovery, then refresh this page; 返回 stays home. */
+export const NOTICE_UNREACHABLE_TIP = "API 起来后再刷新这一页";
 
 /** Pasted drive/UNC path — we do not convert it to a POSIX folder. */
 export const NOTICE_WINDOWS_PATH_TIP = "这是 Windows 路径；请改成当前系统上的绝对路径";
