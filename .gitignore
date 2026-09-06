@@ -1,5 +1,6 @@
 node_modules/
 dist/
+*.tgz
 .build/
 .next/
 .DS_Store
@@ -13,4 +14,7 @@ fable-run.log
 fable-prompt.txt
 run-fable.sh
 run-fable-mvp.sh
+run-grok-ship.sh
 .agent-prompt.txt
+.grok-ship-prompt.md
+.grok/

@@ -2,7 +2,27 @@
   "name": "gloss",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
+  "description": "A dual-pane prose↔code reader: essay on the left, real source on the right.",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "index.html",
+    "package-lock.json",
+    "vite.config.ts",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.server.json",
+    "src",
+    "server",
+    "scripts",
+    "examples",
+    "tests"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -11,6 +31,7 @@
     "check:gloss": "tsx scripts/check-gloss.ts",
     "api": "tsx server/index.ts",
     "dev:all": "concurrently -k -n web,api -c blue,yellow \"npm run dev\" \"npm run api\"",
+    "preview:all": "concurrently -k -n web,api -c blue,yellow \"npm run preview\" \"npm run api\"",
     "test": "node --import tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm run check:gloss && npm test"
   },
