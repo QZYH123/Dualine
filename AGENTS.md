@@ -1,24 +1,20 @@
-# AGENTS.md — Prose ↔ Code reader
+# AGENTS.md — Gloss (prose ↔ code reader)
 
 ## Mission
-Help people understand a project after vibe coding: **prose tied to real code**, in a reading layout that feels calm and precise. Design elegance beats feature count.
+Help people understand a project after vibe coding: prose tied to real code, in a calm paired-reading experience.
 
-## Models / roles
-- **Main agent:** Claude Fable — product design, visual system, frontend, interaction.
-- **Subagent `backend`:** `cursor-grok-4.6-xhigh-fast` — APIs, repo parsing, prose↔code mapping data, persistence. Use proactively for all non-UI implementation.
+## Who does what
+- **Claude Fable 5.1 (main):** product design + frontend. Owns the reading ritual, information architecture, and UI. Trust its product judgment—do not second-guess taste in prompts.
+- **`backend` subagent (`cursor-grok-4.6-xhigh-fast`):** backend code, fixtures wiring when mechanical, boilerplate, type chores, and any work that does **not** change product direction. Use proactively so Fable stays on high-leverage decisions.
+
+## Token discipline (Fable)
+Prefer short turns: decide product/UI, sketch structure, delegate mechanical implementation to `backend` when it will not dilute the design. Do not burn Fable context on long backend digressions.
 
 ## Non-negotiables
-1. Design first. One exquisite primary reading screen > many half-built pages.
-2. Prose and code must stay **linked** (anchors / hover / scroll sync)—not two unrelated columns.
-3. No generic “AI SaaS” look (default Inter-on-white, purple gradients, noisy cards).
-4. No secrets in the repo. Use env vars.
-5. Conventional Commits; work on `feature/*` branches for new work (never push straight to `main` without review when a remote exists).
-6. Chinese UI copy is welcome; tone: calm, precise, not cute.
-
-## Working loop with humans
-- Prefer small demos you can open in the browser.
-- When stuck on product taste, pause and ask rather than shipping a loud UI.
-- After meaningful UI, note how to run and where to look.
+1. Paired reading: prose anchors ↔ code spans (not two unrelated panes).
+2. Round 1 = one primary reading screen that works end-to-end.
+3. No secrets in repo. Conventional Commits on `feature/*` when branching.
+4. Chinese UI OK; calm tone.
 
 ## Skills
-See `.cursor/skills/` — especially `prose-code-reader` and `design-pass`.
+`.cursor/skills/prose-code-reader`, `.cursor/skills/design-pass` — reference, not dogma.
