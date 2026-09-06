@@ -588,3 +588,52 @@ Probe already done at `audit-shots/round9/probe-findings.json` (R5–R8 still pa
 - Local-only. No push, no merge to main. Not claiming publish-done.
 
 
+---
+
+## Round 10 — fresh-eyes Medium/High sweep (2026-09-06 UTC+8)
+
+Grok Build on `feature/gloss-reader-v1` @ `2cb6743`. Live base `http://127.0.0.1:5173` with `GLOSS_PROJECTS_DIR=/tmp/gloss-projects`. Playwright + static probe: `audit-shots/round10/` (untracked). No Reader split. Dual Esc / bridge / rail whisper / pin-chip occlusion / L3 / first-open tour skipped. No product diff this round. Not claiming publish-done / ship-ready.
+
+### Journey notes
+
+1. **R5–R9 still hold** — Pin then chapter jump (rail @1440 and select @1200) unpins, and the code pane follows the new chapter (`server.ts` → `store.ts` / `slug.ts`). Shortly L18 reverse stays on chapter 一 `L18–59`. @1100 pin+select no overflow. @999 gate 「对照需要更宽的窗口 · ≥ 1100px」. Bare `/` is `audit-bad` with `目录第一项 · 用 ?project=<id> 指定`; explicit `?project=audit-bad` is count-only. `npm run check` pins examples (`1 gloss checked, 37 refs, 0 problems`); `check:gloss` with the audit env still reports audit-bad's 2 problems. Pack dry-run omits the lockfile (42 files, no bin, no operator files). Empty / project-as-root / `MyApp` notices name the real root and the child-id rule. Engines `^20.19.0 || >=22.12.0`. API down on `/` shows `示例`; named id is `API 未运行` + `npm run dev:all` + `API 起来后再刷新这一页`; `返回` stays `/`. Esc unpins. `$HOME` expands like `~`; `$HOMELESS` does not. README Run still has install → check → `dev:all`, the `GLOSS_API` whisper, and the localhost / `127.0.0.1` same-machine line.
+
+2. **Own-project first success** — A README-shaped folder (`my-app/gloss.md` + `src/` + one root file the gloss faces) opens at `?project=my-app` with no sample chip and no warn; pin works; the root `notes.md` span loads (not only `src/`). Single-project bare `/` opens that id. Two healthy projects: bare `/` is the first listed id; query switch alpha (pinned) → beta resets pin and shows `b.ts`. Missing id lists both. `check:gloss` on the healthy own folder is green. Clone default (`examples/` only) still opens shortly.
+
+3. **Catalog switch / API honesty** — Query `audit-bad` → `shortly` → `audit-many`: warn / chip / pin / title match the URL. Browser back from `audit-many` lands on shortly with no stale warn/chip/pin. Wordmark from shortly lands on `audit-bad` with the catalog-default hint. Other-projects link to shortly is a clean live read. Mid-session API abort without reload keeps the loaded project (no sample flip, no poll). Reload while down is the unreachable notice. After the API is reachable again the notice stays until reload; reload of the same URL restores the asked project. Reload of shortly while down shows `示例`.
+
+4. **Narrow gate + pin** — Resize 1440→999 without reload shows the gate and hides the session; 999→1440 restores the paired read (no reload). At 1000px the dual pane still shows; crossing 1000→999 on the same page raises the gate. Pin holds through prose scroll (`L18–59` stays). Second click on the same anchor unpins.
+
+5. **Pack honesty** — `files` and `npm pack --dry-run` omit `package-lock.json`. Extract one-liner still reaches `npm install` → `npm run dev:all`. Private, no `bin`.
+
+6. **Looked at, not promoted** — Vite `host: true` lets a non-loopback address fetch `/api` through the web proxy (`172.30.0.2:5173/api/health` answered). The API process still binds `127.0.0.1`; README already names `HOST=0.0.0.0` as the explicit expose. Not a reading-ritual break; no bind change (would fight the localhost / `127.0.0.1` open). No doc churn this round.
+
+### Round 10 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R5–R9 smoke | — | **pass** | pin+chapter (and code follows); L18 teaching span; mid-width; 999; bare `/`; check pin; pack; empty/as-root/id; engines; sample chip; Esc; Run check; catalog switch; mid-session no poll; unreachable tip names API + 刷新; `$HOME`; `GLOSS_API`; localhost open | re-probed green |
+| R10-own | — | **ok** | README-shaped own project reads; root file; single-id `/`; two-id switch; missing lists both; `check:gloss` green | no product change |
+| R10-switch | — | **ok** | query / history back / wordmark / other-projects: no stale warn/pin/chip | no product change |
+| R10-api | — | **ok** | silent keep; reload-down notice; no poll; same-URL recover; shortly `示例` | no product change |
+| R10-gate | — | **ok** | resize without reload; 1000 dual pane; 999 gate | no product change |
+| R10-pin | — | **ok** | pin holds through scroll; second click unpins; chapter jump unpins and follows | no product change |
+| R10-pack | — | **ok** | no lockfile, no bin, extract reaches `dev:all` | no product change |
+| R10-lan-proxy | info | not promoted | Vite `host:true` re-exports `/api` off loopback | API bind stays `127.0.0.1`; README already names `HOST=0.0.0.0`; leave |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | skip; chip stays primary |
+| R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | skip; essay lead is enough |
+| R5-5 / R2-2e | low | deferred | Bridge drops after a few px of pinned prose scroll | skip; do not fight sync |
+| R5-6 / R2-7d | low | deferred | Rail label `目录` whisper contrast | skip |
+| R5-7 | low | deferred | Pin chip can cover the last visible lines of a long focus span | still polish |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+| R9-pack-extract-docs | info | deferred | Publish extract one-liner is install → `dev:all`; Run also has `check` | extract still reaches a session; check stays in Run |
+
+### Round 10 re-test (Grok Build)
+
+- Project check: typecheck + gloss check (`1 gloss checked, 37 refs, 0 problems`) + **72/72** tests green.
+- **No new Medium or High.** Probe `audit-shots/round10/probe-findings.json`: 0 fail/high, 0 medium.
+- Smoke shots: `p0-shortly-open.png`, `p0-r5-rail-unpin.png`, `p0-r5-l18-reverse.png`, `p0-r5-w999.png`, `p0-r6-bare.png`, `p0-r8-unreachable.png`, `p0-r7-api-down-home.png`, `p1-own-happy.png`, `p1-gate-resize-999.png`, `p1-api-reload-recover.png`.
+- Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3. Pack extract vs Run `check` left as info.
+- Local v0.1 stands. No push, no merge to main. Not claiming publish-done.
+
+
