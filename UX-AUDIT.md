@@ -490,3 +490,51 @@ Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-pr
 - Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback. R5-3e closed by R7-1.
 - Local-only. No push, no merge to main. Not claiming publish-done.
 
+
+---
+
+## Round 8 — user-perspective polish (2026-09-06 UTC+8)
+
+Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for `audit-bad`, `audit-long`, `audit-many`, `shortly`) plus temporary APIs for empty / project-as-root / invalid-id / examples-only. Real API stop/restart on :8787. Playwright shots: `audit-shots/round8/` and `audit-shots/round8/retest/` (untracked). Write pass: Grok Build on `feature/gloss-reader-v1` @ `ccd1a33` plus this round's commits. Paths/notice split was not reopened. Not claiming publish-done / ship-ready.
+
+### Journey notes
+
+1. **R5–R7 still hold** — Pin then chapter jump (rail @1440 and select @1200) unpins; shortly L18 reverse stays on chapter 一 `L18–59`; @1100 pin+select no overflow; @999 gate. Bare `/` has `目录第一项 · 用 ?project=<id> 指定`; explicit `?project=audit-bad` is count-only; `npm run check` pins examples (`1 gloss checked, 37 refs, 0 problems`) while `check:gloss` with the audit env still reports audit-bad's 2 problems; pack dry-run omits the lockfile (42 files). Empty / project-as-root / `MyApp` notices name the real root and the child-id rule. Engines `^20.19.0 || >=22.12.0`. API down on `/` shows `示例`; other id is `API 未运行`. Esc unpins (`is-visible` clears).
+
+2. **Fresh-user ritual** — Clone path (API on this repo's `examples/` only): `/` opens shortly, no sample chip, pin works. README Run had install + `dev:all` + the URL, but not `check`, and did not say this repo's `/` is shortly (that sentence lived later, next to the API-down sample fallback). Cheap docs: Run is install → check → `dev:all` → open the URL; this repo's `examples/` only has shortly; a multi-project folder still opens the first listed id — use `?project=`. No shortly hardcode, no catalog reorder.
+
+3. **API stop / restart while reading** — Mid-session, with no reload, the loaded project stays (pin held, no sample flip). The page does not poll; that is honest, not a live connection. Reload while down on a named id is the unreachable notice. After the API is back, the notice stays until reload — reload of the same URL restores the asked project (pin is session state, gone). **Stranded:** the notice already named `npm run dev:all` but did not say to refresh, so a reader who started the API sat on the empty screen. `返回` is home (`/`), not a retry: while the API is still down that is the bundled sample with `示例`; after restart it is the catalog default. Same as the wordmark. Cheap: tip `起来后刷新这一页`. No auto-refresh, no poll.
+
+4. **Catalog switching** — Query `audit-bad` → `shortly` → `audit-many`: warn / chip / pin / title match the URL. Wordmark from `audit-many` lands on `audit-bad` with the catalog-default hint. Missing id lists the other four as links; the shortly link is a clean live read. No stale strip or sample chip.
+
+5. **Deferred, not promoted** — R5-7: the pin chip can cover later lines of a long focus span (first-pin `L18–59` covers ~L33–34 at the viewport floor). The reading line is higher; still polish. R5-5e `$HOME` (only `~/` expands; README prefers an absolute path). R5-6b `GLOSS_API` (in the API table; Run documents `dev:all`). Dual Esc, bridge-while-pinned, L3 left.
+
+### Round 8 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R5-1 / R5-2 / R5-10 | — | **pass** (R5) | pin+chapter jump unpins; L18 teaching span; mid-width pin+select; 999 gate | still green |
+| R5-1b / R6-1 / R6-2 | — | **pass** (R6) | bare `/` hint; explicit audit-bad count-only; check pinned to examples; pack omits lockfile | still green |
+| R7-1 / R7-2 / R7-3 | — | **pass** (R7) | empty / project-as-root / invalid-id real root + child-id tip; engines; sample chip / API-down; Esc | still green |
+| R8-switch | — | ok | query / wordmark / other-projects / bare `/` among audit-bad, shortly, audit-many | no stale warn/pin/chip/title |
+| R8-1 | medium | **fixed** | Named-project API-down notice had the recovery command but no refresh hint; after restart the screen stayed until the reader already knew to reload. `返回` stays home (not a retry) | `NOTICE_UNREACHABLE_TIP` = `起来后刷新这一页`. README: `API 未运行` asks you to refresh; `返回` is home. No poll, no auto-recover |
+| R8-2 | medium | **fixed** | README Run skipped `check` and did not say this repo's `/` is shortly | Run: install → check → `dev:all` → open the URL. This repo's `examples/` only has shortly; use `?project=` for a specific id. No catalog reorder |
+| R8-silent | — | ok | Mid-session API death without reload keeps the loaded project | no poll; reload is the refresh |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | chip stays primary |
+| R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | essay lead is enough |
+| R5-5 / R2-2e | low | deferred | Bridge drops after a few px of pinned prose scroll | do not fight sync |
+| R5-6 / R2-7d | low | deferred | Rail label `目录` whisper contrast | fine for a label |
+| R5-7 | low | deferred | Pin chip can cover the last visible lines of a long focus span | still polish; focused span starts at the reading line |
+| R5-5e | low | deferred | `$HOME` in the env is not expanded; tip stays generic | prefer an absolute path; `~/` already expands |
+| R5-6b | low | deferred | Split `api`+`dev` needs a `GLOSS_API` whisper in README | `dev:all` is the documented path; table already lists `GLOSS_API` |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+
+### Round 8 re-test (Grok Build)
+
+- Project check: typecheck + gloss check (`1 gloss checked, 37 refs, 0 problems`) + **72/72** tests green (one new `noticeCopy` unreachable assertion).
+- **R8-1:** `?project=audit-many` with API aborted: title `API 未运行，读不到这个项目`, hint `npm run dev:all`, tip `起来后刷新这一页`, `返回` still `/` (`retest/01-unreachable-tip.png`). Same URL with API up is audit-many (`retest/02-audit-many-live.png`).
+- **R8-2:** README Run has `npm run check` and says this repo's `/` is shortly.
+- **R6 / R7 verify:** bare `/` hint; explicit audit-bad count-only; shortly live, Esc unpins; @1200 pin+select; @999 gate; API down on `/` shows `示例`.
+- Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback.
+- Local-only. No push, no merge to main. Not claiming publish-done.
+
