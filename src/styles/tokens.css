@@ -1,0 +1,65 @@
+/* ─────────────────────────────────────────────────────────────
+   Gloss · design tokens
+   Paper, ink, and one accent: 朱 (cinnabar), the colour that
+   classical commentaries were written in.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* surfaces */
+  --paper: #f4f2ec;
+  --paper-code: #faf9f5;
+  --paper-raised: #fbfaf7;
+
+  /* ink */
+  --ink: #1e1d1a;
+  --ink-2: #4c4a44;
+  --ink-3: #8a867c;
+  --ink-4: #b3afa4;
+
+  /* hairlines */
+  --rule: #e3e0d7;
+  --rule-strong: #cfcbc0;
+
+  /* accent · 朱 */
+  --zhu: #a8472e;
+  --zhu-deep: #8c3a24;
+  --zhu-wash: rgba(168, 71, 46, 0.07);
+  --zhu-wash-strong: rgba(168, 71, 46, 0.14);
+  --zhu-hair: rgba(168, 71, 46, 0.55);
+
+  /* code tones — low chroma, editorial */
+  --code-fg: #2a2925;
+  --code-comment: #9c978b;
+  --code-keyword: #5a6a8a;
+  --code-string: #8a6b3a;
+  --code-number: #8a6b3a;
+  --code-type: #3f6f6a;
+  --code-function: #1e1d1a;
+  --code-punct: #7d796f;
+  --code-dim: 0.5;
+
+  /* type */
+  --font-prose: "Source Serif 4", "Noto Serif SC", "Songti SC", "Noto Serif CJK SC", "STSong", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-cjk-ui: "Noto Serif SC", "Songti SC", "Noto Serif CJK SC", serif;
+
+  --prose-size: 17px;
+  --prose-leading: 1.9;
+  --code-size: 12.75px;
+  --code-line: 22px;
+
+  /* layout */
+  --header-h: 56px;
+  --rail-w: 176px;
+  --prose-measure: 612px;
+  --prose-pad: 48px;
+  --gutter-w: 64px;
+  --code-min-w: 560px;
+  --reading-line: 0.32; /* fraction of the viewport where a passage becomes “current” */
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-settle: cubic-bezier(0.2, 0.7, 0.15, 1);
+  --dur-align: 460ms;
+  --dur-fade: 220ms;
+}
