@@ -2,9 +2,10 @@
  * Project loading.
  *
  * Which project to read comes from the URL: `/?project=<id>`. Without it, the
- * first project the API lists is opened. The bundled sample (shortly) is used
- * only when there is no API *and* it is what was asked for — never as a quiet
- * stand-in for a missing real project.
+ * first project the API lists is opened (the catalog is sorted by id — that is
+ * not always shortly). Use `?project=shortly` for the sample. The bundled
+ * sample is used only when there is no API *and* it is what was asked for —
+ * never as a quiet stand-in for a missing real project.
  *
  * GET /api/projects is the catalog: it also says whether the projects folder
  * is missing or merely empty. GET /api/projects/:id is the gloss + files.

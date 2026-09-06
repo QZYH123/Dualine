@@ -51,7 +51,7 @@ There is no file picker, on purpose. The API reads a **folder of projects** from
 GLOSS_PROJECTS_DIR=~/glosses npm run dev:all
 ```
 
-Then open `http://localhost:5173/?project=my-app`. With no `?project=`, the first project in the folder is opened. Files are read on every request, so edit `gloss.md`, reload, and the anchors move with you. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
+Then open `http://localhost:5173/?project=my-app`. The catalog is sorted by id; with no `?project=`, the first listed id opens. That is not always shortly — use the query for a specific project (e.g. `?project=shortly`). Files are read on every request, so edit `gloss.md`, reload, and the anchors move with you. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
 
 Before reading, check that every anchor lands:
 

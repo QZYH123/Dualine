@@ -28,6 +28,7 @@ Fallback rule (the load-decision contract):
 - Projects dir missing / not a directory → notice, even if an id was asked for.
 - Dir exists but is empty → notice, not the sample.
 - Named project missing, API up → notice; if the catalog has other projects, list them as links.
+- No `?project=` and the catalog is ok → first listed id (sorted by id). Not shortly unless it sorts first.
 
 ## 2. What changed
 
@@ -62,6 +63,8 @@ GLOSS_PROJECTS_DIR=~/glosses npm run dev:all
 # open http://localhost:5173/?project=my-app
 npm run check:gloss -- ~/glosses
 ```
+
+The catalog is sorted by id. With no `?project=`, the first listed id opens — not shortly unless it sorts first. Use `?project=shortly` (or another id) for a specific project.
 
 Checks and production bundle:
 
@@ -101,7 +104,8 @@ Ran on this machine after the changes, before this report:
 - `npm run check` — typecheck, `check:gloss` (`1 gloss checked, 37 refs, 0 problems`), tests under `tests/` (count has grown since the first ship pass; run `npm test` for the current total).
 - `npm run build` — `tsc -b && vite build` succeeded; output in `dist/` (gitignored).
 - Headless Chrome against `npm run preview:all` / `npm run preview`:
-  - `/` with API → shortly reader
+  - `/` with API on repo `examples/` (only shortly) → shortly reader
+  - a multi-project root with no `?project=` → first catalog id (sorted by id); use `?project=shortly` for the sample
   - `/?project=nope` → 找不到项目, path, catalog link to shortly
   - blank / unset `GLOSS_PROJECTS_DIR` → repo `examples/` (shortly), not a cwd-empty notice; a real empty folder still says 这个目录下没有项目
   - missing dir → 找不到项目目录 (including with `?project=my-app`, no sample)
