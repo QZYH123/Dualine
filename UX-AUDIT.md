@@ -170,7 +170,7 @@ Keep architecture. Conventional commits on feature/gloss-reader-v1. No push. Run
 - Missing project: wordmark + path + shortly link + back.
 - Width: 1320 chapter select on / rail off; at 999px gate shows wider-window notice (retest/07-w999.png).
 - API down: masthead shows sample chip (retest/06-sample-chip.png); other project gets API notice + back.
-- Remaining open: L1 Contents label. Deferred: L2 keyboard reverse, L3 EN sample subtitle.
+- Remaining open after Phase 3: L1 (fixed in Round 2). Deferred: L2 keyboard reverse, L3 EN sample subtitle.
 - Desktop journeys feel solid; mobile intentionally gated — not claiming publish-done.
 
 
@@ -221,3 +221,12 @@ Do **L1, R2-3a, R2-4a, R2-7c**. Leave lows deferred. Conventional commits on `fe
 - Still deferred: L2 keyboard reverse, L3 EN sample subtitle, R2-1 / R2-2b / R2-2e / R2-5c / R2-6c / R2-7d.
 - Not claiming publish-done.
 
+
+## Round 2 executor verify (after Grok)
+
+Independent Playwright against fixtures (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects`):
+- L1 label `目录`; sync after scroll still moves chapter/file/focus with `code.style.top` (transform none).
+- Pin + Esc OK; many-rail scroll reaches chapter 14 at 700px height.
+- Long-line h-scroll: sticky numVisible; warn strip contrast ~7.91.
+- Shots: `audit-shots/round2/verify/`. Full check: typecheck + 37 refs/0 problems + 63/63 tests.
+- Still iterating: deferred lows remain; not claiming finished.
