@@ -20,6 +20,12 @@ export function noDirTip(root?: string): string {
   return root && looksLikeWindowsPath(root) ? NOTICE_WINDOWS_PATH_TIP : NOTICE_NO_DIR_TIP;
 }
 
+/**
+ * Quiet extra on the warn strip when `/` opened the catalog's first id.
+ * Not a redirect, not a shortly preference — just how the list works.
+ */
+export const CATALOG_DEFAULT_HINT = "目录第一项 · 用 ?project=<id> 指定";
+
 /** One-line strip under the masthead. Null when there is nothing to say. */
 export function warningStripText(warnings: string[]): string | null {
   if (warnings.length === 0) return null;

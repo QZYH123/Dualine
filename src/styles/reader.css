@@ -1043,6 +1043,24 @@ html:has(.warn-strip) {
   border-radius: 1px;
 }
 
+.warn-strip__why {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-cjk-ui);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.warn-strip__why::before {
+  content: "·";
+  margin: 0 0.65em;
+  color: var(--ink-4);
+  font-family: var(--font-mono);
+}
+
 .warn-strip--many {
   cursor: pointer;
 }

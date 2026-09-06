@@ -8,7 +8,7 @@ import {
   type CodeRef,
   type Project,
 } from "../lib/gloss";
-import { warningStripExpandable, warningStripText } from "../lib/notice";
+import { CATALOG_DEFAULT_HINT, warningStripExpandable, warningStripText } from "../lib/notice";
 import { Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
@@ -20,6 +20,8 @@ interface ReaderProps {
   highlighter: HighlighterCore;
   source: "api" | "sample";
   warnings: string[];
+  /** True when the URL has no `?project=` — the catalog's first listed id. */
+  catalogDefault?: boolean;
 }
 
 function readToken(name: string, fallback: number): number {
@@ -27,7 +29,7 @@ function readToken(name: string, fallback: number): number {
   return Number.isFinite(v) ? v : fallback;
 }
 
-export function Reader({ project, highlighter, source, warnings }: ReaderProps) {
+export function Reader({ project, highlighter, source, warnings, catalogDefault = false }: ReaderProps) {
   const { doc, files } = project;
   const warnText = warningStripText(warnings);
 
@@ -177,7 +179,9 @@ export function Reader({ project, highlighter, source, warnings }: ReaderProps) 
           sample={source === "sample"}
           onSelectChapter={onSelectChapter}
         />
-        {warnText && <WarnStrip warnings={warnings} label={warnText} />}
+        {warnText && (
+          <WarnStrip warnings={warnings} label={warnText} catalogDefault={catalogDefault} />
+        )}
         <main className="reader">
           <Rail chapters={doc.chapters} currentChapterId={currentChapterId} onSelect={onSelectChapter} />
 
@@ -215,9 +219,26 @@ export function Reader({ project, highlighter, source, warnings }: ReaderProps) 
   );
 }
 
-function WarnStrip({ warnings, label }: { warnings: string[]; label: string }) {
+function WarnStrip({
+  warnings,
+  label,
+  catalogDefault,
+}: {
+  warnings: string[];
+  label: string;
+  catalogDefault: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const expandable = warningStripExpandable(warnings);
+  const why = catalogDefault ? <span className="warn-strip__why">{CATALOG_DEFAULT_HINT}</span> : null;
+  const expandTitle = "查看无法落地的锚点";
+  const title = expandable
+    ? catalogDefault
+      ? `${expandTitle} · ${CATALOG_DEFAULT_HINT}`
+      : expandTitle
+    : catalogDefault
+      ? CATALOG_DEFAULT_HINT
+      : undefined;
 
   const warningKey = warnings.join("\n");
   useEffect(() => {
@@ -226,8 +247,9 @@ function WarnStrip({ warnings, label }: { warnings: string[]; label: string }) {
 
   if (!expandable) {
     return (
-      <p className="warn-strip" role="status">
+      <p className="warn-strip" role="status" title={title}>
         {label}
+        {why}
       </p>
     );
   }
@@ -239,10 +261,11 @@ function WarnStrip({ warnings, label }: { warnings: string[]; label: string }) {
         className={"warn-strip warn-strip--many" + (open ? " is-open" : "")}
         aria-expanded={open}
         aria-controls="warn-strip-detail"
-        title="查看无法落地的锚点"
+        title={title}
         onClick={() => setOpen((v) => !v)}
       >
         {label}
+        {why}
       </button>
       {open && (
         <ul id="warn-strip-detail" className="warn-strip__list" role="status">

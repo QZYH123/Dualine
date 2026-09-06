@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
+  CATALOG_DEFAULT_HINT,
   NOTICE_NO_DIR_TIP,
   NOTICE_WINDOWS_PATH_TIP,
   looksLikeWindowsPath,
@@ -31,6 +32,13 @@ describe("warningStripText", () => {
     assert.equal(warningStripExpandable([]), false);
     assert.equal(warningStripExpandable(["a"]), false);
     assert.equal(warningStripExpandable(["a", "b"]), true);
+  });
+});
+
+describe("CATALOG_DEFAULT_HINT", () => {
+  test("names the first listed id and the ?project= query", () => {
+    assert.match(CATALOG_DEFAULT_HINT, /目录第一项/);
+    assert.match(CATALOG_DEFAULT_HINT, /\?project=/);
   });
 });
 
