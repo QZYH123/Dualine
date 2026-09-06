@@ -135,7 +135,7 @@ None for the designed desktop ritual. Reading on >=1100px with dev:all feels sol
 | M2 | fixed | `返回` only for not-found and unreachable; hidden on empty / no-dir. |
 | M3 | fixed | One-line sticky strip under the masthead; reading is not blocked. |
 | M4 | fixed | Gloss · 对照 wordmark above notice titles (including the viewport gate). |
-| L1 | open | Rail label still “Contents”; not in this pass. |
+| L1 | fixed | Rail label is 目录; aria-label stays 章节. |
 | L2 | deferred | Glossed code lines not keyboard-activatable. |
 | L3 | deferred | voice choice; do not rush |
 | L4 | fixed | Covered by the H1 gate. |
@@ -172,4 +172,52 @@ Keep architecture. Conventional commits on feature/gloss-reader-v1. No push. Run
 - API down: masthead shows sample chip (retest/06-sample-chip.png); other project gets API notice + back.
 - Remaining open: L1 Contents label. Deferred: L2 keyboard reverse, L3 EN sample subtitle.
 - Desktop journeys feel solid; mobile intentionally gated — not claiming publish-done.
+
+
+---
+
+## Round 2 — deeper journeys (2026-09-06 UTC+8)
+
+Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for fixtures `audit-many`, `audit-long`, `audit-bad`) and production preview at http://127.0.0.1:4173. Screenshots: `audit-shots/round2/`.
+
+### Journey notes
+
+1. **First-time (README → open)** — Essay lead already says the code follows the passage. No separate in-chrome “what next” tip; pin/`Esc` only appear after the first pin. Acceptable for v1; do not bolt on a tour.
+2. **Pin then scroll** — Pin holds through prose scroll; code-pane chip `已固定 Esc 释放` stays visible; global `Esc` works even when focus is on the wordmark. Bridge hides after a few pixels of scroll (intentional). Masthead shows `已固定` without `Esc` (chip carries the hint).
+3. **Many chapters (14)** — At 1440×900 all rail items fit. At 1440×700 last chapters clip and `.rail { overflow: hidden }` prevents scrolling (`03d-many-short.png`). Mid-width chapter `<select>` works and jumps correctly; chapter label hides when select shows.
+4. **Long code line** — Horizontal overflow works; focus wash remains. **Line numbers scroll away** with the text (`04b-long-hscroll.png`) — easy to lose place.
+5. **Warning strip (real broken gloss)** — Shows `2 处锚点无法落到代码` (count collapse). Readable as a presence signal; **contrast ~3.2:1** on paper (ink-3) — too soft for a warning. Detail list not expandable (deferred).
+6. **Keyboard** — Tab reaches wordmark → rail buttons → anchors. `Esc` unpins globally. Glossed code lines still mouse-only (L2 deferred). No focus trap found.
+7. **Contrast / fatigue** — Prose measure and leading still calm. Soft chrome (`ink-4` rail label ~2:1, meta ~2:1) is intentional whisper; warning strip should not whisper.
+8. **`preview:all` / vite preview:4173** — Same shortly session as dev (focus + bridge). Warnings and missing-project notices behave. Not worse than dev for these paths (404 console on missing project is the API response).
+
+### Round 2 issues
+
+| id | sev | status | issue | proposed fix |
+|----|-----|--------|-------|--------------|
+| L1 | must | fixed | Rail label still `Contents` amid Chinese chrome | Visible label is 目录; `aria-label` stays 章节; dropped uppercase on the label |
+| R2-3a | medium | fixed | Many chapters clip; rail not scrollable | `.rail { overflow-x: hidden; overflow-y: auto }` + thin quiet scrollbar |
+| R2-4a | medium | fixed | Line numbers leave the pane on horizontal scroll | sticky `.line__num` with opaque paper/wash; accent `::before` on the number so it stays |
+| R2-7c | medium | fixed | Warning strip contrast ~3.2:1 | strip text is `--ink-2` (~7.9:1); still one line |
+| R2-1 | low | deferred | No first-open ritual tip beyond essay lead | leave; lead is enough |
+| R2-2b | low | deferred | Masthead `已固定` omits Esc | chip already teaches Esc |
+| R2-2e | low | deferred | Bridge drops while pinned | intentional; do not fight sync |
+| R2-5c | low | deferred | Multi-warning count-only strip | optional expand later |
+| R2-6c / L2 | low | deferred | Glossed lines not keyboard-activatable | keep deferred |
+| R2-7d | low | deferred | Rail label whisper contrast | fine for label; fixed copy is enough |
+
+### Round 2 fix priority (Grok Build)
+
+Do **L1, R2-3a, R2-4a, R2-7c**. Leave lows deferred. Conventional commits on `feature/gloss-reader-v1`. No push. Re-test with fixtures; run full check.
+
+## Round 2 re-test (Grok Build)
+
+- Project check: typecheck + gloss check (37 refs, 0 problems) + 63/63 tests green.
+- L1: shortly rail label is `目录`; `aria-label="章节"`.
+- R2-3a: audit-many at 1440×700 — last chapter starts clipped; `rail.scrollTop` brings 十四 into view (`audit-shots/round2/retest/03e-many-scrolled.png`).
+- R2-4a: audit-long h-scroll — `.line__num` stays flush to the pane left; focus accent remains; `white-space: pre` kept (`04b-long-hscroll.png`).
+- R2-7c: audit-bad strip still one line (32px); text `--ink-2` contrast ~7.9:1 vs paper.
+- Regressions probed: shortly pin + reverse click; 1200px chapter `<select>`; 999px width gate; missing-project wordmark + back.
+- Still deferred: L2 keyboard reverse, L3 EN sample subtitle, R2-1 / R2-2b / R2-2e / R2-5c / R2-6c / R2-7d.
+- Not claiming publish-done.
 
