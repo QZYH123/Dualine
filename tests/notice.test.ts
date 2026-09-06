@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
   NOTICE_NO_DIR_TIP,
+  NOTICE_WINDOWS_PATH_TIP,
+  looksLikeWindowsPath,
+  noDirTip,
   noticeShowsBack,
   warningStripExpandable,
   warningStripText,
@@ -35,5 +38,17 @@ describe("NOTICE_NO_DIR_TIP", () => {
   test("asks for an absolute folder path", () => {
     assert.match(NOTICE_NO_DIR_TIP, /GLOSS_PROJECTS_DIR/);
     assert.match(NOTICE_NO_DIR_TIP, /绝对路径/);
+  });
+});
+
+describe("noDirTip", () => {
+  test("names a pasted Windows path instead of asking for a POSIX folder", () => {
+    assert.equal(looksLikeWindowsPath("C:/Users/foo/glosses"), true);
+    assert.equal(looksLikeWindowsPath("C:\\Users\\foo\\glosses"), true);
+    assert.equal(looksLikeWindowsPath("\\\\server\\share"), true);
+    assert.equal(looksLikeWindowsPath("/tmp/gloss-projects"), false);
+    assert.equal(noDirTip("/tmp/gone"), NOTICE_NO_DIR_TIP);
+    assert.equal(noDirTip("C:/Users/foo/glosses"), NOTICE_WINDOWS_PATH_TIP);
+    assert.match(NOTICE_WINDOWS_PATH_TIP, /Windows/);
   });
 });

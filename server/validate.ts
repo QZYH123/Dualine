@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -8,6 +9,7 @@ import {
   type CodeRef,
   type Inline,
 } from "../src/lib/gloss.js";
+import { looksLikeWindowsPath } from "../src/lib/notice.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -62,12 +64,25 @@ export function isValidProjectId(id: string): boolean {
   return ID_RE.test(id);
 }
 
+/**
+ * Trim, expand a leading `~/`, and resolve from cwd.
+ * A Windows drive/UNC path is left as pasted so the notice can name it —
+ * POSIX `resolve` would otherwise hide it under `$PWD`.
+ */
+export function resolveProjectsDir(raw: string): string {
+  const s = raw.trim();
+  if (s === "~") return homedir();
+  if (s.startsWith("~/")) return resolve(homedir(), s.slice(2));
+  if (looksLikeWindowsPath(s)) return s;
+  return resolve(s);
+}
+
 export function projectsRoot(): string {
   const raw = process.env.GLOSS_PROJECTS_DIR;
   if (raw == null || raw.trim() === "") {
     return resolve(join(REPO_ROOT, "examples"));
   }
-  return resolve(raw);
+  return resolveProjectsDir(raw);
 }
 
 export type RootStatus = "ok" | "missing" | "not-directory";
@@ -77,7 +92,7 @@ export function inspectRoot(root = projectsRoot()): {
   root: string;
   status: RootStatus;
 } {
-  const abs = resolve(root);
+  const abs = looksLikeWindowsPath(root) ? root : resolve(root);
   try {
     const st = statSync(abs);
     if (!st.isDirectory()) return { root: abs, status: "not-directory" };

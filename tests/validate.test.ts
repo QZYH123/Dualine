@@ -6,7 +6,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,7 @@ import {
   projectsRoot,
   readTextFile,
   refLabel,
+  resolveProjectsDir,
 } from "../server/validate.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -177,6 +178,31 @@ describe("lineCount / refLabel / readTextFile / projectsRoot", () => {
       assert.equal(projectsRoot(), resolve(REPO, "examples"));
       process.env.GLOSS_PROJECTS_DIR = "   ";
       assert.equal(projectsRoot(), resolve(REPO, "examples"));
+    } finally {
+      if (prev === undefined) delete process.env.GLOSS_PROJECTS_DIR;
+      else process.env.GLOSS_PROJECTS_DIR = prev;
+    }
+  });
+
+  test("resolveProjectsDir trims, expands ~, and leaves Windows paths as pasted", () => {
+    const spaced = join(tmp, "with spaces");
+    mkdirSync(spaced);
+    assert.equal(resolveProjectsDir(`  ${spaced}  `), resolve(spaced));
+    assert.equal(resolveProjectsDir(`${projectDir}/`), resolve(projectDir));
+    assert.equal(resolveProjectsDir("~"), homedir());
+    assert.equal(resolveProjectsDir("~/glosses"), resolve(homedir(), "glosses"));
+    assert.equal(resolveProjectsDir("  ~/glosses  "), resolve(homedir(), "glosses"));
+    assert.equal(resolveProjectsDir("C:/Users/foo/glosses"), "C:/Users/foo/glosses");
+    assert.equal(resolveProjectsDir("C:\\Users\\foo\\glosses"), "C:\\Users\\foo\\glosses");
+
+    const prev = process.env.GLOSS_PROJECTS_DIR;
+    try {
+      process.env.GLOSS_PROJECTS_DIR = `  ${projectDir}  `;
+      assert.equal(projectsRoot(), resolve(projectDir));
+      process.env.GLOSS_PROJECTS_DIR = "C:/Users/foo/glosses";
+      assert.equal(projectsRoot(), "C:/Users/foo/glosses");
+      assert.equal(inspectRoot().status, "missing");
+      assert.equal(inspectRoot().root, "C:/Users/foo/glosses");
     } finally {
       if (prev === undefined) delete process.env.GLOSS_PROJECTS_DIR;
       else process.env.GLOSS_PROJECTS_DIR = prev;

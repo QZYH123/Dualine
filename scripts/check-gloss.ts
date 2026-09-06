@@ -14,6 +14,7 @@ import {
   isValidProjectId,
   projectsRoot,
   refLabel,
+  resolveProjectsDir,
 } from "../server/validate.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -41,7 +42,7 @@ function displayPath(abs: string, root: string): string {
 
 function resolveRoot(argv: string[]): string {
   const arg = argv.find((a) => !a.startsWith("-"));
-  return arg ? resolve(arg) : projectsRoot();
+  return arg ? resolveProjectsDir(arg) : projectsRoot();
 }
 
 function glossEntries(root: string): { id: string; glossPath: string }[] {
