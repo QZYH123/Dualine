@@ -83,6 +83,7 @@ export const CodePane = memo(function CodePane({
       </div>
 
       <div className="code-pane__viewport" ref={viewportRef}>
+        {!file && <p className="code-pane__empty">没有可对照的文件</p>}
         {file && (
           <div
             key={file.path}
