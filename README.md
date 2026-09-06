@@ -25,6 +25,15 @@ The two start together and stop together (`Ctrl-C` once). If the API's port is t
 
 `npm run dev` alone also works: the reader falls back to the bundled sample project (the one under `examples/shortly/`) when there is no API to ask, and the terminal shows a single quiet line about it instead of a stack trace. `npm run api` runs the API alone.
 
+To serve the production bundle the same way — static files plus the local API:
+
+```sh
+npm run build
+npm run preview:all    # web on http://localhost:4173, API on 127.0.0.1:8787
+```
+
+`vite preview` proxies `/api` like the dev server. Without the API, `npm run preview` shows the bundled sample. Reading any other project still needs the API; this is a local-first tool, not a hosted app.
+
 Designed for viewports ≥ 1100px wide; the contents rail appears at ≥ 1320px.
 
 ## Read your own project
@@ -50,7 +59,7 @@ Before reading, check that every anchor lands:
 npm run check:gloss -- ~/glosses        # or GLOSS_PROJECTS_DIR=~/glosses npm run check:gloss
 ```
 
-When the screen has nothing to face it says so in one line — 找不到项目, API 未运行, or 这个目录下没有项目 — with the path to look at underneath, instead of quietly showing the sample.
+When the screen has nothing to face it says so in one line — 找不到项目, 找不到项目目录, API 未运行, or 这个目录下没有项目 — with the path to look at underneath, instead of quietly showing the sample. If the API can list other projects in the folder, those names appear as links. The sample is used only when the API is unreachable *and* you did not ask for a different project.
 
 The API binds to `127.0.0.1` and serves file contents from the folder you point it at; keep it local. If you must expose it, `HOST=0.0.0.0` is explicit.
 
@@ -89,16 +98,17 @@ npm run check          # typecheck + check:gloss + test
 npm test               # node:test suites under tests/
 npm run check:gloss    # every anchor → a real file and a line range inside it
 npm run build          # production bundle in dist/
+npm run preview:all    # after build: dist on :4173 + API on :8787
 ```
 
-`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken, `2` when the folder does not exist. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
+`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
 
 ## API
 
 | | |
 |---|---|
-| `GET /api/health` | `{ ok: true }` |
-| `GET /api/projects` | `{ projects: [{ id, name, tagline, lang }] }` |
+| `GET /api/health` | `{ ok: true, root, rootStatus }` |
+| `GET /api/projects` | `{ projects: [{ id, name, tagline, lang }], root, rootStatus }` — `rootStatus` is `ok`, `missing`, or `not-directory` |
 | `GET /api/projects/:id` | `{ id, name, tagline, lang, gloss, files, warnings }` — `gloss` is the Markdown source, `files` maps project-relative paths to contents |
 
 | env | default | |
@@ -106,7 +116,7 @@ npm run build          # production bundle in dist/
 | `GLOSS_PROJECTS_DIR` | `examples/` | folder of projects, one subfolder each |
 | `PORT` | `8787` | API port; the Vite proxy follows it |
 | `HOST` | `127.0.0.1` | API bind address |
-| `GLOSS_API` | `http://127.0.0.1:$PORT` | where Vite proxies `/api` in dev |
+| `GLOSS_API` | `http://127.0.0.1:$PORT` | where Vite proxies `/api` in `dev` and `preview` |
 
 Project ids must match `^[a-z0-9][a-z0-9-_]*$`; anything else is `400`. Paths in a gloss that escape the project folder (including through symlinks) are refused, and binary files are never sent.
 
@@ -116,7 +126,8 @@ Project ids must match `^[a-z0-9][a-z0-9-_]*$`; anything else is `400`. Paths in
 src/
   lib/gloss.ts          document model + gloss.md parser (browser and server)
   lib/highlight.ts      Shiki, one restrained theme
-  lib/load.ts           ?project= → API → sample fallback
+  lib/load.ts           ?project= → API catalog → project or a quiet notice
+  lib/load-decision.ts  fallback policy (no silent sample for a real project)
   reader/               Masthead · Rail · Prose · CodePane · useReadingSync
   styles/tokens.css     paper, ink, 朱 — the whole visual system
   styles/reader.css
@@ -139,6 +150,17 @@ examples/shortly/       sample project: gloss.md + src/
 ## Not yet
 
 - The gloss is written by hand. Nothing here generates prose from code; that is the point of v1 — get the reading right first.
-- One project per screen; switching is by URL. There is no list, no picker, no remote clone.
+- One project per screen; switching is by URL. There is no picker and no remote clone. When a named project is missing, the notice lists whatever else the API can see in the folder.
 - The reader does not surface the API's `warnings`; run `check:gloss`.
 - Narrow viewports are not a goal yet. Below 1100px the two pages do not fit.
+
+## Publish
+
+MIT. Version `0.1.0`. `private: true` — this is a local app, not an npm library.
+
+```sh
+npm pack               # source tarball: reader, server, examples, tests
+npm run build          # static assets in dist/ (gitignored)
+```
+
+The production bundle still talks to the local API for any project that is not the bundled sample. Bind remains `127.0.0.1` unless `HOST` is set. Tag `v0.1.0` when you want a release; do not expect a hosted service.
