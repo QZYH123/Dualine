@@ -18,6 +18,10 @@ export function noticeShowsBack(kind: NoticeKind): boolean {
 /** Missing / not-a-directory projects folder: prefer an absolute path. */
 export const NOTICE_NO_DIR_TIP = "把 GLOSS_PROJECTS_DIR 设成文件夹的绝对路径";
 
+/** Empty catalog: child folders, not this folder itself. */
+export const NOTICE_EMPTY_TIP =
+  "每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md";
+
 /** Pasted drive/UNC path — we do not convert it to a POSIX folder. */
 export const NOTICE_WINDOWS_PATH_TIP = "这是 Windows 路径；请改成当前系统上的绝对路径";
 
@@ -57,7 +61,7 @@ export function noticeCopy(result: NoticeScreen): {
       return {
         title: `找不到项目 “${result.id}”`,
         hint: projectPath(result.catalog, result.id),
-        tip: result.catalog.projects.length > 0 ? "这个目录里还有" : "每个项目一个子文件夹，内含 gloss.md",
+        tip: result.catalog.projects.length > 0 ? "这个目录里还有" : NOTICE_EMPTY_TIP,
       };
     case "unreachable":
       return {
@@ -68,8 +72,8 @@ export function noticeCopy(result: NoticeScreen): {
     case "empty":
       return {
         title: "这个目录下没有项目",
-        hint: projectPath(result.catalog, "<id>"),
-        tip: "每个项目一个子文件夹，内含 gloss.md",
+        hint: result.catalog.root ?? "GLOSS_PROJECTS_DIR",
+        tip: NOTICE_EMPTY_TIP,
       };
     case "no-dir":
       return {

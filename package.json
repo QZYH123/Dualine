@@ -6,7 +6,7 @@
   "description": "A dual-pane prose↔code reader: essay on the left, real source on the right.",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "files": [
     "LICENSE",

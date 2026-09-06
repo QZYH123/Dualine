@@ -14,7 +14,7 @@ A reader for understanding a codebase you vibe-coded: prose on the left, the rea
 
 ## Run
 
-Requires Node 20+.
+Requires Node 20.19+ or 22.12+ (Vite 8).
 
 ```sh
 npm install
@@ -46,6 +46,8 @@ There is no file picker, on purpose. The API reads a **folder of projects** from
     gloss.md              ← the prose (see "Writing a gloss")
     src/…                 ← the code the prose points at
 ```
+
+Point the env at that outer folder, not at `my-app` itself — a path that already has `gloss.md` is one project, not the catalog.
 
 ```sh
 GLOSS_PROJECTS_DIR=~/glosses npm run dev:all

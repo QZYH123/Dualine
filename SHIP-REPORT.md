@@ -49,7 +49,7 @@ Tests went from 39 to 60 (`node:test`) at the time of this report, and have grow
 
 ## 3. How to run and how to publish
 
-Requires **Node 20+**.
+Requires **Node 20.19+ or 22.12+** (Vite 8).
 
 ```sh
 npm install

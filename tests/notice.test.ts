@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
   CATALOG_DEFAULT_HINT,
+  NOTICE_EMPTY_TIP,
   NOTICE_NO_DIR_TIP,
   NOTICE_WINDOWS_PATH_TIP,
   noDirTip,
+  noticeCopy,
   noticeShowsBack,
   warningStripExpandable,
   warningStripText,
@@ -46,6 +48,26 @@ describe("NOTICE_NO_DIR_TIP", () => {
   test("asks for an absolute folder path", () => {
     assert.match(NOTICE_NO_DIR_TIP, /GLOSS_PROJECTS_DIR/);
     assert.match(NOTICE_NO_DIR_TIP, /绝对路径/);
+  });
+});
+
+describe("noticeCopy empty", () => {
+  test("names the real folder, not a fake <id> path, and spells the child-folder rule", () => {
+    const copy = noticeCopy({
+      kind: "empty",
+      catalog: { root: "/tmp/glosses", rootStatus: "ok", projects: [] },
+    });
+    assert.equal(copy.title, "这个目录下没有项目");
+    assert.equal(copy.hint, "/tmp/glosses");
+    assert.equal(copy.tip, NOTICE_EMPTY_TIP);
+    assert.match(NOTICE_EMPTY_TIP, /小写字母、数字/);
+    assert.doesNotMatch(copy.hint, /<id>/);
+  });
+
+  test("falls back to the env name when the catalog has no root", () => {
+    const copy = noticeCopy({ kind: "empty", catalog: { projects: [] } });
+    assert.equal(copy.hint, "GLOSS_PROJECTS_DIR");
+    assert.equal(copy.tip, NOTICE_EMPTY_TIP);
   });
 });
 
