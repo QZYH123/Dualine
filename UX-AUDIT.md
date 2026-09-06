@@ -437,3 +437,56 @@ Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-pr
 - Pack: `files` no longer lists `package-lock.json`; dry-run still has index.html, src, server, examples, tests.
 - Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-3e empty-hint placeholder, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback.
 - Local-only. No push, no merge to main. Not claiming publish-done.
+
+
+---
+
+## Round 7 — user-perspective polish (2026-09-06 UTC+8)
+
+Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for `audit-bad`, `audit-long`, `audit-many`, `shortly`) plus temporary APIs for empty / single / relative / project-as-root / invalid-id own-dirs. Pack path: `npm pack` → `tar xf` → `package/` → `npm install` → `check` / `build` / vite+API on free ports. Playwright shots: `audit-shots/round7/` and `audit-shots/round7/retest/` (untracked). Write pass: Grok Build on `feature/gloss-reader-v1` @ `90dec78` plus this round's commits. Paths/notice split was not reopened. Not claiming publish-done / ship-ready.
+
+### Journey notes
+
+1. **R6 still holds** — Bare `/` opens `audit-bad` with `目录第一项 · 用 ?project=<id> 指定`. Explicit `?project=audit-bad` is count-only. `GLOSS_PROJECTS_DIR=/tmp/gloss-projects npm run check` stays on `examples/` (`1 gloss checked, 37 refs, 0 problems`); the same env on `check:gloss` still reports audit-bad's 2 problems. `package.json` `files` and `npm pack --dry-run` omit the lockfile.
+
+2. **Packing extract → install → run** — Tarball has 42 files (reader, server, examples, tests, LICENSE, README, tsconfigs). No `bin`, no lockfile. Extract + `npm install` + `npm run check` + `npm run build` all green. A stranger vite+API on free ports lists `examples/shortly`. README extract command matches. **Engines were a lie:** `package.json` said `>=20` while Vite 8.2 requires `^20.19.0 || >=22.12.0`. Cheap honesty: pin engines to that range; README/SHIP-REPORT say 20.19+ or 22.12+.
+
+3. **Honesty leftovers** — Live shortly: no `示例` chip, no warn. API down on `/`: chip `示例`. Other id: `API 未运行` + `npm run dev:all` + 返回. L2 keyboard reverse and L3 EN subtitle not reopened. Docs vs pack (no lockfile, no bin, `check` pinned to examples) still match after R6.
+
+4. **Own-dir daily** — Empty root, single `mini`, relative path → absolute `catalog.root`, reload after `gloss.md` edit: all still work. New footguns: pointing `GLOSS_PROJECTS_DIR` at a folder that already has `gloss.md` (lists zero children), and a sole `MyApp` folder (invalid id, skipped). Both showed `这个目录下没有项目` with a fake hint `…/<id>/gloss.md` (R5-3e). Cheap empathy, no API shape change: hint is the real root; tip names the child-folder + lowercase-id rule. README says not to point the env at the project itself.
+
+5. **Long-session chrome** — Pin + chapter tour: masthead 56px. @1320/1200/1100 pin + `<select>` do not overflow. @999 gate. Warn strip Enter expand/collapse, catalog-default hint stays. Esc unpins. Pin chip can still cover later lines of a long focus span (R5-7); the reading line is higher up — still polish, not Med.
+
+### Round 7 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R5-1b | medium | **pass** (R6) | Bare `/` catalog-default hint | still green; not reopened |
+| R6-1 | medium | **pass** (R6) | `npm run check` pinned to examples | still green with audit env set; CLI still sees audit-bad |
+| R6-2 | medium | **pass** (R6) | pack omits lockfile | `files` and dry-run still omit it |
+| R7-pack | — | ok | extract → install → check/build/dev-run | 42 files, no bin, no lockfile; stranger path works |
+| R7-1 | medium | **fixed** | Empty catalog used a fake `…/<id>/gloss.md` hint; pointing at a project folder or an invalid id looked the same as a blank dir | Hint is the real `catalog.root`. Tip: `每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md`. README: env is the outer folder, not the project itself. Promotes R5-3e. No catalog reorder, no auto-open |
+| R7-2 | medium | **fixed** | Invalid folder id (`MyApp`) skipped → generic empty | same tip as R7-1 (id rule on the screen). `check:gloss` still prints the unservable id |
+| R7-3 | medium | **fixed** | `engines` / README said Node 20+; Vite 8 needs 20.19+ or 22.12+ | `"node": "^20.19.0 \|\| >=22.12.0"`; README + SHIP-REPORT aligned |
+| R7-chrome | — | ok | Mid-width pin+select; 999 gate; chapter tour; warn expand | no chrome redesign |
+| R7-honesty | — | ok | sample chip / API-down notice / docs vs check-pack | no change |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | chip stays primary |
+| R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | essay lead is enough |
+| R5-5 / R2-2e | low | deferred | Bridge drops after a few px of pinned prose scroll | do not fight sync |
+| R5-6 / R2-7d | low | deferred | Rail label `目录` whisper contrast | fine for a label |
+| R5-7 | low | deferred | Pin chip can cover the last visible code lines | still polish; focused span is aligned to the reading line |
+| R5-5e | low | deferred | `$HOME` in the env is not expanded; tip stays generic | prefer an absolute path |
+| R5-6b | low | deferred | Split `api`+`dev` needs a `GLOSS_API` whisper in README | `dev:all` is the documented path |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+
+### Round 7 re-test (Grok Build)
+
+- Project check: typecheck + gloss check (`1 gloss checked, 37 refs, 0 problems`) + **71/71** tests green (two new `noticeCopy` empty assertions).
+- **R7-1 / R7-2:** empty / project-as-root / `MyApp` notices name the real folder (no `<id>`) and the child-id rule (`retest/01-empty.png`, `02-as-project.png`, `03-bad-id.png`).
+- **R7-3:** `package.json` engines match Vite 8; README/SHIP-REPORT say 20.19+ or 22.12+.
+- **R6 verify:** bare `/` hint; explicit audit-bad count-only; check pin; pack lockfile omitted.
+- Smoke: shortly live, no sample chip; Esc unpins; @1200 pin + select, no overflow; @999 gate.
+- Pack: extract + install + check + build + vite `/api/projects` → shortly.
+- Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback. R5-3e closed by R7-1.
+- Local-only. No push, no merge to main. Not claiming publish-done.
+
