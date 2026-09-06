@@ -12,3 +12,5 @@ fable-run.log
 *.tsbuildinfo
 fable-prompt.txt
 run-fable.sh
+run-fable-mvp.sh
+.agent-prompt.txt

@@ -22,3 +22,6 @@ Prefer short turns: decide product/UI, sketch structure, delegate mechanical imp
 
 ## Model intensity
 Always use **xhigh** (Fable: `claude-fable-5-1-thinking-xhigh`; Grok backend: `cursor-grok-4.6-xhigh-fast`). Do not switch to high/medium to save tokens.
+
+## When to drop Fable
+Keep Fable as main until Fable quota is exhausted. Only then switch main work to Grok xhigh-fast. Until that happens, do not run Grok-only as the main agent.
