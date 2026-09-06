@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import {
   checkRefs,
   collectRefs,
+  inspectRoot,
   isValidProjectId,
   projectsRoot,
   refLabel,
@@ -38,14 +39,20 @@ function displayPath(abs: string, root: string): string {
   return relative(root, abs).split(sep).join("/");
 }
 
-function resolveRoot(): string {
-  const arg = process.argv.slice(2).find((a) => !a.startsWith("-"));
+function resolveRoot(argv: string[]): string {
+  const arg = argv.find((a) => !a.startsWith("-"));
   return arg ? resolve(arg) : projectsRoot();
 }
 
 function glossEntries(root: string): { id: string; glossPath: string }[] {
   const out: { id: string; glossPath: string }[] = [];
-  for (const name of readdirSync(root).sort()) {
+  let names: string[];
+  try {
+    names = readdirSync(root).sort();
+  } catch {
+    return out;
+  }
+  for (const name of names) {
     const dir = join(root, name);
     let st;
     try {
@@ -62,10 +69,14 @@ function glossEntries(root: string): { id: string; glossPath: string }[] {
   return out;
 }
 
-function main(): number {
-  const root = resolveRoot();
-  if (!existsSync(root) || !statSync(root).isDirectory()) {
+export function runCheck(argv: string[] = process.argv.slice(2)): number {
+  const { root, status } = inspectRoot(resolveRoot(argv));
+  if (status === "missing") {
     console.error(`check:gloss: projects dir not found: ${root}`);
+    return 2;
+  }
+  if (status === "not-directory") {
+    console.error(`check:gloss: not a directory: ${root}`);
     return 2;
   }
 
@@ -125,4 +136,7 @@ function main(): number {
   return problems > 0 ? 1 : 0;
 }
 
-process.exit(main());
+const entry = process.argv[1];
+if (entry && resolve(entry) === fileURLToPath(import.meta.url)) {
+  process.exit(runCheck());
+}
