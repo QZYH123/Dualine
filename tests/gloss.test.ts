@@ -306,4 +306,16 @@ describe("examples/shortly/gloss.md", () => {
     const first = doc.chapters[0]?.passages[0];
     assert.ok(first?.ref, "chapter 1 first passage should have a ref");
   });
+
+  test("L18 reverse prefers the chapter-one teaching span, not a 1-line overlap", () => {
+    const src = readFileSync(join(REPO, "examples/shortly/gloss.md"), "utf8");
+    const { doc } = parseGloss(src);
+    const hits = buildReverseIndex(doc).get("src/server.ts");
+    const teaching = hitAtLine(hits, 18);
+    assert.equal(teaching?.ref.start, 18);
+    assert.equal(teaching?.ref.end, 59);
+    const handler = hitAtLine(hits, 19);
+    assert.equal(handler?.ref.start, 19);
+    assert.equal(handler?.ref.end, 30);
+  });
 });
