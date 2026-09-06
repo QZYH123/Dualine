@@ -173,6 +173,10 @@ describe("lineCount / refLabel / readTextFile / projectsRoot", () => {
       assert.equal(projectsRoot(), resolve(REPO, "examples"));
       process.env.GLOSS_PROJECTS_DIR = "/tmp/custom-gloss-root";
       assert.equal(projectsRoot(), resolve("/tmp/custom-gloss-root"));
+      process.env.GLOSS_PROJECTS_DIR = "";
+      assert.equal(projectsRoot(), resolve(REPO, "examples"));
+      process.env.GLOSS_PROJECTS_DIR = "   ";
+      assert.equal(projectsRoot(), resolve(REPO, "examples"));
     } finally {
       if (prev === undefined) delete process.env.GLOSS_PROJECTS_DIR;
       else process.env.GLOSS_PROJECTS_DIR = prev;

@@ -63,7 +63,11 @@ export function isValidProjectId(id: string): boolean {
 }
 
 export function projectsRoot(): string {
-  return resolve(process.env.GLOSS_PROJECTS_DIR ?? join(REPO_ROOT, "examples"));
+  const raw = process.env.GLOSS_PROJECTS_DIR;
+  if (raw == null || raw.trim() === "") {
+    return resolve(join(REPO_ROOT, "examples"));
+  }
+  return resolve(raw);
 }
 
 export type RootStatus = "ok" | "missing" | "not-directory";
