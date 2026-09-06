@@ -7,7 +7,7 @@ import {
   type Catalog,
   type LoadResult,
 } from "./lib/load";
-import { noticeShowsBack } from "./lib/notice";
+import { NOTICE_NO_DIR_TIP, noticeShowsBack } from "./lib/notice";
 import { Reader } from "./reader/Reader";
 import { Wordmark } from "./reader/Masthead";
 
@@ -126,7 +126,7 @@ function noticeTip(result: Exclude<LoadResult, { kind: "project" }>): string | n
     case "empty":
       return "每个项目一个子文件夹，内含 gloss.md";
     case "no-dir":
-      return "设置 GLOSS_PROJECTS_DIR 指向一个文件夹";
+      return NOTICE_NO_DIR_TIP;
   }
 }
 

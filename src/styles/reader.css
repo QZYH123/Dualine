@@ -66,12 +66,18 @@ button {
   align-items: baseline;
   gap: 10px;
   margin: 0;
+  justify-self: start;
   font-family: var(--font-prose);
   font-size: 19px;
   font-weight: 500;
   letter-spacing: -0.012em;
   color: var(--ink);
   text-decoration: none;
+}
+
+.wordmark:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 3px;
 }
 
 .wordmark__seal {
@@ -128,6 +134,23 @@ button {
   color: var(--ink-3);
   letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+.masthead__pinned {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.masthead__pinned kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ink-4);
+  letter-spacing: 0.04em;
+  padding: 0 4px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
 }
 
 .masthead__chapter {
@@ -323,6 +346,11 @@ button {
 
 .rail__item:hover {
   color: var(--ink);
+}
+
+.rail__item:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 2px;
 }
 
 .rail__item.is-current {
@@ -875,6 +903,11 @@ button {
   pointer-events: auto;
 }
 
+.code-pane__pin:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 3px;
+}
+
 .code-pane__pin::before {
   content: "";
   width: 6px;
@@ -900,6 +933,10 @@ button {
   }
   .code {
     animation: none;
+  }
+  .code-pane__pin,
+  .code-pane__hint {
+    transition: none;
   }
 }
 
@@ -935,12 +972,25 @@ html:has(.warn-strip) {
   --header-h: calc(var(--mast-h) + var(--warn-strip-h));
 }
 
+.warn-strip-wrap {
+  position: sticky;
+  top: var(--mast-h);
+  z-index: 19;
+  display: block;
+  width: 100%;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+}
+
 .warn-strip {
   position: sticky;
   top: var(--mast-h);
   z-index: 19;
-  height: var(--warn-strip-h);
+  box-sizing: border-box;
   display: flex;
+  width: 100%;
+  height: var(--warn-strip-h);
   align-items: center;
   justify-content: center;
   gap: 10px;
@@ -949,7 +999,11 @@ html:has(.warn-strip) {
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(12px) saturate(1.1);
   -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  border: 0;
   border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  appearance: none;
+  -webkit-appearance: none;
   font-family: var(--font-mono);
   font-size: 11.5px;
   letter-spacing: 0.02em;
@@ -959,6 +1013,14 @@ html:has(.warn-strip) {
   text-overflow: ellipsis;
 }
 
+.warn-strip-wrap .warn-strip {
+  position: relative;
+  top: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .warn-strip::before {
   content: "";
   width: 2px;
@@ -966,6 +1028,67 @@ html:has(.warn-strip) {
   flex: none;
   background: var(--zhu);
   border-radius: 1px;
+}
+
+.warn-strip--many {
+  cursor: pointer;
+}
+
+.warn-strip--many:hover {
+  color: var(--ink);
+}
+
+.warn-strip--many::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-right: 1px solid var(--ink-3);
+  border-bottom: 1px solid var(--ink-3);
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.warn-strip--many.is-open::after {
+  transform: translateY(1px) rotate(225deg);
+}
+
+.warn-strip:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: -3px;
+}
+
+.warn-strip__list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 18;
+  margin: 0;
+  padding: 8px 28px 12px;
+  list-style: none;
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.warn-strip__list li {
+  list-style: none;
+  margin: 0 auto;
+  padding: 4px 0;
+  max-width: 52rem;
+  overflow-wrap: anywhere;
+}
+
+.warn-strip__list li::marker {
+  content: none;
+}
+
+.warn-strip__list li + li {
+  border-top: 1px solid var(--rule);
 }
 
 .notice__title {
@@ -1011,6 +1134,12 @@ html:has(.warn-strip) {
 
 .notice__projects a:hover {
   color: var(--zhu);
+}
+
+.notice__projects a:focus-visible,
+.notice__back:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 3px;
 }
 
 .notice__projects span {

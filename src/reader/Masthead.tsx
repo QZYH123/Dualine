@@ -47,7 +47,11 @@ export const Masthead = memo(function Masthead({
       </div>
 
       <div className="masthead__state">
-        {pinned && <span>已固定</span>}
+        {pinned && (
+          <span className="masthead__pinned">
+            已固定 <kbd>Esc</kbd>
+          </span>
+        )}
         {chapter && (
           <span className="masthead__chapter">
             <em>{cjkNumeral(chapter.index)}</em>

@@ -8,7 +8,7 @@ import {
   type CodeRef,
   type Project,
 } from "../lib/gloss";
-import { warningStripText } from "../lib/notice";
+import { warningStripExpandable, warningStripText } from "../lib/notice";
 import { Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
@@ -150,7 +150,11 @@ export function Reader({ project, highlighter, source, warnings }: ReaderProps) 
   );
 
   const onSelectChapter = useCallback((chapterId: string) => {
-    document.getElementById(chapterId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById(chapterId)?.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
   }, []);
 
   return (
@@ -172,11 +176,7 @@ export function Reader({ project, highlighter, source, warnings }: ReaderProps) 
           sample={source === "sample"}
           onSelectChapter={onSelectChapter}
         />
-        {warnText && (
-          <p className="warn-strip" role="status">
-            {warnText}
-          </p>
-        )}
+        {warnText && <WarnStrip warnings={warnings} label={warnText} />}
         <main className="reader">
           <Rail chapters={doc.chapters} currentChapterId={currentChapterId} onSelect={onSelectChapter} />
 
@@ -211,5 +211,45 @@ export function Reader({ project, highlighter, source, warnings }: ReaderProps) 
         </main>
       </div>
     </>
+  );
+}
+
+function WarnStrip({ warnings, label }: { warnings: string[]; label: string }) {
+  const [open, setOpen] = useState(false);
+  const expandable = warningStripExpandable(warnings);
+
+  const warningKey = warnings.join("\n");
+  useEffect(() => {
+    setOpen(false);
+  }, [warningKey]);
+
+  if (!expandable) {
+    return (
+      <p className="warn-strip" role="status">
+        {label}
+      </p>
+    );
+  }
+
+  return (
+    <div className="warn-strip-wrap">
+      <button
+        type="button"
+        className={"warn-strip warn-strip--many" + (open ? " is-open" : "")}
+        aria-expanded={open}
+        aria-controls="warn-strip-detail"
+        title="查看无法落地的锚点"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {label}
+      </button>
+      {open && (
+        <ul id="warn-strip-detail" className="warn-strip__list" role="status">
+          {warnings.map((w) => (
+            <li key={w}>{w}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
