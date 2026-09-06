@@ -230,3 +230,48 @@ Independent Playwright against fixtures (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects
 - Long-line h-scroll: sticky numVisible; warn strip contrast ~7.91.
 - Shots: `audit-shots/round2/verify/`. Full check: typecheck + 37 refs/0 problems + 63/63 tests.
 - Still iterating: deferred lows remain; not claiming finished.
+
+
+## Round 3 — user-shoes by module (2026-09-06 UTC+8)
+
+Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for `shortly`, `audit-many`, `audit-long`, `audit-bad`) plus temporary APIs for empty / relative / missing / file-as-dir roots. Screenshots: `audit-shots/round3/` (untracked).
+
+### Journey notes
+
+1. **Onboarding / wrong path copy** — Notices already show the *resolved absolute* path. Relative `./foo` and `glosses` become `$PWD/…` and say 找不到项目目录. A file path says 项目路径不是一个目录 and names the file. Empty `GLOSS_PROJECTS_DIR=""` was **cwd**, not the README default `examples/` — the table implied unset and blank were the same. Tip said “指向一个文件夹” without “绝对路径”.
+2. **Pin + Esc** — Code-pane chip `已固定 Esc 释放` is still the primary teacher. Masthead was only `已固定`. Quiet `Esc` kbd added beside it; chip unchanged. No tour.
+3. **Catalog** — Missing-project links (`/?project=<id>`) all 200; click opens the project. After API restart onto a missing root, a stale listed link reloads to 找不到项目目录 (honest, not a blank/dead page). Empty dir / missing dir / not-a-directory still honest; 返回 still hidden on empty / no-dir.
+4. **Performance** — `audit-long` vertical scroll spam ~16ms frames (max 17, 0 over 32ms); horizontal long-line scroll fine. No sync rewrite.
+5. **A11y** — Tab order: wordmark → rail → anchors; chapter `<select>` at mid width; pin chip is in tab order when visible. Wordmark used to paint a column-wide UA ring (`justify-self: stretch`). 朱 `:focus-visible` on wordmark / rail / pin / notices; wordmark hugs its text. `prefers-reduced-motion`: html scroll `auto`, code/bridge align off; chapter jump now uses `auto` too. Glossed code lines still mouse-only (L2).
+6. **Docs** — README `dev:all` / `check` / `preview:all` match `package.json`. SHIP-REPORT still claimed warnings were not shown in the reader (stale since M3). No dead relative markdown links.
+
+### Round 3 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R3-1a | medium | fixed | Blank `GLOSS_PROJECTS_DIR` was cwd, not repo `examples/` | `projectsRoot()` treats unset **or blank** as `examples/` |
+| R3-1e | low | fixed | no-dir tip did not say absolute path | 「把 GLOSS_PROJECTS_DIR 设成文件夹的绝对路径」; README says cwd-resolve, prefer absolute |
+| R3-5d | medium | fixed | Wordmark focus ring spanned the masthead column | `.wordmark { justify-self: start }` + 朱 ring |
+| R3-5a | low | fixed | Rail / pin / notice used UA rings or none | 朱 `:focus-visible` to match anchors |
+| R3-5c | low | fixed | Chapter `scrollIntoView({smooth})` ignored reduced motion | `auto` when `prefers-reduced-motion: reduce` |
+| R2-2b | low | fixed | Masthead `已固定` omitted Esc | Quiet `<kbd>Esc</kbd>` next to the label; chip stays primary |
+| R2-5c | low | fixed | Multi-warn strip was count-only | Click-expand overlay under the one-line strip |
+| R3-3 | — | ok | Catalog links live; stale-after-restart recovers honestly | no code change |
+| R3-4a | — | ok | audit-long scroll not janky | no sync rewrite |
+| R2-1 | low | deferred | No first-open in-chrome tip | essay lead already says the code follows; no tour |
+| L2 / R2-6c | low | deferred | Glossed code lines not keyboard-activatable | leave; do not rush reverse a11y |
+| L3 | low | deferred | EN sample subtitle | voice choice |
+| R2-2e | low | deferred | Bridge drops while pinned after scroll | intentional |
+| R2-7d | low | deferred | Rail label whisper contrast | fine for a label |
+
+### Round 3 re-test
+
+- Project check: typecheck + gloss check (37 refs, 0 problems) + **65/65** tests green.
+- Blank env → API root is repo `examples/`; `/` opens shortly, not a cwd-empty notice.
+- Relative `./foo`: title 找不到项目目录, hint `/…/foo`, tip names 绝对路径.
+- File-as-dir `/etc/hosts`: 项目路径不是一个目录 + path + same tip.
+- Pin: masthead `已固定 Esc`; chip `已固定 Esc 释放`; Esc unpins. Mid-width (1200) not cluttered next to the chapter select.
+- audit-bad: strip stays 32px, centered, caret; click lists both warnings; click again collapses; header height unchanged.
+- Wordmark focus ~103px wide, 朱; rail 朱 ring. Catalog links still work.
+- Still deferred: L2, L3, R2-1, R2-2e, R2-7d.
+- Not claiming publish-done.

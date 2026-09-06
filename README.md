@@ -63,6 +63,8 @@ When the screen has nothing to face it says so in one line — 找不到项目, 
 
 The API binds to `127.0.0.1` and serves file contents from the folder you point it at; keep it local. If you must expose it, `HOST=0.0.0.0` is explicit.
 
+`GLOSS_PROJECTS_DIR` is resolved from the current working directory (`./foo` becomes `$PWD/foo`). Prefer an absolute path. Unset or blank falls back to this repo's `examples/`, not the current directory.
+
 ## Writing a gloss
 
 A project is a folder with a `gloss.md` and its source files (see `examples/shortly/`). The prose is Markdown with one extension: a link whose target is `path#L<start>-L<end>` is an **anchor**.
@@ -113,7 +115,7 @@ npm run preview:all    # after build: dist on :4173 + API on :8787
 
 | env | default | |
 |---|---|---|
-| `GLOSS_PROJECTS_DIR` | `examples/` | folder of projects, one subfolder each |
+| `GLOSS_PROJECTS_DIR` | this repo's `examples/` when unset or blank | folder of projects, one subfolder each; a set value is resolved from the current working directory — prefer an absolute path |
 | `PORT` | `8787` | API port; the Vite proxy follows it |
 | `HOST` | `127.0.0.1` | API bind address |
 | `GLOSS_API` | `http://127.0.0.1:$PORT` | where Vite proxies `/api` in `dev` and `preview` |
@@ -152,7 +154,7 @@ examples/shortly/       sample project: gloss.md + src/
 - The gloss is written by hand. Nothing here generates prose from code; that is the point of v1 — get the reading right first.
 - One project per screen; switching is by URL. There is no picker and no remote clone. When a named project is missing, the notice lists whatever else the API can see in the folder.
 - Narrow viewports are not a goal yet. Below about 1000px a notice asks for a wider window rather than stacking the two pages.
-- Broken anchors appear as a one-line strip under the masthead; `check:gloss` still prints the full list.
+- Broken anchors appear as a one-line strip under the masthead; click the count to expand the list. `check:gloss` still prints the full list.
 
 ## Publish
 

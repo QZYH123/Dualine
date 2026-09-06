@@ -17,7 +17,7 @@ The six module boundaries from v1 were kept. No framework rewrite and no change 
 | validate | `server/validate.ts` | **Keep as SSOT.** CLI `check:gloss` and API `warnings` still share `checkRefs` / `collectRefs`. Added `inspectRoot()` next to `projectsRoot()`. |
 | load | `src/lib/load.ts` | **Tighten.** I/O stays here; policy moved to `src/lib/load-decision.ts` so node:test can cover fallback without Vite `?raw` fixtures. |
 
-What was not done: splitting `useReadingSync`, rewriting the API as a framework, surfacing `warnings` in the reader, adding a project picker as a product surface.
+What was not done: splitting `useReadingSync`, rewriting the API as a framework, adding a project picker as a product surface.
 
 The client never imports `server/`. The server imports only `src/lib/gloss.ts` for parse/model. Load policy is duplicated as a *type* of `rootStatus` (`ok` \| `missing` \| `not-directory`) on both sides so the browser does not take a filesystem dependency.
 
@@ -88,8 +88,8 @@ git tag v0.1.0           # when you want a release
 
 - Gloss prose is written by hand. Nothing generates it from code.
 - One project per screen; switching is by URL. Error screens may list other projects in the folder. There is still no picker and no remote clone.
-- API `warnings` are not shown in the reader; run `check:gloss`.
-- Narrow viewports are not a goal. Below ~1100px the two pages do not fit (contents rail at ≥1320px).
+- Broken anchors show as a one-line strip under the masthead (click the count to expand). `check:gloss` still prints the full list.
+- Narrow viewports are not a goal. Below ~1000px the reader asks for a wider window (≥1100px) instead of stacking; the contents rail appears at ≥1320px.
 - Production JS is a single ~746 kB chunk (Shiki). Acceptable for local use; not split.
 - The bundled sample is only `examples/shortly/` files imported via Vite `?raw`. A gloss that points outside those files will not match the fixture (the CLI warns when checking `examples/`).
 - `HOST=0.0.0.0` serves local file contents; keep the API loopback unless you mean it.
