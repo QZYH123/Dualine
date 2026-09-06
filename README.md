@@ -18,8 +18,11 @@ Requires Node 20.19+ or 22.12+ (Vite 8).
 
 ```sh
 npm install
+npm run check        # typecheck + this repo's examples
 npm run dev:all      # web on http://localhost:5173, API on 127.0.0.1:8787
 ```
+
+Then open the URL. This repo's `examples/` only has shortly, so `/` is that paired read. A folder of several projects still opens the first listed id — use `?project=shortly` (or another id) when you mean a specific one.
 
 The two start together and stop together (`Ctrl-C` once). If the API's port is taken it says so and both sides exit; run with another port — `PORT=8790 npm run dev:all` — and the web side follows automatically.
 
@@ -61,7 +64,7 @@ Before reading, check that every anchor lands:
 npm run check:gloss -- ~/glosses        # or GLOSS_PROJECTS_DIR=~/glosses npm run check:gloss
 ```
 
-When the screen has nothing to face it says so in one line — 找不到项目, 找不到项目目录, API 未运行, or 这个目录下没有项目 — with the path to look at underneath, instead of quietly showing the sample. If the API can list other projects in the folder, those names appear as links. The sample is used only when the API is unreachable *and* you did not ask for a different project.
+When the screen has nothing to face it says so in one line — 找不到项目, 找不到项目目录, API 未运行, or 这个目录下没有项目 — with the path (or the recovery command) underneath, instead of quietly showing the sample. `API 未运行` points at `npm run dev:all` and asks you to refresh once it is up; `返回` is home, not a retry of the same id. If the API can list other projects in the folder, those names appear as links. The sample is used only when the API is unreachable *and* you did not ask for a different project.
 
 The API binds to `127.0.0.1` and serves file contents from the folder you point it at; keep it local. If you must expose it, `HOST=0.0.0.0` is explicit.
 

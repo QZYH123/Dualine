@@ -4,6 +4,7 @@ import {
   CATALOG_DEFAULT_HINT,
   NOTICE_EMPTY_TIP,
   NOTICE_NO_DIR_TIP,
+  NOTICE_UNREACHABLE_TIP,
   NOTICE_WINDOWS_PATH_TIP,
   noDirTip,
   noticeCopy,
@@ -68,6 +69,16 @@ describe("noticeCopy empty", () => {
     const copy = noticeCopy({ kind: "empty", catalog: { projects: [] } });
     assert.equal(copy.hint, "GLOSS_PROJECTS_DIR");
     assert.equal(copy.tip, NOTICE_EMPTY_TIP);
+  });
+});
+
+describe("noticeCopy unreachable", () => {
+  test("names the recovery command and asks to refresh once the API is up", () => {
+    const copy = noticeCopy({ kind: "unreachable", id: "audit-many" });
+    assert.equal(copy.title, "API 未运行，读不到这个项目");
+    assert.equal(copy.hint, "npm run dev:all");
+    assert.equal(copy.tip, NOTICE_UNREACHABLE_TIP);
+    assert.match(NOTICE_UNREACHABLE_TIP, /刷新/);
   });
 });
 
