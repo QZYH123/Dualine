@@ -4,13 +4,19 @@ import { splitFrontmatter } from "../src/lib/gloss.js";
 import {
   checkRefs,
   collectRefs,
+  inspectRoot,
   isValidProjectId,
   projectsRoot,
   readTextFile,
   safeResolve,
 } from "./validate.js";
 
-export { isValidProjectId, projectsRoot } from "./validate.js";
+export {
+  inspectRoot,
+  isValidProjectId,
+  projectsRoot,
+  type RootStatus,
+} from "./validate.js";
 
 export const MAX_FILES = 200;
 const SKIP_DIRS = new Set(["node_modules", "dist"]);
@@ -29,15 +35,25 @@ export interface ProjectDetail extends ProjectSummary {
 }
 
 export function listProjects(root = projectsRoot()): ProjectSummary[] {
-  if (!existsSync(root) || !statSync(root).isDirectory()) return [];
+  if (inspectRoot(root).status !== "ok") return [];
+  let names: string[];
+  try {
+    names = readdirSync(root).sort();
+  } catch {
+    return [];
+  }
   const out: ProjectSummary[] = [];
-  for (const name of readdirSync(root).sort()) {
+  for (const name of names) {
     if (!isValidProjectId(name)) continue;
     const dir = join(root, name);
     const glossPath = join(dir, "gloss.md");
-    if (!statSync(dir).isDirectory() || !existsSync(glossPath)) continue;
-    const gloss = readFileSync(glossPath, "utf8");
-    out.push({ id: name, ...metaFromGloss(name, gloss) });
+    try {
+      if (!statSync(dir).isDirectory() || !existsSync(glossPath)) continue;
+      const gloss = readFileSync(glossPath, "utf8");
+      out.push({ id: name, ...metaFromGloss(name, gloss) });
+    } catch {
+      continue;
+    }
   }
   return out;
 }

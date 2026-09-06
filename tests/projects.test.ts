@@ -74,6 +74,12 @@ describe("listProjects", () => {
   test("nonexistent root is empty", () => {
     assert.deepEqual(listProjects(join(root, "does-not-exist")), []);
   });
+
+  test("a file path is empty rather than thrown", () => {
+    const file = join(root, "not-a-dir");
+    writeFileSync(file, "x\n");
+    assert.deepEqual(listProjects(file), []);
+  });
 });
 
 describe("loadProject", () => {

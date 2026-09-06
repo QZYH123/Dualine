@@ -66,6 +66,23 @@ export function projectsRoot(): string {
   return resolve(process.env.GLOSS_PROJECTS_DIR ?? join(REPO_ROOT, "examples"));
 }
 
+export type RootStatus = "ok" | "missing" | "not-directory";
+
+/** Resolve the projects folder and say whether it can be listed. */
+export function inspectRoot(root = projectsRoot()): {
+  root: string;
+  status: RootStatus;
+} {
+  const abs = resolve(root);
+  try {
+    const st = statSync(abs);
+    if (!st.isDirectory()) return { root: abs, status: "not-directory" };
+    return { root: abs, status: "ok" };
+  } catch {
+    return { root: abs, status: "missing" };
+  }
+}
+
 export function refLabel(ref: CodeRef): string {
   return ref.start === ref.end
     ? `${ref.file}#L${ref.start}`

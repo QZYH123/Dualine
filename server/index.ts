@@ -7,6 +7,7 @@ import {
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  inspectRoot,
   isValidProjectId,
   listProjects,
   loadProject,
@@ -35,7 +36,11 @@ function sendJson(
   res.end(json);
 }
 
-export function handle(method: string, pathname: string): HandleResult {
+export function handle(
+  method: string,
+  pathname: string,
+  root = projectsRoot(),
+): HandleResult {
   const path = pathname.replace(/\/+$/, "") || "/";
 
   if (method !== "GET") {
@@ -47,11 +52,20 @@ export function handle(method: string, pathname: string): HandleResult {
   }
 
   if (path === "/api/health") {
-    return { status: 200, body: { ok: true } };
+    const { root: abs, status } = inspectRoot(root);
+    return { status: 200, body: { ok: true, root: abs, rootStatus: status } };
   }
 
   if (path === "/api/projects") {
-    return { status: 200, body: { projects: listProjects() } };
+    const { root: abs, status } = inspectRoot(root);
+    return {
+      status: 200,
+      body: {
+        projects: status === "ok" ? listProjects(abs) : [],
+        root: abs,
+        rootStatus: status,
+      },
+    };
   }
 
   const projectMatch = /^\/api\/projects\/([^/]+)$/.exec(path);
@@ -65,7 +79,7 @@ export function handle(method: string, pathname: string): HandleResult {
     if (!isValidProjectId(id)) {
       return { status: 400, body: { error: "invalid id" } };
     }
-    const project = loadProject(id);
+    const project = loadProject(id, root);
     if (!project) return { status: 404, body: { error: "not found" } };
     return { status: 200, body: project };
   }
@@ -81,7 +95,7 @@ export function createApiServer(): Server {
     try {
       const url = new URL(pathname, "http://127.0.0.1");
       pathname = url.pathname;
-      const result = handle(method, pathname);
+      const result = handle(method, pathname, projectsRoot());
       status = result.status;
       sendJson(res, result.status, result.body, result.headers);
     } catch (err) {

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import type { Server } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
-import { createApiServer } from "../server/index.js";
+import { createApiServer, handle } from "../server/index.js";
 
 const prevProjectsDir = process.env.GLOSS_PROJECTS_DIR;
 delete process.env.GLOSS_PROJECTS_DIR;
@@ -36,13 +39,25 @@ describe("createApiServer", () => {
   test("GET /api/health", async () => {
     const res = await get("/api/health");
     assert.equal(res.status, 200);
-    assert.deepEqual(await res.json(), { ok: true });
+    const body = (await res.json()) as {
+      ok: boolean;
+      root: string;
+      rootStatus: string;
+    };
+    assert.equal(body.ok, true);
+    assert.equal(body.rootStatus, "ok");
+    assert.equal(typeof body.root, "string");
   });
 
   test("GET /api/projects lists shortly", async () => {
     const res = await get("/api/projects");
     assert.equal(res.status, 200);
-    const body = (await res.json()) as { projects: { id: string }[] };
+    const body = (await res.json()) as {
+      projects: { id: string }[];
+      root: string;
+      rootStatus: string;
+    };
+    assert.equal(body.rootStatus, "ok");
     assert.ok(body.projects.some((p) => p.id === "shortly"));
   });
 
@@ -85,5 +100,63 @@ describe("createApiServer", () => {
     assert.equal(slash.status, 200);
     const body = (await slash.json()) as { projects: { id: string }[] };
     assert.ok(body.projects.some((p) => p.id === "shortly"));
+  });
+});
+
+describe("handle catalog against an explicit root", () => {
+  test("missing dir vs empty folder vs a file", () => {
+    const missing = join(tmpdir(), `gloss-missing-${Date.now()}`);
+    const miss = handle("GET", "/api/projects", missing);
+    assert.equal(miss.status, 200);
+    const missBody = miss.body as {
+      projects: unknown[];
+      root: string;
+      rootStatus: string;
+    };
+    assert.equal(missBody.rootStatus, "missing");
+    assert.deepEqual(missBody.projects, []);
+
+    const empty = mkdtempSync(join(tmpdir(), "gloss-empty-"));
+    try {
+      const ok = handle("GET", "/api/projects", empty);
+      const okBody = ok.body as { projects: unknown[]; rootStatus: string };
+      assert.equal(ok.status, 200);
+      assert.equal(okBody.rootStatus, "ok");
+      assert.deepEqual(okBody.projects, []);
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
+
+    const dir = mkdtempSync(join(tmpdir(), "gloss-file-"));
+    const file = join(dir, "not-a-dir");
+    writeFileSync(file, "x\n");
+    try {
+      const bad = handle("GET", "/api/projects", file);
+      const badBody = bad.body as { rootStatus: string };
+      assert.equal(bad.status, 200);
+      assert.equal(badBody.rootStatus, "not-directory");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("lists a real project from a temp folder", () => {
+    const root = mkdtempSync(join(tmpdir(), "gloss-handle-"));
+    try {
+      mkdirSync(join(root, "demo"));
+      writeFileSync(
+        join(root, "demo", "gloss.md"),
+        "---\nname: Demo\ntagline: hi\n---\n# Demo\n\nLead.\n",
+      );
+      const listed = handle("GET", "/api/projects", root);
+      const body = listed.body as { projects: { id: string; name: string }[] };
+      assert.deepEqual(body.projects, [{ id: "demo", name: "Demo", tagline: "hi", lang: "typescript" }]);
+      const detail = handle("GET", "/api/projects/demo", root);
+      assert.equal(detail.status, 200);
+      const missing = handle("GET", "/api/projects/nope", root);
+      assert.equal(missing.status, 404);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

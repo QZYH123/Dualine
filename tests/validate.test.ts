@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import {
   checkRefs,
   collectRefs,
+  inspectRoot,
   lineCount,
   MAX_FILE_BYTES,
   projectsRoot,
@@ -176,5 +177,14 @@ describe("lineCount / refLabel / readTextFile / projectsRoot", () => {
       if (prev === undefined) delete process.env.GLOSS_PROJECTS_DIR;
       else process.env.GLOSS_PROJECTS_DIR = prev;
     }
+  });
+
+  test("inspectRoot distinguishes missing, file, and directory", () => {
+    const missing = inspectRoot(join(tmp, "no-such"));
+    assert.equal(missing.status, "missing");
+    const file = join(tmp, "just-a-file");
+    writeFileSync(file, "x\n");
+    assert.equal(inspectRoot(file).status, "not-directory");
+    assert.equal(inspectRoot(projectDir).status, "ok");
   });
 });
