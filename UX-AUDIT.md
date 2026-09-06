@@ -387,3 +387,53 @@ Read-only probe at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp
 - Smoke: Esc unpin; L2 Enter reverse-pin; 1100 pin + select no overflow; 999 gate 「对照需要更宽的窗口」.
 - Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-1b first-open warn/empty on a broken first id, R5-3e empty-hint placeholder, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback.
 - Local-only. No push, no merge to main. Not claiming publish-done.
+
+
+---
+
+## Round 6 — user-perspective polish (2026-09-06 UTC+8)
+
+Probed at http://127.0.0.1:5173 with live API (`GLOSS_PROJECTS_DIR=/tmp/gloss-projects` for `audit-bad`, `audit-long`, `audit-many`, `shortly`) plus temporary APIs for empty / single / relative own-dirs. Playwright shots: `audit-shots/round6/` and `audit-shots/round6/retest/` (untracked). Write pass: Grok Build on `feature/gloss-reader-v1`. Not claiming publish-done / ship-ready.
+
+### Journey notes
+
+1. **R5-1b first-open `/`** — Catalog is still sorted by id. Bare `/` opens `audit-bad`: warn strip `2 处锚点无法落到代码`, code pane `没有可对照的文件` (current passage faces a missing file). Docs already said first listed id; the screen itself did not. Wordmark from `?project=shortly` lands on the same home. Product order unchanged; no shortly preference, no redirect. Cheap honesty: when there is no `?project=` *and* the strip is showing, a quiet extra `目录第一项 · 用 ?project=<id> 指定`. Explicit `?project=audit-bad` keeps the real warnings and omits the hint.
+
+2. **Packing / publish** — `npm pack --dry-run` ships 41 files (reader, server, examples, tests, LICENSE, README). No `bin` (README uses `npm run`). Engines Node 20+ match. `package.json` `files` listed `package-lock.json`, but npm never puts the lockfile in the tarball — extract + `npm install` floats ranges. Clone is the pinned path. Removed the lockfile from `files`; README/SHIP-REPORT say so.
+
+3. **Check cmds** — Default `check:gloss` on this repo is still `1 gloss checked, 37 refs, 0 problems`. Tests 69/69 after the hint constant. `GLOSS_PROJECTS_DIR=/tmp/gloss-projects npm run check:gloss` fails on audit-bad (2 problems) — honest for the CLI. The same env used to make `npm run check` fail, while docs treated check as the product self-check. `npm run check` now runs `GLOSS_PROJECTS_DIR= npm run check:gloss` so it always validates `examples/`. Own folders stay `npm run check:gloss -- ~/glosses`. SHIP-REPORT does not hard-code the test count.
+
+4. **Own-dir** — Empty root lists zero projects (`rootStatus: ok`). Single project `mini` is the catalog default. Relative `GLOSS_PROJECTS_DIR` becomes an absolute `catalog.root`. Missing relative path is cwd-resolved `missing`. Reload after editing `gloss.md` picks up the new tagline. Empty-notice hint still uses a literal `<id>` placeholder (R5-3e, still low).
+
+5. **Long-session chrome** — Pin + chapter tour: masthead stays 56px. @1320/1200/1100 pin + chapter `<select>` do not overflow. @999 gate 「对照需要更宽的窗口 · ≥ 1100px」. Warn strip keyboard: Tab to the count, Enter expands both warnings, Enter again collapses; hint stays. Esc unpins (class `is-visible`, not opacity mid-fade). Pin chip can still cover the lower code viewport (R5-7); focused span starts at the reading line, so it is polish, not a ritual break.
+
+6. **A11y leftovers** — Focus order at 1440: wordmark → warn strip → rail → anchors. @1200: wordmark → chapter `<select>` (visually-hidden label `章节`) → prose. Warn strip is a native button when expandable. L2 keyboard reverse not reopened.
+
+### Round 6 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R5-1b | medium | **fixed** | Bare `/` (and wordmark home) can open a broken first id with warn strip + empty code pane and no in-chrome explanation that this is the catalog default | Quiet `目录第一项 · 用 ?project=<id> 指定` on the existing warn strip when `?project=` is absent. Warnings stay. No reorder, no shortly hardcode, no redirect |
+| R6-1 | medium | **fixed** | `npm run check` inherited `GLOSS_PROJECTS_DIR` and failed on the audit fixture while docs described a green examples self-check | `check` script runs `GLOSS_PROJECTS_DIR= npm run check:gloss`; CLI + env still check own folders |
+| R6-2 | medium | **fixed** | `files` listed `package-lock.json` but `npm pack` omits it — extract+install is unpinned | Drop lockfile from `files`; README/SHIP-REPORT: pack is source without a lockfile; clone for the pin; no `bin` |
+| R6-3 | — | ok | Own-dir empty / single / relative / reload | no product change |
+| R6-4 | — | ok | Mid-width pin+select; 999 gate; chapter tour; warn expand | no chrome redesign |
+| R6-5 | — | ok | Warn strip keyboard; chapter select label `章节` | no change |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | chip stays primary |
+| R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | essay lead is enough; R5-1b is a different tip |
+| R5-5 / R2-2e | low | deferred | Bridge drops after a few px of pinned prose scroll | do not fight sync |
+| R5-6 / R2-7d | low | deferred | Rail label `目录` whisper contrast | fine for a label |
+| R5-7 | low | deferred | Pin chip can cover the last visible code lines | still polish; focused span is aligned to the reading line |
+| R5-3e | low | deferred | Empty hint uses a literal `<id>` placeholder | copy polish |
+| R5-5e | low | deferred | `$HOME` in the env is not expanded; tip stays generic | prefer an absolute path |
+| R5-6b | low | deferred | Split `api`+`dev` needs a `GLOSS_API` whisper in README | `dev:all` is the documented path |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+
+### Round 6 re-test (Grok Build)
+
+- Project check with `GLOSS_PROJECTS_DIR=/tmp/gloss-projects`: typecheck + gloss check (`1 gloss checked, 37 refs, 0 problems`) + **69/69** tests green (one new `CATALOG_DEFAULT_HINT` assertion). Standalone `GLOSS_PROJECTS_DIR=/tmp/gloss-projects npm run check:gloss` still reports audit-bad's 2 problems.
+- **R5-1b @1440:** `/` strip is `2 处锚点无法落到代码 · 目录第一项 · 用 ?project=<id> 指定` (`retest/01-bare-home.png`). `?project=audit-bad` has the count only (`01b-explicit-audit-bad.png`). Wordmark from shortly still opens audit-bad, now with the hint (`02b-wordmark-home.png`). Hint still visible at 1100 (`03-w1100-hint.png`).
+- Smoke: shortly live, no sample chip, no warn; Esc unpins; @1200 pin + select, no overflow, label `章节`; @999 gate; warn strip Enter expand/collapse with hint still in the button.
+- Pack: `files` no longer lists `package-lock.json`; dry-run still has index.html, src, server, examples, tests.
+- Still deferred: R5-3 dual Esc, R5-4 / R2-1 / R5-1c first-open pin tip, R5-5 / R2-2e bridge, R5-6 / R2-7d rail whisper, R5-7 chip occlusion, L3, R5-3e empty-hint placeholder, R5-5e `$HOME` in tip, R5-6b `GLOSS_API` whisper. Note: R5-6f localhost vs loopback.
+- Local-only. No push, no merge to main. Not claiming publish-done.
