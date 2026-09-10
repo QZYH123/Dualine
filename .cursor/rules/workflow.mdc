@@ -10,3 +10,7 @@ alwaysApply: true
 **`backend` subagent (`cursor-grok-4.6-xhigh-fast`):** APIs, parsing, mapping data, persistence, fixtures plumbing, boilerplate, and simple tasks that do not change the product big picture. Delegate these proactively.
 
 **Token discipline:** Keep Fable focused on decisions and UI that set the tone. Push mechanical work to `backend` when safe. Prefer fixtures-first demos over premature platform work.
+
+
+## Model intensity
+Always xhigh: main `claude-fable-5-1-thinking-xhigh`; backend `cursor-grok-4.6-xhigh-fast`. Never downshift for cost.

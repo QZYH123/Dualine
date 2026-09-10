@@ -1,5 +1,6 @@
 node_modules/
 dist/
+*.tgz
 .build/
 .next/
 .DS_Store
@@ -9,3 +10,11 @@ dist/
 !.env.example
 fable-run.log
 .cursor/chats/
+*.tsbuildinfo
+fable-prompt.txt
+run-fable.sh
+run-fable-mvp.sh
+run-grok-ship.sh
+.agent-prompt.txt
+.grok-ship-prompt.md
+.grok/
