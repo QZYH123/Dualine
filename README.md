@@ -52,13 +52,23 @@ There is no file picker, on purpose. The API reads a **folder of projects** from
     src/…                 ← the code the prose points at
 ```
 
-Point the env at that outer folder, not at `my-app` itself — a path that already has `gloss.md` is one project, not the catalog.
+Point the env at that outer folder. If the folder itself contains `gloss.md` and has no child projects, Dualine treats it as the one project — the folder name is the id. Child folders win when both exist.
 
 ```sh
 GLOSS_PROJECTS_DIR=~/glosses npm run dev:all
+# or, for a single project:
+GLOSS_PROJECTS_DIR=~/glosses/my-app npm run dev:all
 ```
 
-Then open `http://localhost:5173/?project=my-app`. The catalog is sorted by id; with no `?project=`, the first listed id opens. That is not always shortly — use the query for a specific project (e.g. `?project=shortly`). The wordmark goes to `/`, which is that same first id. If that project has broken anchors, the warn strip says so and adds a quiet line that this is the catalog default. Files are read on every request, so edit `gloss.md`, reload, and the anchors move with you. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
+Then open `http://localhost:5173/?project=my-app`. The catalog is sorted by id; with no `?project=`, the first listed id opens. That is not always shortly — use the query for a specific project (e.g. `?project=shortly`). Chapters are `#c3` in the URL. The wordmark goes to `/`, which is that same first id. If that project has broken anchors, the warn strip says so and adds a quiet line that this is the catalog default. Files are re-read on every request. Edit `gloss.md` while Dualine is open and a quiet **已更新** appears in the masthead — click it to reload; it will not steal your place. Only the files the gloss refers to, plus everything under `src/`, are sent to the browser (text files up to 512 KB, at most 200 of them).
+
+This repo is itself a project. From the Dualine checkout:
+
+```sh
+GLOSS_PROJECTS_DIR=$PWD npm run dev:all
+```
+
+Then `http://localhost:5173/?project=dualine` — the same paired read, about Dualine.
 
 Before reading, check that every anchor lands:
 
@@ -100,17 +110,19 @@ Lead paragraph, shown under the title.
 
 Write like a good commentary: name the real structures, say why they exist, and point at the lines. Every claim that matters should have an anchor.
 
+An agent can draft that file. Dualine still only reads. Copy `.cursor/skills/write-gloss/SKILL.md` into the agent's skills (or open this repo so the skill loads), ask it to write the 对照笔记 in the project you want to explain, then point `GLOSS_PROJECTS_DIR` at that project folder (or its parent) and open Dualine with `?project=<id>`.
+
 ## Check
 
 ```sh
-npm run check          # typecheck + this repo's examples via check:gloss + test
+npm run check          # typecheck + examples + this repo's gloss.md + test
 npm test               # node:test suites under tests/
 npm run check:gloss    # every anchor → a real file and a line range inside it
 npm run build          # production bundle in dist/
 npm run preview:all    # after build: dist on :4173 + API on :8787
 ```
 
-`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. `npm run check` always validates this repo's `examples/`, even if `GLOSS_PROJECTS_DIR` is set in the shell — use `npm run check:gloss -- ~/glosses` (or the env) for your own folder. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
+`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. `npm run check` always validates this repo's `examples/` and this repo's own `gloss.md`, even if `GLOSS_PROJECTS_DIR` is set in the shell — use `npm run check:gloss -- ~/glosses` (or the env) for your own folder. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
 
 ## API
 
@@ -132,6 +144,7 @@ Project ids must match `^[a-z0-9][a-z0-9-_]*$`; anything else is `400`. Paths in
 ## Layout
 
 ```
+gloss.md                this repo, read as a project (GLOSS_PROJECTS_DIR=$PWD)
 src/
   lib/gloss.ts          document model + gloss.md parser (browser and server)
   lib/highlight.ts      Shiki, one restrained theme
@@ -148,6 +161,7 @@ server/
 scripts/check-gloss.ts  the CLI validator
 tests/                  node:test — parser, validator, loader, API
 examples/shortly/       sample project: gloss.md + src/
+.cursor/skills/write-gloss/   how an agent drafts gloss.md
 ```
 
 ## Visual system
@@ -158,7 +172,7 @@ examples/shortly/       sample project: gloss.md + src/
 
 ## Not yet
 
-- The gloss is written by hand. Nothing here generates prose from code; that is the point of v1 — get the reading right first.
+- Dualine does not generate prose from code. Authoring is hand-written or via the `write-gloss` skill; this app only reads.
 - One project per screen; switching is by URL. There is no picker and no remote clone. When a named project is missing, the notice lists whatever else the API can see in the folder.
 - Narrow viewports are not a goal yet. Below about 1000px a notice asks for a wider window rather than stacking the two pages.
 - Broken anchors appear as a one-line strip under the masthead; click the count to expand the list. When `/` opened the first listed project, the strip also says so and points at `?project=<id>`. `check:gloss` still prints the full list.
