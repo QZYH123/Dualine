@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { HighlighterCore } from "shiki/core";
 import { getHighlighter } from "./lib/highlight";
 import {
@@ -13,22 +13,53 @@ import { Wordmark } from "./reader/Masthead";
 export default function App() {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
   const [loaded, setLoaded] = useState<LoadResult | null>(null);
+  const [tick, setTick] = useState(0);
+  const [stale, setStale] = useState(false);
+
+  useEffect(() => {
+    getHighlighter().then(setHighlighter);
+  }, []);
 
   useEffect(() => {
     let alive = true;
-    Promise.all([getHighlighter(), loadProject(requestedProjectId())]).then(([hl, result]) => {
+    setStale(false);
+    loadProject(requestedProjectId()).then((result) => {
       if (!alive) return;
-      setHighlighter(hl);
       setLoaded(result);
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [tick]);
 
   useEffect(() => {
     if (loaded?.kind === "project") document.title = `${loaded.project.name} · Gloss 对照`;
   }, [loaded]);
+
+  useEffect(() => {
+    if (loaded?.kind !== "project" || loaded.source !== "api" || !loaded.rev) return;
+    const id = loaded.project.id;
+    const seen = loaded.rev;
+    const iv = window.setInterval(async () => {
+      try {
+        const res = await fetch(`/api/projects/${encodeURIComponent(id)}/rev`, {
+          headers: { accept: "application/json" },
+        });
+        if (!res.ok) return;
+        const body: unknown = await res.json();
+        const rev =
+          body && typeof body === "object" && typeof (body as { rev?: unknown }).rev === "string"
+            ? (body as { rev: string }).rev
+            : null;
+        if (rev) setStale(rev !== seen);
+      } catch {
+        /* keep the loaded project; poll is best-effort */
+      }
+    }, 2500);
+    return () => window.clearInterval(iv);
+  }, [loaded]);
+
+  const reload = useCallback(() => setTick((n) => n + 1), []);
 
   if (!highlighter || !loaded) {
     return <div className="loading">对照</div>;
@@ -37,11 +68,14 @@ export default function App() {
   if (loaded.kind === "project") {
     return (
       <Reader
+        key={tick}
         project={loaded.project}
         highlighter={highlighter}
         source={loaded.source}
         warnings={loaded.warnings}
         catalogDefault={requestedProjectId() === null}
+        stale={stale}
+        onReload={reload}
       />
     );
   }

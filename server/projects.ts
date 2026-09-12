@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { splitFrontmatter } from "../src/lib/gloss.js";
 import {
   checkRefs,
@@ -32,10 +32,20 @@ export interface ProjectDetail extends ProjectSummary {
   gloss: string;
   files: Record<string, string>;
   warnings: string[];
+  /** Max mtime of gloss.md and the files it faces — for the reader's quiet reload chip. */
+  rev: string;
 }
 
-export function listProjects(root = projectsRoot()): ProjectSummary[] {
-  if (inspectRoot(root).status !== "ok") return [];
+function hasGloss(dir: string): boolean {
+  const glossPath = join(dir, "gloss.md");
+  try {
+    return existsSync(glossPath) && statSync(glossPath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function childProjects(root: string): ProjectSummary[] {
   let names: string[];
   try {
     names = readdirSync(root).sort();
@@ -46,10 +56,9 @@ export function listProjects(root = projectsRoot()): ProjectSummary[] {
   for (const name of names) {
     if (!isValidProjectId(name)) continue;
     const dir = join(root, name);
-    const glossPath = join(dir, "gloss.md");
     try {
-      if (!statSync(dir).isDirectory() || !existsSync(glossPath)) continue;
-      const gloss = readFileSync(glossPath, "utf8");
+      if (!statSync(dir).isDirectory() || !hasGloss(dir)) continue;
+      const gloss = readFileSync(join(dir, "gloss.md"), "utf8");
       out.push({ id: name, ...metaFromGloss(name, gloss) });
     } catch {
       continue;
@@ -58,15 +67,90 @@ export function listProjects(root = projectsRoot()): ProjectSummary[] {
   return out;
 }
 
+function selfProject(root: string): ProjectSummary | null {
+  const id = basename(resolve(root));
+  if (!isValidProjectId(id) || !hasGloss(root)) return null;
+  try {
+    const gloss = readFileSync(join(root, "gloss.md"), "utf8");
+    return { id, ...metaFromGloss(id, gloss) };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Folder of child projects, or — if none — the folder itself when it has gloss.md
+ * and a servable name. Children win when both exist.
+ */
+export function listProjects(root = projectsRoot()): ProjectSummary[] {
+  if (inspectRoot(root).status !== "ok") return [];
+  const children = childProjects(root);
+  if (children.length > 0) return children;
+  const self = selfProject(root);
+  return self ? [self] : [];
+}
+
+/** Child `<root>/<id>` first; otherwise `<root>` when its basename is `id`. */
+export function resolveProjectDir(
+  id: string,
+  root = projectsRoot(),
+): string | null {
+  if (!isValidProjectId(id)) return null;
+  const child = safeResolve(root, id);
+  if (child) {
+    try {
+      if (statSync(child).isDirectory() && hasGloss(child)) return child;
+    } catch {
+      /* fall through to self */
+    }
+  }
+  const abs = resolve(root);
+  if (basename(abs) === id && hasGloss(abs)) return abs;
+  return null;
+}
+
+export function projectStamp(projectDir: string): string {
+  let latest = 0;
+  const bump = (abs: string) => {
+    try {
+      latest = Math.max(latest, statSync(abs).mtimeMs);
+    } catch {
+      /* skip */
+    }
+  };
+  bump(join(projectDir, "gloss.md"));
+  try {
+    const gloss = readFileSync(join(projectDir, "gloss.md"), "utf8");
+    for (const { ref } of collectRefs(gloss)) {
+      const abs = safeResolve(projectDir, ref.file);
+      if (abs) bump(abs);
+    }
+  } catch {
+    /* gloss unreadable — stamp still reflects the file mtime above */
+  }
+  const srcRoot = join(projectDir, "src");
+  try {
+    if (existsSync(srcRoot) && statSync(srcRoot).isDirectory()) {
+      for (const abs of walkTextFiles(srcRoot)) bump(abs);
+    }
+  } catch {
+    /* skip */
+  }
+  return String(Math.round(latest));
+}
+
 export function loadProject(
   id: string,
   root = projectsRoot(),
 ): ProjectDetail | null {
-  if (!isValidProjectId(id)) return null;
-  const projectDir = safeResolve(root, id);
+  const projectDir = resolveProjectDir(id, root);
   if (!projectDir) return null;
+  return loadFromDir(id, projectDir);
+}
+
+function loadFromDir(id: string, projectDir: string): ProjectDetail | null {
   const glossPath = join(projectDir, "gloss.md");
-  if (!existsSync(glossPath) || !statSync(glossPath).isFile()) return null;
+  if (!hasGloss(projectDir)) return null;
 
   const gloss = readFileSync(glossPath, "utf8");
   const meta = metaFromGloss(id, gloss);
@@ -103,7 +187,7 @@ export function loadProject(
     }
   }
 
-  return { id, ...meta, gloss, files, warnings };
+  return { id, ...meta, gloss, files, warnings, rev: projectStamp(projectDir) };
 }
 
 function metaFromGloss(

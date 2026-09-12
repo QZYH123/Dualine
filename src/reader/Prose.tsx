@@ -111,7 +111,7 @@ function Inlines({ inlines, hoverAnchorId, pinnedAnchorId, onAnchorHover, onAnch
             key={i}
             className={cls}
             data-anchor={x.id}
-            href={`#${x.ref.file}:${x.ref.start}`}
+            href="#"
             title={`${x.ref.file} · ${x.ref.start}${x.ref.end !== x.ref.start ? `–${x.ref.end}` : ""}`}
             onMouseEnter={() => onAnchorHover?.(x.id)}
             onMouseLeave={() => onAnchorHover?.(null)}

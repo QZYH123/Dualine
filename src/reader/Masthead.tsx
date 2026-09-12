@@ -24,6 +24,8 @@ interface MastheadProps {
   chapters: Chapter[];
   pinned: boolean;
   sample?: boolean;
+  stale?: boolean;
+  onReload?: () => void;
   onSelectChapter: (chapterId: string) => void;
 }
 
@@ -34,6 +36,8 @@ export const Masthead = memo(function Masthead({
   chapters,
   pinned,
   sample,
+  stale,
+  onReload,
   onSelectChapter,
 }: MastheadProps) {
   return (
@@ -43,6 +47,16 @@ export const Masthead = memo(function Masthead({
       <div className="masthead__project">
         <span className="masthead__name">{name}</span>
         {sample && <span className="masthead__chip">示例</span>}
+        {stale && (
+          <button
+            type="button"
+            className="masthead__stale"
+            onClick={onReload}
+            title="磁盘上的笔记或代码已更新"
+          >
+            已更新
+          </button>
+        )}
         {tagline && <span className="masthead__tagline">{tagline}</span>}
       </div>
 

@@ -34,7 +34,13 @@ export function requestedProjectId(search: string = window.location.search): str
 }
 
 export type LoadResult =
-  | { kind: "project"; project: Project; source: "api" | "sample"; warnings: string[] }
+  | {
+      kind: "project";
+      project: Project;
+      source: "api" | "sample";
+      warnings: string[];
+      rev?: string;
+    }
   | { kind: "not-found"; id: string; catalog: Catalog }
   | { kind: "empty"; catalog: Catalog }
   | { kind: "no-dir"; catalog: Catalog }
@@ -86,6 +92,7 @@ export async function loadProject(requested: string | null): Promise<LoadResult>
       project: buildProject(body.id, body.gloss, body.files),
       source: "api",
       warnings: payloadWarnings(body),
+      rev: typeof body.rev === "string" ? body.rev : undefined,
     };
   }
   return decided;

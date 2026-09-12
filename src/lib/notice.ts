@@ -18,9 +18,9 @@ export function noticeShowsBack(kind: NoticeKind): boolean {
 /** Missing / not-a-directory projects folder: prefer an absolute path. */
 export const NOTICE_NO_DIR_TIP = "把 GLOSS_PROJECTS_DIR 设成文件夹的绝对路径";
 
-/** Empty catalog: child folders, not this folder itself. */
+/** Empty catalog: child folders, or this folder itself if it has gloss.md. */
 export const NOTICE_EMPTY_TIP =
-  "每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md";
+  "每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md；也可以直接指到那个项目文件夹";
 
 /** API down: name the recovery, then refresh this page; 返回 stays home. */
 export const NOTICE_UNREACHABLE_TIP = "API 起来后再刷新这一页";

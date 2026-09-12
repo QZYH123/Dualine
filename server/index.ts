@@ -11,7 +11,9 @@ import {
   isValidProjectId,
   listProjects,
   loadProject,
+  projectStamp,
   projectsRoot,
+  resolveProjectDir,
 } from "./projects.js";
 
 export interface HandleResult {
@@ -66,6 +68,22 @@ export function handle(
         rootStatus: status,
       },
     };
+  }
+
+  const revMatch = /^\/api\/projects\/([^/]+)\/rev$/.exec(path);
+  if (revMatch) {
+    let id: string;
+    try {
+      id = decodeURIComponent(revMatch[1]);
+    } catch {
+      return { status: 400, body: { error: "invalid id" } };
+    }
+    if (!isValidProjectId(id)) {
+      return { status: 400, body: { error: "invalid id" } };
+    }
+    const dir = resolveProjectDir(id, root);
+    if (!dir) return { status: 404, body: { error: "not found" } };
+    return { status: 200, body: { rev: projectStamp(dir) } };
   }
 
   const projectMatch = /^\/api\/projects\/([^/]+)$/.exec(path);

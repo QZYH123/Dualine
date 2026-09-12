@@ -78,8 +78,13 @@ export const CodePane = memo(function CodePane({
             {codeHover && <>{rangeLabel(codeHover.ref)} · 回到正文 ↩</>}
           </span>
           {inFocus && !codeHover && <span className="code-pane__span">{rangeLabel(inFocus)}</span>}
-          {file && <span>{LANG_LABEL[file.lang] ?? file.lang}</span>}
-          {file && <span>{lines.length} 行</span>}
+          {file && !pinned && <span>{LANG_LABEL[file.lang] ?? file.lang}</span>}
+          {file && !pinned && <span>{lines.length} 行</span>}
+          {pinned && (
+            <button type="button" className="code-pane__pin" onClick={onUnpin}>
+              已固定 <kbd>Esc</kbd> 释放
+            </button>
+          )}
         </span>
       </div>
 
@@ -155,15 +160,6 @@ export const CodePane = memo(function CodePane({
             </div>
           </div>
         )}
-
-        <button
-          type="button"
-          className={"code-pane__pin" + (pinned ? " is-visible" : "")}
-          onClick={onUnpin}
-          tabIndex={pinned ? 0 : -1}
-        >
-          已固定 <kbd>Esc</kbd> 释放
-        </button>
       </div>
     </aside>
   );

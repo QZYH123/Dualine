@@ -32,6 +32,7 @@ export interface ProjectPayload {
   gloss: string;
   files: Record<string, string>;
   warnings?: string[];
+  rev?: string;
 }
 
 export type FetchResult =

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { HighlighterCore } from "shiki/core";
 import {
   allPassages,
@@ -22,6 +22,8 @@ interface ReaderProps {
   warnings: string[];
   /** True when the URL has no `?project=` — the catalog's first listed id. */
   catalogDefault?: boolean;
+  stale?: boolean;
+  onReload?: () => void;
 }
 
 function readToken(name: string, fallback: number): number {
@@ -29,7 +31,19 @@ function readToken(name: string, fallback: number): number {
   return Number.isFinite(v) ? v : fallback;
 }
 
-export function Reader({ project, highlighter, source, warnings, catalogDefault = false }: ReaderProps) {
+function chapterUrl(chapterId: string): string {
+  return `${window.location.pathname}${window.location.search}#${chapterId}`;
+}
+
+export function Reader({
+  project,
+  highlighter,
+  source,
+  warnings,
+  catalogDefault = false,
+  stale = false,
+  onReload,
+}: ReaderProps) {
   const { doc, files } = project;
   const warnText = warningStripText(warnings);
 
@@ -151,14 +165,86 @@ export function Reader({ project, highlighter, source, warnings, catalogDefault 
     [tokens],
   );
 
+  const followHash = useRef(false);
+  const holdY = useRef(0);
+  const jumping = useRef(false);
+
+  const scrollChapter = useCallback(
+    (chapterId: string, behavior: ScrollBehavior) => {
+      const el = document.getElementById(chapterId);
+      if (!el) return;
+      const first =
+        el.querySelector<HTMLElement>("[data-passage]") ??
+        el.querySelector<HTMLElement>(".chapter__head") ??
+        el;
+      const lineY = tokens.header + (window.innerHeight - tokens.header) * tokens.readingLine;
+      const delta = first.getBoundingClientRect().top - (lineY - 8);
+      window.scrollBy({ top: delta, behavior: Math.abs(delta) < 2 ? "auto" : behavior });
+    },
+    [tokens],
+  );
+
+  const holdHashUntilScroll = useCallback(() => {
+    followHash.current = false;
+    jumping.current = true;
+    const done = () => {
+      jumping.current = false;
+      holdY.current = window.scrollY;
+    };
+    window.addEventListener("scrollend", done, { once: true });
+    window.setTimeout(done, 800);
+  }, []);
+
   const onSelectChapter = useCallback((chapterId: string) => {
     unpin();
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById(chapterId)?.scrollIntoView({
-      behavior: reduced ? "auto" : "smooth",
-      block: "start",
-    });
-  }, [unpin]);
+    holdHashUntilScroll();
+    if (window.location.hash !== `#${chapterId}`) {
+      history.pushState(null, "", chapterUrl(chapterId));
+    }
+    scrollChapter(chapterId, "auto");
+  }, [unpin, holdHashUntilScroll, scrollChapter]);
+
+  const booted = useRef(false);
+  useLayoutEffect(() => {
+    if (booted.current) return;
+    booted.current = true;
+    jumping.current = true;
+    const id = window.location.hash.replace(/^#/, "");
+    if (id && doc.chapters.some((c) => c.id === id)) {
+      scrollChapter(id, "auto");
+    }
+    holdY.current = window.scrollY;
+    followHash.current = false;
+    jumping.current = false;
+  }, [doc, scrollChapter]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (jumping.current || followHash.current) return;
+      if (Math.abs(window.scrollY - holdY.current) < 32) return;
+      followHash.current = true;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!currentChapterId || !followHash.current) return;
+    if (window.location.hash === `#${currentChapterId}`) return;
+    history.replaceState(null, "", chapterUrl(currentChapterId));
+  }, [currentChapterId]);
+
+  useEffect(() => {
+    const onHash = () => {
+      const id = window.location.hash.replace(/^#/, "");
+      if (!id || !doc.chapters.some((c) => c.id === id)) return;
+      unpin();
+      holdHashUntilScroll();
+      scrollChapter(id, "auto");
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [doc, unpin, holdHashUntilScroll, scrollChapter]);
 
   return (
     <>
@@ -177,6 +263,8 @@ export function Reader({ project, highlighter, source, warnings, catalogDefault 
           chapters={doc.chapters}
           pinned={pinnedAnchorId !== null}
           sample={source === "sample"}
+          stale={stale}
+          onReload={onReload}
           onSelectChapter={onSelectChapter}
         />
         {warnText && (

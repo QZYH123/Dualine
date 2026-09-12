@@ -119,8 +119,9 @@ button {
   letter-spacing: 0.04em;
 }
 
-/* The chip already says this is the bundled sample; the tagline lives in the prose. */
-.masthead__project:has(.masthead__chip) .masthead__tagline {
+/* Sample / stale chips already speak; the tagline lives in the prose. */
+.masthead__project:has(.masthead__chip) .masthead__tagline,
+.masthead__project:has(.masthead__stale) .masthead__tagline {
   display: none;
 }
 
@@ -176,6 +177,28 @@ button {
   padding: 0 6px;
   line-height: 1.7;
   border-radius: 2px;
+}
+
+.masthead__stale {
+  font-family: var(--font-cjk-ui);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--zhu);
+  border: 1px solid var(--zhu-hair);
+  background: var(--zhu-wash);
+  padding: 0 6px;
+  line-height: 1.7;
+  border-radius: 2px;
+}
+
+.masthead__stale:hover {
+  color: var(--zhu-deep);
+  background: var(--zhu-wash-strong);
+}
+
+.masthead__stale:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 3px;
 }
 
 .masthead__jump {
@@ -885,35 +908,25 @@ button {
   font-style: italic;
 }
 
-/* pinned state */
+/* pinned state — lives in the code pane header so it never covers lines */
 .code-pane__pin {
-  position: absolute;
-  left: 22px;
-  bottom: 18px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px 6px 9px;
+  gap: 6px;
+  margin-left: 4px;
+  padding: 1px 8px 1px 7px;
   font-family: var(--font-cjk-ui);
-  font-size: 12px;
+  font-size: 11.5px;
   letter-spacing: 0.04em;
   color: var(--ink-2);
-  background: var(--paper-raised);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(30, 29, 26, 0.04);
-  opacity: 0;
-  transform: translateY(6px);
-  transition:
-    opacity var(--dur-fade) var(--ease-out),
-    transform var(--dur-fade) var(--ease-out);
-  pointer-events: none;
+  background: var(--zhu-wash);
+  border: 1px solid var(--zhu-hair);
+  border-radius: 3px;
 }
 
-.code-pane__pin.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+.code-pane__pin:hover {
+  color: var(--zhu-deep);
+  background: var(--zhu-wash-strong);
 }
 
 .code-pane__pin:focus-visible {
@@ -947,7 +960,6 @@ button {
   .code {
     animation: none;
   }
-  .code-pane__pin,
   .code-pane__hint {
     transition: none;
   }

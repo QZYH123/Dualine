@@ -5,7 +5,7 @@
  *   npx tsx scripts/check-gloss.ts [projects-dir]
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   checkRefs,
@@ -67,6 +67,11 @@ function glossEntries(root: string): { id: string; glossPath: string }[] {
       out.push({ id: name, glossPath });
     }
   }
+  if (out.length > 0) return out;
+  const self = join(root, "gloss.md");
+  if (existsSync(self) && statSync(self).isFile()) {
+    out.push({ id: basename(resolve(root)), glossPath: self });
+  }
   return out;
 }
 
@@ -84,7 +89,7 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
   const entries = glossEntries(root);
   if (entries.length === 0) {
     console.log(
-      `0 glosses checked under ${root} — expected ${root}/<id>/gloss.md`,
+      `0 glosses checked under ${root} — expected ${root}/<id>/gloss.md or ${root}/gloss.md`,
     );
     return 1;
   }

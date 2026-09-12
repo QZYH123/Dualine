@@ -18,3 +18,4 @@ run-grok-ship.sh
 .agent-prompt.txt
 .grok-ship-prompt.md
 .grok/
+.playwright-mcp/

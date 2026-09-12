@@ -159,4 +159,31 @@ describe("handle catalog against an explicit root", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test("a folder with gloss.md is listed as itself; /rev tracks the stamp", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-self-api-"));
+    const self = join(parent, "solo");
+    try {
+      mkdirSync(self);
+      writeFileSync(join(self, "gloss.md"), "# Solo\n\nLead.\n\n## One\n\nHi.\n");
+      const id = "solo";
+      const listed = handle("GET", "/api/projects", self);
+      const body = listed.body as { projects: { id: string }[] };
+      assert.deepEqual(
+        body.projects.map((p) => p.id),
+        [id],
+      );
+      const detail = handle("GET", `/api/projects/${id}`, self);
+      assert.equal(detail.status, 200);
+      const payload = detail.body as { rev: string; gloss: string };
+      assert.match(payload.rev, /^\d+$/);
+      const rev = handle("GET", `/api/projects/${id}/rev`, self);
+      assert.equal(rev.status, 200);
+      assert.deepEqual(rev.body, { rev: payload.rev });
+      const missingRev = handle("GET", "/api/projects/nope/rev", self);
+      assert.equal(missingRev.status, 404);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
 });

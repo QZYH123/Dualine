@@ -125,6 +125,61 @@ describe("loadProject", () => {
     }
   });
 
+  test("a folder with gloss.md is itself a project when it has no children", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-self-"));
+    const selfRoot = join(parent, "solo");
+    try {
+      mkdirSync(selfRoot);
+      writeFileSync(
+        join(selfRoot, "gloss.md"),
+        `---
+name: Solo
+tagline: just me
+---
+
+# Solo
+
+Lead.
+
+## One
+
+See [a](src/a.ts#L1).
+`,
+      );
+      mkdirSync(join(selfRoot, "src"));
+      writeFileSync(join(selfRoot, "src/a.ts"), "export const a = 1;\n");
+      const listed = listProjects(selfRoot);
+      assert.equal(listed.length, 1);
+      assert.equal(listed[0].name, "Solo");
+      assert.equal(listed[0].id, "solo");
+      const detail = loadProject("solo", selfRoot);
+      assert.ok(detail);
+      assert.equal(detail.name, "Solo");
+      assert.ok("src/a.ts" in detail.files);
+      assert.deepEqual(detail.warnings, []);
+      assert.match(detail.rev, /^\d+$/);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("child projects win over a gloss.md sitting at the catalog root", () => {
+    const mixed = mkdtempSync(join(tmpdir(), "gloss-mixed-"));
+    try {
+      writeFileSync(join(mixed, "gloss.md"), "# Root\n\nIgnored when children exist.\n");
+      mkdirSync(join(mixed, "child"));
+      writeFileSync(join(mixed, "child", "gloss.md"), "---\nname: Child\n---\n# Child\n\nHi.\n");
+      const listed = listProjects(mixed);
+      assert.deepEqual(
+        listed.map((p) => p.id),
+        ["child"],
+      );
+      assert.equal(loadProject("child", mixed)?.name, "Child");
+    } finally {
+      rmSync(mixed, { recursive: true, force: true });
+    }
+  });
+
   test("shortly against examples/ has 5 files and no warnings", () => {
     const prev = process.env.GLOSS_PROJECTS_DIR;
     delete process.env.GLOSS_PROJECTS_DIR;

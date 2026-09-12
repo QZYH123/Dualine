@@ -32,6 +32,18 @@ describe("runCheck", () => {
     assert.equal(runCheck([empty]), 1);
   });
 
+  test("a folder with gloss.md at its root is checked as one project", () => {
+    const self = join(tmp, "self-app");
+    mkdirSync(self);
+    writeFileSync(
+      join(self, "gloss.md"),
+      "# Self\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n",
+    );
+    mkdirSync(join(self, "src"));
+    writeFileSync(join(self, "src/a.ts"), "export const a = 1;\n");
+    assert.equal(runCheck([self]), 0);
+  });
+
   test("unservable id is a problem", () => {
     const root = join(tmp, "ids");
     mkdirSync(join(root, "Bad Name"), { recursive: true });
