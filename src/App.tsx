@@ -6,9 +6,10 @@ import {
   requestedProjectId,
   type LoadResult,
 } from "./lib/load";
+import { COPY, chromeLocale, glossLocale, homeHref, htmlLang, type Locale } from "./lib/locale";
 import { noticeCopy, noticeShowsBack } from "./lib/notice";
 import { Reader } from "./reader/Reader";
-import { Wordmark } from "./reader/Masthead";
+import { LangSwitch, Wordmark } from "./reader/Masthead";
 
 export default function App() {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
@@ -31,10 +32,6 @@ export default function App() {
       alive = false;
     };
   }, [tick]);
-
-  useEffect(() => {
-    if (loaded?.kind === "project") document.title = `${loaded.project.name} · Gloss 对照`;
-  }, [loaded]);
 
   useEffect(() => {
     if (loaded?.kind !== "project" || loaded.source !== "api" || !loaded.rev) return;
@@ -61,8 +58,27 @@ export default function App() {
 
   const reload = useCallback(() => setTick((n) => n + 1), []);
 
+  const search = typeof window === "undefined" ? "" : window.location.search;
+  const nav = typeof navigator === "undefined" ? undefined : navigator.language;
+  const locale =
+    loaded?.kind === "project"
+      ? chromeLocale(search, loaded.project, nav)
+      : chromeLocale(search, undefined, nav);
+  const noteLocale =
+    loaded?.kind === "project" ? glossLocale(loaded.project.locale, loaded.project.doc) : locale;
+  const copy = COPY[locale];
+
+  useEffect(() => {
+    document.documentElement.lang = htmlLang(locale);
+  }, [locale]);
+
+  useEffect(() => {
+    if (loaded?.kind === "project") document.title = copy.documentTitle(loaded.project.name);
+    else document.title = copy.defaultTitle;
+  }, [loaded, copy]);
+
   if (!highlighter || !loaded) {
-    return <div className="loading">对照</div>;
+    return <div className="loading">{copy.loading}</div>;
   }
 
   if (loaded.kind === "project") {
@@ -75,12 +91,14 @@ export default function App() {
         warnings={loaded.warnings}
         catalogDefault={requestedProjectId() === null}
         stale={stale}
+        locale={locale}
+        noteLocale={noteLocale}
         onReload={reload}
       />
     );
   }
 
-  return <Notice result={loaded} />;
+  return <Notice result={loaded} locale={locale} />;
 }
 
 /*
@@ -89,15 +107,25 @@ export default function App() {
  * the loading state — one line of Chinese, one line of mono that says exactly
  * where to look.
  */
-function Notice({ result }: { result: Exclude<LoadResult, { kind: "project" }> }) {
+function Notice({
+  result,
+  locale,
+}: {
+  result: Exclude<LoadResult, { kind: "project" }>;
+  locale: Locale;
+}) {
   const catalog = "catalog" in result ? result.catalog : undefined;
-  const { title, hint, tip } = noticeCopy(result);
+  const { title, hint, tip } = noticeCopy(result, locale);
+  const copy = COPY[locale];
   const projects = catalog?.projects ?? [];
 
   return (
     <div className="loading notice" role="status">
       <div>
-        <Wordmark as="p" />
+        <div className="masthead__brand">
+          <Wordmark as="p" />
+          <LangSwitch locale={locale} />
+        </div>
         <p className="notice__title">{title}</p>
         <p className="notice__hint">{hint}</p>
         {tip && <p className="notice__tip">{tip}</p>}
@@ -105,15 +133,15 @@ function Notice({ result }: { result: Exclude<LoadResult, { kind: "project" }> }
           <ul className="notice__projects">
             {projects.map((p) => (
               <li key={p.id}>
-                <a href={`/?project=${encodeURIComponent(p.id)}`}>{p.id}</a>
+                <a href={homeHref(locale, p.id)}>{p.id}</a>
                 {p.tagline ? <span>{p.tagline}</span> : null}
               </li>
             ))}
           </ul>
         )}
         {noticeShowsBack(result.kind) && (
-          <a className="notice__back" href="/">
-            返回
+          <a className="notice__back" href={homeHref(locale)}>
+            {copy.back}
           </a>
         )}
       </div>

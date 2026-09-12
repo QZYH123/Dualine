@@ -1,11 +1,14 @@
 import { memo, type ReactNode } from "react";
-import { cjkNumeral, type Chapter, type GlossDoc, type Inline } from "../lib/gloss";
+import { type Chapter, type GlossDoc, type Inline } from "../lib/gloss";
+import { chapterNum, type Copy, type Locale } from "../lib/locale";
 
 interface ProseProps {
   doc: GlossDoc;
   currentPassageId: string | null;
   hoverAnchorId: string | null;
   pinnedAnchorId: string | null;
+  locale: Locale;
+  copy: Copy;
   onAnchorHover: (id: string | null) => void;
   onAnchorClick: (id: string) => void;
 }
@@ -15,13 +18,15 @@ export const Prose = memo(function Prose({
   currentPassageId,
   hoverAnchorId,
   pinnedAnchorId,
+  locale,
+  copy,
   onAnchorHover,
   onAnchorClick,
 }: ProseProps) {
   return (
     <>
       <header className="title-block">
-        <p className="title-block__eyebrow">Gloss · 对照笔记</p>
+        <p className="title-block__eyebrow">{copy.eyebrow}</p>
         <h1 className="title-block__title">{doc.title}</h1>
         {doc.lead.length > 0 && (
           <p className="title-block__lead">
@@ -37,6 +42,7 @@ export const Prose = memo(function Prose({
           currentPassageId={currentPassageId}
           hoverAnchorId={hoverAnchorId}
           pinnedAnchorId={pinnedAnchorId}
+          locale={locale}
           onAnchorHover={onAnchorHover}
           onAnchorClick={onAnchorClick}
         />
@@ -45,7 +51,7 @@ export const Prose = memo(function Prose({
   );
 });
 
-interface ChapterProps extends Omit<ProseProps, "doc"> {
+interface ChapterProps extends Omit<ProseProps, "doc" | "copy"> {
   chapter: Chapter;
 }
 
@@ -54,13 +60,14 @@ function ChapterView({
   currentPassageId,
   hoverAnchorId,
   pinnedAnchorId,
+  locale,
   onAnchorHover,
   onAnchorClick,
 }: ChapterProps) {
   return (
     <section className="chapter" id={chapter.id} data-chapter={chapter.id}>
       <header className="chapter__head">
-        <span className="chapter__num">{cjkNumeral(chapter.index)}</span>
+        <span className="chapter__num">{chapterNum(chapter.index, locale)}</span>
         <h2 className="chapter__title">{chapter.title}</h2>
       </header>
       {chapter.passages.map((p) => (

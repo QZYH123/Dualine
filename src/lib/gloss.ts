@@ -56,6 +56,8 @@ export interface Project {
   name: string;
   tagline: string;
   lang: string;
+  /** Raw `locale:` from the gloss frontmatter, if any (`zh` / `en`). */
+  locale?: string;
   doc: GlossDoc;
   files: Record<string, ProjectFile>;
 }
@@ -326,6 +328,7 @@ export function buildProject(
     name: meta.name ?? doc.title,
     tagline: meta.tagline ?? "",
     lang,
+    locale: meta.locale || undefined,
     doc,
     files: projectFiles,
   };

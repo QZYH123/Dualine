@@ -2,6 +2,7 @@ import { memo, useMemo, useRef, useState, type RefObject } from "react";
 import type { HighlighterCore } from "shiki/core";
 import { hitAtLine, type CodeRef, type GlossHit, type ProjectFile } from "../lib/gloss";
 import { tokenize, type TokenLine } from "../lib/highlight";
+import type { Copy } from "../lib/locale";
 
 interface CodePaneProps {
   file: ProjectFile | null;
@@ -16,6 +17,7 @@ interface CodePaneProps {
   onUnpin: () => void;
   onLineHover: (anchorId: string | null) => void;
   onLineClick: (anchorId: string) => void;
+  copy: Copy;
 }
 
 const LANG_LABEL: Record<string, string> = {
@@ -37,6 +39,7 @@ export const CodePane = memo(function CodePane({
   onUnpin,
   onLineHover,
   onLineClick,
+  copy,
 }: CodePaneProps) {
   const lines: TokenLine[] = useMemo(
     () => (file ? tokenize(highlighter, file.content.replace(/\n$/, ""), file.lang) : []),
@@ -67,7 +70,7 @@ export const CodePane = memo(function CodePane({
   };
 
   return (
-    <aside className="code-pane" aria-label="代码">
+    <aside className="code-pane" aria-label={copy.code}>
       <div className="code-pane__head">
         <span className="code-pane__path">
           {dir && <span className="code-pane__dir">{dir}/</span>}
@@ -75,21 +78,21 @@ export const CodePane = memo(function CodePane({
         </span>
         <span className="code-pane__meta">
           <span className={"code-pane__hint" + (codeHover ? " is-visible" : "")} aria-live="polite">
-            {codeHover && <>{rangeLabel(codeHover.ref)} · 回到正文 ↩</>}
+            {codeHover && <>{rangeLabel(codeHover.ref)} · {copy.backToNote} ↩</>}
           </span>
           {inFocus && !codeHover && <span className="code-pane__span">{rangeLabel(inFocus)}</span>}
           {file && !pinned && <span>{LANG_LABEL[file.lang] ?? file.lang}</span>}
-          {file && !pinned && <span>{lines.length} 行</span>}
+          {file && !pinned && <span>{copy.lines(lines.length)}</span>}
           {pinned && (
             <button type="button" className="code-pane__pin" onClick={onUnpin}>
-              已固定 <kbd>Esc</kbd> 释放
+              {copy.pinned} <kbd>Esc</kbd> {copy.unpin}
             </button>
           )}
         </span>
       </div>
 
       <div className="code-pane__viewport" ref={viewportRef}>
-        {!file && <p className="code-pane__empty">没有可对照的文件</p>}
+        {!file && <p className="code-pane__empty">{copy.emptyCode}</p>}
         {file && (
           <div
             key={file.path}
@@ -115,8 +118,8 @@ export const CodePane = memo(function CodePane({
                   data-line={n}
                   role={hit ? "button" : undefined}
                   tabIndex={hit ? 0 : undefined}
-                  title={hit ? "回到解释这段代码的正文" : undefined}
-                  aria-label={hit ? `第 ${n} 行，回到正文` : undefined}
+                  title={hit ? copy.lineBackTitle : undefined}
+                  aria-label={hit ? copy.lineBackAria(n) : undefined}
                   onMouseEnter={() => enter(hit)}
                   onMouseDown={
                     hit

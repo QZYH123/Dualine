@@ -61,18 +61,41 @@ button {
   border-bottom: 1px solid var(--rule);
 }
 
+.masthead__brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  justify-self: start;
+}
+
 .wordmark {
   display: inline-flex;
   align-items: baseline;
   gap: 10px;
   margin: 0;
-  justify-self: start;
   font-family: var(--font-prose);
   font-size: 19px;
   font-weight: 500;
   letter-spacing: -0.012em;
   color: var(--ink);
   text-decoration: none;
+}
+
+.lang-switch {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--ink-4);
+  text-decoration: none;
+}
+
+.lang-switch:hover {
+  color: var(--ink-2);
+}
+
+.lang-switch:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 3px;
 }
 
 .wordmark:focus-visible {
@@ -445,7 +468,6 @@ button {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--ink-4);
   margin: 0 0 22px;
 }
@@ -988,8 +1010,13 @@ button {
   padding: 0 24px;
 }
 
-.notice .wordmark {
+.notice .masthead__brand {
+  justify-content: center;
   margin: 0 auto 28px;
+}
+
+.notice .wordmark {
+  margin: 0;
   justify-content: center;
 }
 

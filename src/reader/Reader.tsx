@@ -8,8 +8,9 @@ import {
   type CodeRef,
   type Project,
 } from "../lib/gloss";
-import { CATALOG_DEFAULT_HINT, warningStripExpandable, warningStripText } from "../lib/notice";
-import { Masthead, Wordmark } from "./Masthead";
+import { warningStripExpandable, warningStripText } from "../lib/notice";
+import { COPY, htmlLang, type Copy, type Locale } from "../lib/locale";
+import { LangSwitch, Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
 import { CodePane } from "./CodePane";
@@ -23,6 +24,8 @@ interface ReaderProps {
   /** True when the URL has no `?project=` — the catalog's first listed id. */
   catalogDefault?: boolean;
   stale?: boolean;
+  locale: Locale;
+  noteLocale: Locale;
   onReload?: () => void;
 }
 
@@ -42,10 +45,13 @@ export function Reader({
   warnings,
   catalogDefault = false,
   stale = false,
+  locale,
+  noteLocale,
   onReload,
 }: ReaderProps) {
   const { doc, files } = project;
-  const warnText = warningStripText(warnings);
+  const copy = COPY[locale];
+  const warnText = warningStripText(warnings, locale);
 
   const passages = useMemo(() => allPassages(doc), [doc]);
   const refById = useMemo(() => resolveRefs(doc), [doc]);
@@ -250,9 +256,12 @@ export function Reader({
     <>
       <div className="notice viewport-notice" role="status">
         <div>
-          <Wordmark as="p" />
-          <p className="notice__title">对照需要更宽的窗口</p>
-          <p className="notice__hint">≥ 1100px</p>
+          <div className="masthead__brand">
+            <Wordmark as="p" />
+            <LangSwitch locale={locale} />
+          </div>
+          <p className="notice__title">{copy.wideWindow}</p>
+          <p className="notice__hint">{copy.wideHint}</p>
         </div>
       </div>
       <div className="session">
@@ -264,21 +273,37 @@ export function Reader({
           pinned={pinnedAnchorId !== null}
           sample={source === "sample"}
           stale={stale}
+          locale={locale}
+          noteLocale={noteLocale}
+          copy={copy}
           onReload={onReload}
           onSelectChapter={onSelectChapter}
         />
         {warnText && (
-          <WarnStrip warnings={warnings} label={warnText} catalogDefault={catalogDefault} />
+          <WarnStrip
+            warnings={warnings}
+            label={warnText}
+            catalogDefault={catalogDefault}
+            copy={copy}
+          />
         )}
         <main className="reader">
-          <Rail chapters={doc.chapters} currentChapterId={currentChapterId} onSelect={onSelectChapter} />
+          <Rail
+            chapters={doc.chapters}
+            currentChapterId={currentChapterId}
+            noteLocale={noteLocale}
+            copy={copy}
+            onSelect={onSelectChapter}
+          />
 
-          <article className="prose" ref={proseRef}>
+          <article className="prose" ref={proseRef} lang={htmlLang(noteLocale)}>
             <Prose
               doc={doc}
               currentPassageId={currentPassageId}
               hoverAnchorId={hoverAnchorId}
               pinnedAnchorId={pinnedAnchorId}
+              locale={noteLocale}
+              copy={copy}
               onAnchorHover={setHoverAnchorId}
               onAnchorClick={onAnchorClick}
             />
@@ -300,6 +325,7 @@ export function Reader({
             onUnpin={unpin}
             onLineHover={setHoverAnchorId}
             onLineClick={jumpToAnchor}
+            copy={copy}
           />
         </main>
       </div>
@@ -311,21 +337,23 @@ function WarnStrip({
   warnings,
   label,
   catalogDefault,
+  copy,
 }: {
   warnings: string[];
   label: string;
   catalogDefault: boolean;
+  copy: Copy;
 }) {
   const [open, setOpen] = useState(false);
   const expandable = warningStripExpandable(warnings);
-  const why = catalogDefault ? <span className="warn-strip__why">{CATALOG_DEFAULT_HINT}</span> : null;
-  const expandTitle = "查看无法落地的锚点";
+  const why = catalogDefault ? <span className="warn-strip__why">{copy.catalogDefault}</span> : null;
+  const expandTitle = copy.warnExpand;
   const title = expandable
     ? catalogDefault
-      ? `${expandTitle} · ${CATALOG_DEFAULT_HINT}`
+      ? `${expandTitle} · ${copy.catalogDefault}`
       : expandTitle
     : catalogDefault
-      ? CATALOG_DEFAULT_HINT
+      ? copy.catalogDefault
       : undefined;
 
   const warningKey = warnings.join("\n");

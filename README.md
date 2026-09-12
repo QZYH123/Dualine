@@ -91,6 +91,7 @@ A project is a folder with a `gloss.md` and its source files (see `examples/shor
 name: shortly
 tagline: 一个短链接服务
 lang: typescript
+locale: zh
 ---
 
 # shortly 是怎么工作的
@@ -103,7 +104,8 @@ Lead paragraph, shown under the title.
 ```
 
 - `#` — document title; the paragraph after it is the lead.
-- `##` — chapter (numbered automatically 一、二、三…).
+- `##` — chapter (numbered 一、二、三… in Chinese chrome, 1, 2, 3 in English).
+- `locale: zh` or `en` — optional. Chrome follows the note (CJK in the title/lead → Chinese, otherwise English). `?lang=en` or `?lang=zh` overrides. The wordmark stays Gloss · 对照; a quiet EN / 中 next to it switches chrome.
 - Every paragraph faces one span: its first anchor, or an explicit `@[src/x.ts#L1-L9]` at the start, or — if it has neither — the span of the previous paragraph.
 - `` `code` ``, `**strong**`, `*em*` work as usual. Write a space between CJK and Latin.
 - Paths are relative to the project folder and must stay inside it. Line numbers are 1-based and inclusive.
@@ -150,6 +152,7 @@ src/
   lib/highlight.ts      Shiki, one restrained theme
   lib/load.ts           ?project= → API catalog → project or a quiet notice
   lib/load-decision.ts  fallback policy (no silent sample for a real project)
+  lib/locale.ts         chrome language (zh / en)
   reader/               Masthead · Rail · Prose · CodePane · useReadingSync
   styles/tokens.css     paper, ink, 朱 — the whole visual system
   styles/reader.css

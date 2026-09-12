@@ -1,4 +1,5 @@
 import type { Catalog } from "./load-decision.js";
+import { COPY, type Locale } from "./locale.js";
 import { looksLikeWindowsPath } from "./paths.js";
 
 export type NoticeKind = "not-found" | "unreachable" | "empty" | "no-dir";
@@ -16,33 +17,36 @@ export function noticeShowsBack(kind: NoticeKind): boolean {
 }
 
 /** Missing / not-a-directory projects folder: prefer an absolute path. */
-export const NOTICE_NO_DIR_TIP = "把 GLOSS_PROJECTS_DIR 设成文件夹的绝对路径";
+export const NOTICE_NO_DIR_TIP = COPY.zh.noDirTip;
 
 /** Empty catalog: child folders, or this folder itself if it has gloss.md. */
-export const NOTICE_EMPTY_TIP =
-  "每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md；也可以直接指到那个项目文件夹";
+export const NOTICE_EMPTY_TIP = COPY.zh.emptyTip;
 
 /** API down: name the recovery, then refresh this page; 返回 stays home. */
-export const NOTICE_UNREACHABLE_TIP = "API 起来后再刷新这一页";
+export const NOTICE_UNREACHABLE_TIP = COPY.zh.unreachableTip;
 
 /** Pasted drive/UNC path — we do not convert it to a POSIX folder. */
-export const NOTICE_WINDOWS_PATH_TIP = "这是 Windows 路径；请改成当前系统上的绝对路径";
+export const NOTICE_WINDOWS_PATH_TIP = COPY.zh.windowsTip;
 
-export function noDirTip(root?: string): string {
-  return root && looksLikeWindowsPath(root) ? NOTICE_WINDOWS_PATH_TIP : NOTICE_NO_DIR_TIP;
+export function noDirTip(root?: string, locale: Locale = "zh"): string {
+  const copy = COPY[locale];
+  return root && looksLikeWindowsPath(root) ? copy.windowsTip : copy.noDirTip;
 }
 
 /**
  * Quiet extra on the warn strip when `/` opened the catalog's first id.
  * Not a redirect, not a shortly preference — just how the list works.
  */
-export const CATALOG_DEFAULT_HINT = "目录第一项 · 用 ?project=<id> 指定";
+export const CATALOG_DEFAULT_HINT = COPY.zh.catalogDefault;
 
 /** One-line strip under the masthead. Null when there is nothing to say. */
-export function warningStripText(warnings: string[]): string | null {
+export function warningStripText(
+  warnings: string[],
+  locale: Locale = "zh",
+): string | null {
   if (warnings.length === 0) return null;
   if (warnings.length === 1) return warnings[0];
-  return `${warnings.length} 处锚点无法落到代码`;
+  return COPY[locale].warnMany(warnings.length);
 }
 
 export function warningStripExpandable(warnings: string[]): boolean {
@@ -54,38 +58,39 @@ export function projectPath(catalog: Catalog, id: string): string {
 }
 
 /** Title / hint / tip for a load-failure notice — App only renders. */
-export function noticeCopy(result: NoticeScreen): {
+export function noticeCopy(
+  result: NoticeScreen,
+  locale: Locale = "zh",
+): {
   title: string;
   hint: string;
   tip: string | null;
 } {
+  const copy = COPY[locale];
   switch (result.kind) {
     case "not-found":
       return {
-        title: `找不到项目 “${result.id}”`,
+        title: copy.notFound(result.id),
         hint: projectPath(result.catalog, result.id),
-        tip: result.catalog.projects.length > 0 ? "这个目录里还有" : NOTICE_EMPTY_TIP,
+        tip: result.catalog.projects.length > 0 ? copy.alsoHere : copy.emptyTip,
       };
     case "unreachable":
       return {
-        title: "API 未运行，读不到这个项目",
+        title: copy.unreachable,
         hint: "npm run dev:all",
-        tip: NOTICE_UNREACHABLE_TIP,
+        tip: copy.unreachableTip,
       };
     case "empty":
       return {
-        title: "这个目录下没有项目",
+        title: copy.empty,
         hint: result.catalog.root ?? "GLOSS_PROJECTS_DIR",
-        tip: NOTICE_EMPTY_TIP,
+        tip: copy.emptyTip,
       };
     case "no-dir":
       return {
-        title:
-          result.catalog.rootStatus === "not-directory"
-            ? "项目路径不是一个目录"
-            : "找不到项目目录",
+        title: result.catalog.rootStatus === "not-directory" ? copy.notDirectory : copy.missingDir,
         hint: result.catalog.root ?? "GLOSS_PROJECTS_DIR",
-        tip: noDirTip(result.catalog.root),
+        tip: noDirTip(result.catalog.root, locale),
       };
   }
 }

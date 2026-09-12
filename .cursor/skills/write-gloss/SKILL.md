@@ -41,13 +41,16 @@ Markdown plus one extension. No `###`, no images, no HTML. `[label](url)` that i
 name: shortly
 tagline: 一个短链接服务
 lang: typescript
+locale: zh
 ---
 ```
+
+`locale: zh` or `en` is optional. Dualine's chrome follows the note (CJK in the title/lead → Chinese, otherwise English). `?lang=` overrides. Chapter numbers are 一、二、三… or 1, 2, 3 to match.
 
 **Structure**
 
 - `#` title. The paragraph(s) after it, before the first `##`, are the lead (shown under the title; they do not drive the code pane).
-- `##` chapter. Dualine numbers them 一、二、三…
+- `##` chapter. Dualine numbers them 一、二、三… (or 1, 2, 3 when the chrome is English).
 - A blank line ends a passage. Soft-wrapped lines in one passage are joined with a space.
 
 **Anchors** — a link whose target is `path#L<start>-L<end>`:

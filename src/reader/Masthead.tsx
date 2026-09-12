@@ -1,7 +1,15 @@
 import { memo } from "react";
-import { cjkNumeral, type Chapter } from "../lib/gloss";
+import type { Chapter } from "../lib/gloss";
+import {
+  COPY,
+  chapterNum,
+  homeHref,
+  langHref,
+  type Copy,
+  type Locale,
+} from "../lib/locale";
 
-export function Wordmark({ as = "a" }: { as?: "a" | "p" }) {
+export function Wordmark({ as = "a", href = "/" }: { as?: "a" | "p"; href?: string }) {
   const inner = (
     <>
       Gloss
@@ -11,8 +19,21 @@ export function Wordmark({ as = "a" }: { as?: "a" | "p" }) {
   );
   if (as === "p") return <p className="wordmark">{inner}</p>;
   return (
-    <a className="wordmark" href="/">
+    <a className="wordmark" href={href}>
       {inner}
+    </a>
+  );
+}
+
+export function LangSwitch({ locale }: { locale: Locale }) {
+  const next: Locale = locale === "zh" ? "en" : "zh";
+  return (
+    <a
+      className="lang-switch"
+      href={langHref(next, window.location)}
+      hrefLang={next === "zh" ? "zh-CN" : "en"}
+    >
+      {COPY[locale].otherLang}
     </a>
   );
 }
@@ -25,6 +46,9 @@ interface MastheadProps {
   pinned: boolean;
   sample?: boolean;
   stale?: boolean;
+  locale: Locale;
+  noteLocale: Locale;
+  copy: Copy;
   onReload?: () => void;
   onSelectChapter: (chapterId: string) => void;
 }
@@ -37,24 +61,30 @@ export const Masthead = memo(function Masthead({
   pinned,
   sample,
   stale,
+  locale,
+  noteLocale,
+  copy,
   onReload,
   onSelectChapter,
 }: MastheadProps) {
   return (
     <header className="masthead">
-      <Wordmark />
+      <div className="masthead__brand">
+        <Wordmark href={homeHref(locale)} />
+        <LangSwitch locale={locale} />
+      </div>
 
       <div className="masthead__project">
         <span className="masthead__name">{name}</span>
-        {sample && <span className="masthead__chip">示例</span>}
+        {sample && <span className="masthead__chip">{copy.sample}</span>}
         {stale && (
           <button
             type="button"
             className="masthead__stale"
             onClick={onReload}
-            title="磁盘上的笔记或代码已更新"
+            title={copy.staleTitle}
           >
-            已更新
+            {copy.stale}
           </button>
         )}
         {tagline && <span className="masthead__tagline">{tagline}</span>}
@@ -63,25 +93,25 @@ export const Masthead = memo(function Masthead({
       <div className="masthead__state">
         {pinned && (
           <span className="masthead__pinned">
-            已固定 <kbd>Esc</kbd>
+            {copy.pinned} <kbd>Esc</kbd>
           </span>
         )}
         {chapter && (
           <span className="masthead__chapter">
-            <em>{cjkNumeral(chapter.index)}</em>
+            <em>{chapterNum(chapter.index, noteLocale)}</em>
             {chapter.title}
           </span>
         )}
         {chapters.length > 0 && (
           <label className="masthead__jump">
-            <span className="visually-hidden">章节</span>
+            <span className="visually-hidden">{copy.chapters}</span>
             <select
               value={chapter?.id ?? chapters[0].id}
               onChange={(e) => onSelectChapter(e.target.value)}
             >
               {chapters.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {cjkNumeral(c.index)} {c.title}
+                  {chapterNum(c.index, noteLocale)} {c.title}
                 </option>
               ))}
             </select>
