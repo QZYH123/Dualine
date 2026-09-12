@@ -18,6 +18,7 @@ import { loadShortlyFixture } from "../fixtures/shortly";
 import {
   afterDetail,
   afterList,
+  isUsablePayload,
   requestedProjectId as projectIdFromSearch,
   SAMPLE_ID,
   type Catalog,
@@ -37,7 +38,7 @@ export type LoadResult =
   | {
       kind: "project";
       project: Project;
-      source: "api" | "sample";
+      source: "api" | "sample" | "export";
       warnings: string[];
       rev?: string;
     }
@@ -72,7 +73,21 @@ async function getJson(url: string): Promise<FetchResult> {
   return { status: res.status, body };
 }
 
+function readExportPayload(): LoadResult | null {
+  const raw = (window as Window & { __GLOSS_EXPORT__?: unknown }).__GLOSS_EXPORT__;
+  if (!isUsablePayload(raw)) return null;
+  return {
+    kind: "project",
+    project: buildProject(typeof raw.id === "string" && raw.id ? raw.id : "export", raw.gloss, raw.files),
+    source: "export",
+    warnings: payloadWarnings(raw),
+  };
+}
+
 export async function loadProject(requested: string | null): Promise<LoadResult> {
+  const frozen = readExportPayload();
+  if (frozen) return frozen;
+
   const list = await getJson("/api/projects");
   const listed = afterList(requested, list);
   if (listed.kind === "sample") {

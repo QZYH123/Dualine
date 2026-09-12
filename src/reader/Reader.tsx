@@ -19,7 +19,7 @@ import { useReadingSync } from "./useReadingSync";
 interface ReaderProps {
   project: Project;
   highlighter: HighlighterCore;
-  source: "api" | "sample";
+  source: "api" | "sample" | "export";
   warnings: string[];
   /** True when the URL has no `?project=` — the catalog's first listed id. */
   catalogDefault?: boolean;
@@ -273,6 +273,7 @@ export function Reader({
           pinned={pinnedAnchorId !== null}
           sample={source === "sample"}
           stale={stale}
+          frozen={source === "export"}
           locale={locale}
           noteLocale={noteLocale}
           copy={copy}

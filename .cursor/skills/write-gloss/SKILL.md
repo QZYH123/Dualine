@@ -80,7 +80,7 @@ Follow a request or data path, not the directory listing. Name real structures, 
 - Length: one sitting (about 6–10 chapters for a small app; one subsystem of a large repo, not the whole tree).
 - First chapter: what it does. Then walk one path. Last chapter: what it does not do, with anchors on the natural extension points.
 - Language: the user's language. Default Chinese if they are writing in Chinese.
-- Tests, lockfiles, generated code, `node_modules`, and `dist` are out unless they are the subject.
+- Tests, package lockfiles, generated code, `node_modules`, and `dist` are out unless they are the subject. Do commit `gloss.lock` (Dualine's memory of the faced text).
 
 **Line numbers are facts.** Before citing a span, read that file. After the draft, re-read every cited range and confirm the sentence still matches those lines. Never guess.
 
@@ -92,7 +92,7 @@ Follow a request or data path, not the directory listing. Name real structures, 
 2. **Outline** chapters as that path. Do not outline files.
 3. **Draft** `gloss.md`. For each claim, read the file, then write the sentence with an accurate anchor.
 4. **Check.**
-   - Dualine checkout available: `npm run check:gloss -- <parent>` from that repo. Fix every `file has N lines` / missing-file line until `0 problems`.
+   - Dualine checkout available: `npm run check:gloss -- <parent>` from that repo. Fix every `file has N lines` / missing-file / `code changed since gloss.lock` line. When the ranges are right, `npm run check:gloss -- <parent> --accept` writes `gloss.lock`. Stop at `0 problems`.
    - Otherwise: for each `path#Lstart-Lend`, the file exists under the project folder, `1 ≤ start ≤ end ≤ line count`.
 5. **Handoff** (see below). Do not start Dualine unless the user asked you to.
 

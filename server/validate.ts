@@ -53,10 +53,12 @@ export interface LocatedRef {
   ref: CodeRef;
 }
 
+export type RefReason = "outside" | "missing" | "range" | "drift" | "lock";
+
 export interface RefProblem {
   loc: string;
   ref: CodeRef;
-  reason: "outside" | "missing" | "range";
+  reason: RefReason;
   message: string;
 }
 
@@ -109,11 +111,15 @@ export function refLabel(ref: CodeRef): string {
     : `${ref.file}#L${ref.start}-L${ref.end}`;
 }
 
-export function lineCount(src: string): number {
-  if (src.length === 0) return 0;
+export function fileLines(src: string): string[] {
+  if (src.length === 0) return [];
   const lines = src.split(/\r?\n/);
   if (lines[lines.length - 1] === "") lines.pop();
-  return lines.length;
+  return lines;
+}
+
+export function lineCount(src: string): number {
+  return fileLines(src).length;
 }
 
 export function safeResolve(root: string, rel: string): string | null {

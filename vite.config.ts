@@ -1,6 +1,21 @@
+import { readFileSync } from "node:fs";
 import type { ServerResponse } from "node:http";
 import react from "@vitejs/plugin-react";
-import { createLogger, defineConfig, type Logger } from "vite";
+import { createLogger, defineConfig, type Logger, type Plugin } from "vite";
+
+const exportPayloadPath = process.env.GLOSS_EXPORT_PAYLOAD;
+const exportOutDir = process.env.GLOSS_EXPORT_OUT;
+
+function exportPayloadPlugin(payloadPath: string): Plugin {
+  return {
+    name: "gloss-export-payload",
+    transformIndexHtml(html) {
+      const json = readFileSync(payloadPath, "utf8").replace(/</g, "\\u003c");
+      const tag = `<script>window.__GLOSS_EXPORT__=${json}</script>`;
+      return html.replace('<div id="root"></div>', `${tag}\n    <div id="root"></div>`);
+    },
+  };
+}
 
 const viteLogger = createLogger();
 let lastProxyWarnAt = 0;
@@ -52,8 +67,12 @@ const apiProxy = {
 };
 
 export default defineConfig({
-  plugins: [react()],
+  base: exportOutDir ? "./" : "/",
+  plugins: [react(), exportPayloadPath ? exportPayloadPlugin(exportPayloadPath) : null].filter(
+    (p): p is Plugin => p !== null,
+  ),
   customLogger,
+  build: exportOutDir ? { outDir: exportOutDir, emptyOutDir: true } : undefined,
   server: {
     port: 5173,
     strictPort: true,

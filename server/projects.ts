@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { splitFrontmatter } from "../src/lib/gloss.js";
+import { checkLock } from "./lock.js";
 import {
   checkRefs,
   collectRefs,
@@ -156,9 +157,12 @@ function loadFromDir(id: string, projectDir: string): ProjectDetail | null {
   const meta = metaFromGloss(id, gloss);
   const refs = collectRefs(gloss);
   const problems = checkRefs(projectDir, refs);
+  const okLocs = new Set(refs.map((r) => r.loc));
+  for (const p of problems) okLocs.delete(p.loc);
+  const lockProblems = checkLock(projectDir, refs, okLocs);
   const seenWarn = new Set<string>();
   const warnings: string[] = [];
-  for (const p of problems) {
+  for (const p of [...problems, ...lockProblems]) {
     if (seenWarn.has(p.message)) continue;
     seenWarn.add(p.message);
     warnings.push(p.message);

@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "spans": [
+    {
+      "loc": "c1.p1.a1",
+      "file": "src/App.tsx",
+      "start": 84,
+      "end": 101,
+      "sha256": "38843334a1a73c8c9a3ecc2ed557d32765b4bd6036c3df9bf60f9309936a4c83"
+    },
+    {
+      "loc": "c1.p2.a1",
+      "file": "src/main.tsx",
+      "start": 6,
+      "end": 10,
+      "sha256": "528070e84bd6fdd700fcee94450f2dce5af4a562d56042f73971069de2426944"
+    },
+    {
+      "loc": "c2.p4.a1",
+      "file": "src/lib/load.ts",
+      "start": 77,
+      "end": 89,
+      "sha256": "9b9c03cd8cee3cc21f3be276b7cd38cca99af1eb3c387dfbcdb2fdeba5f85ae1"
+    },
+    {
+      "loc": "c2.p4.a2",
+      "file": "src/lib/load.ts",
+      "start": 91,
+      "end": 113,
+      "sha256": "0c2e7e4873029b3408c5b836152c9dc59751027acda4bc0fc320ef88edaf321f"
+    },
+    {
+      "loc": "c2.p4.a3",
+      "file": "src/lib/load-decision.ts",
+      "start": 103,
+      "end": 114,
+      "sha256": "5aab1287cbc92a6e083c123563f1239128637e53048613e9b13ebd852c85bc82"
+    },
+    {
+      "loc": "c2.p5.a1",
+      "file": "src/App.tsx",
+      "start": 38,
+      "end": 59,
+      "sha256": "86ac861cf11638b22a7ef806013acd7715cf845ed7af4f5d4e9186b8865ef521"
+    },
+    {
+      "loc": "c3.p6.a1",
+      "file": "src/lib/gloss.ts",
+      "start": 11,
+      "end": 15,
+      "sha256": "20c0b57f27b20ba962fe9468e5db5391bb29b8c52aedcb415b2de5690ac3d90f"
+    },
+    {
+      "loc": "c3.p7.a1",
+      "file": "src/lib/gloss.ts",
+      "start": 227,
+      "end": 245,
+      "sha256": "5eac1d876b9ee5fa4e06574ecb9ec3e2f5718b1ed631184b24e77a67af170281"
+    },
+    {
+      "loc": "c3.p7.a2",
+      "file": "src/lib/gloss.ts",
+      "start": 69,
+      "end": 75,
+      "sha256": "485b6b863de4a30b0eb2dc240fcec6f072f6cbb8aebc5cf7f0a42f6cb0b64b99"
+    },
+    {
+      "loc": "c3.p9.a1",
+      "file": "src/lib/gloss.ts",
+      "start": 271,
+      "end": 279,
+      "sha256": "cbdcc85575bc79924b3e2b164e24d935bca4898f8c2c8ccf8fb46a96002321fd"
+    },
+    {
+      "loc": "c4.p10.a1",
+      "file": "server/index.ts",
+      "start": 41,
+      "end": 105,
+      "sha256": "7d7a4c4001374c86dcbe44337aea1d567ff851e7a0ad2db9b75c96e736a63a60"
+    },
+    {
+      "loc": "c4.p11.a1",
+      "file": "server/projects.ts",
+      "start": 85,
+      "end": 91,
+      "sha256": "8e06aaba1ffa9e95bc1f22f3707789d56ae4741de6d2c33ae6b5f503fc60a3ee"
+    },
+    {
+      "loc": "c4.p12.a1",
+      "file": "server/projects.ts",
+      "start": 94,
+      "end": 109,
+      "sha256": "af1d552f7e15bf02cd67ee1973d10d2cd638cd564a7194ee2323e3579d1f5cdd"
+    },
+    {
+      "loc": "c4.p12.a2",
+      "file": "server/projects.ts",
+      "start": 169,
+      "end": 188,
+      "sha256": "8533456c0cc458a3756cf6005c411c249c72df64d65ab8f8989d65e6a8de3d78"
+    },
+    {
+      "loc": "c4.p12.a3",
+      "file": "server/validate.ts",
+      "start": 202,
+      "end": 235,
+      "sha256": "9acadb4d29cb4e3e0978ea5b78b172862ea842d622831498092c92ae862f96f4"
+    },
+    {
+      "loc": "c4.p13.a1",
+      "file": "server/projects.ts",
+      "start": 112,
+      "end": 139,
+      "sha256": "8f91839b6fd5e09b2174539a7a7b0135b68e3e987aae18234c0fbfe129755777"
+    },
+    {
+      "loc": "c5.p14.a1",
+      "file": "src/reader/useReadingSync.ts",
+      "start": 1,
+      "end": 8,
+      "sha256": "485da1ba618c24ba88031f8a7965c20a70757a05c19362c8b87da6b28c866b11"
+    },
+    {
+      "loc": "c5.p14.a2",
+      "file": "src/reader/useReadingSync.ts",
+      "start": 85,
+      "end": 98,
+      "sha256": "e58a2b79533beb5a2a4a364e4aaedaa40e90dd10a2a56a4b0d1220dbd6a78719"
+    },
+    {
+      "loc": "c5.p15.a1",
+      "file": "src/reader/useReadingSync.ts",
+      "start": 140,
+      "end": 146,
+      "sha256": "2e8199c8a962a15f921024c98e0ed5e8be5a44d468f7b1e49832d9a6a87de8ee"
+    },
+    {
+      "loc": "c5.p16.a1",
+      "file": "src/reader/useReadingSync.ts",
+      "start": 174,
+      "end": 190,
+      "sha256": "e384c9f624cb77db8a7b1fd86e3c28cffa97c8653f97427daaf7572d9879c4f5"
+    },
+    {
+      "loc": "c6.p17.a1",
+      "file": "src/reader/Reader.tsx",
+      "start": 112,
+      "end": 114,
+      "sha256": "9cb9fd8ac3e8c2f4518fd6703242816ca39840b24b1b7c563d335b042c40470d"
+    },
+    {
+      "loc": "c6.p17.a2",
+      "file": "src/reader/Reader.tsx",
+      "start": 118,
+      "end": 124,
+      "sha256": "cdce076f4cd7b15c9c2c649f78b185cf09a4bd6ba192a86f31106e51eacae1f3"
+    },
+    {
+      "loc": "c6.p18.a1",
+      "file": "src/reader/Prose.tsx",
+      "start": 111,
+      "end": 134,
+      "sha256": "57f3a5613dd49bb8c0675804521afcbffade92d3647db6930a10b6b52a961102"
+    },
+    {
+      "loc": "c7.p20.a1",
+      "file": "src/lib/gloss.ts",
+      "start": 292,
+      "end": 310,
+      "sha256": "f82113ae3a1f9a83056c63cf30df7a19fa571e815dbdc14d5965d710f455ad37"
+    },
+    {
+      "loc": "c7.p21.a1",
+      "file": "src/reader/Reader.tsx",
+      "start": 133,
+      "end": 170,
+      "sha256": "6c07eacbb94c48b84d266a37a1443eb7d167a23a30e128bdf1685e2078f32b92"
+    },
+    {
+      "loc": "c7.p22.a1",
+      "file": "src/lib/highlight.ts",
+      "start": 100,
+      "end": 109,
+      "sha256": "8b420beda6f159d24126434ac44f381c6691da268b3c6c81b3ed5f4087effcd5"
+    },
+    {
+      "loc": "c8.p25.a1",
+      "file": "src/lib/load-decision.ts",
+      "start": 96,
+      "end": 101,
+      "sha256": "196f26a600dc97772a56fb55fe3d05980df7153539c0ceab4e499b8f820f4e5e"
+    },
+    {
+      "loc": "c8.p26.a1",
+      "file": "src/reader/Reader.tsx",
+      "start": 257,
+      "end": 265,
+      "sha256": "6bb70d5202011080a2cf64dfe0d777be416e4d67defe4a51ed65a3cddd56c26e"
+    },
+    {
+      "loc": "c8.p27.a1",
+      "file": "server/index.ts",
+      "start": 129,
+      "end": 132,
+      "sha256": "13753b429743332f3509f763dee02aea09f8c8e7bceb55f693cf975f046de0da"
+    }
+  ]
+}

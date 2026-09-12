@@ -66,11 +66,16 @@ export function langHref(
   return `${loc.pathname}?${q}${loc.hash}`;
 }
 
-export function homeHref(locale: Locale, projectId?: string | null): string {
+export function homeHref(
+  locale: Locale,
+  projectId?: string | null,
+  frozen = false,
+): string {
   const p = new URLSearchParams();
   p.set("lang", locale);
-  if (projectId) p.set("project", projectId);
-  return `/?${p.toString()}`;
+  if (!frozen && projectId) p.set("project", projectId);
+  const q = p.toString();
+  return frozen ? `?${q}` : `/?${q}`;
 }
 
 export interface Copy {

@@ -46,6 +46,7 @@ interface MastheadProps {
   pinned: boolean;
   sample?: boolean;
   stale?: boolean;
+  frozen?: boolean;
   locale: Locale;
   noteLocale: Locale;
   copy: Copy;
@@ -61,6 +62,7 @@ export const Masthead = memo(function Masthead({
   pinned,
   sample,
   stale,
+  frozen = false,
   locale,
   noteLocale,
   copy,
@@ -70,7 +72,7 @@ export const Masthead = memo(function Masthead({
   return (
     <header className="masthead">
       <div className="masthead__brand">
-        <Wordmark href={homeHref(locale)} />
+        <Wordmark href={homeHref(locale, null, frozen)} />
         <LangSwitch locale={locale} />
       </div>
 

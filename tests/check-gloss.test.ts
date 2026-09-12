@@ -41,6 +41,8 @@ describe("runCheck", () => {
     );
     mkdirSync(join(self, "src"));
     writeFileSync(join(self, "src/a.ts"), "export const a = 1;\n");
+    assert.equal(runCheck([self]), 1);
+    assert.equal(runCheck([self, "--accept"]), 0);
     assert.equal(runCheck([self]), 0);
   });
 

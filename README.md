@@ -119,12 +119,16 @@ An agent can draft that file. Dualine still only reads. Copy `.cursor/skills/wri
 ```sh
 npm run check          # typecheck + examples + this repo's gloss.md + test
 npm test               # node:test suites under tests/
-npm run check:gloss    # every anchor → a real file and a line range inside it
+npm run check:gloss    # anchors land, and faced text still matches gloss.lock
+npm run check:gloss -- --accept   # rewrite gloss.lock after you retarget ranges
+npm run export:gloss -- examples/shortly   # static facing-page in export/<id>/
 npm run build          # production bundle in dist/
 npm run preview:all    # after build: dist on :4173 + API on :8787
 ```
 
-`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. `npm run check` always validates this repo's `examples/` and this repo's own `gloss.md`, even if `GLOSS_PROJECTS_DIR` is set in the shell — use `npm run check:gloss -- ~/glosses` (or the env) for your own folder. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
+`check:gloss` looks at `examples/` by default, or the folder given as an argument / in `GLOSS_PROJECTS_DIR`. It prints one line per broken anchor (`c3.p7.a2 → src/server.ts#L90: file has 87 lines`), and exits `1` when anything is broken or the folder is empty, `2` when the folder does not exist or is not a directory. A missing or stale `gloss.lock` is a problem: the lock remembers the *text* of each faced span, so a shift that keeps the line numbers legal but changes the code still fails. After you fix the ranges, `--accept` rewrites the lock. Commit `gloss.lock` next to `gloss.md`. `npm run check` always validates this repo's `examples/` and this repo's own `gloss.md`, even if `GLOSS_PROJECTS_DIR` is set in the shell — use `npm run check:gloss -- ~/glosses` (or the env) for your own folder. The API reports the same lines as `warnings` on each project, so the CLI and the server never disagree about what is broken — they share one validator (`server/validate.ts`).
+
+`export:gloss` freezes one project folder (the one with `gloss.md`) into `export/<id>/`. Open `index.html` — no API. Relative links, so the folder can be copied or served as static files.
 
 ## API
 
@@ -161,9 +165,11 @@ server/
   index.ts              the API (node:http, tsx)
   projects.ts           folder → project: discovery, file walk, limits
   validate.ts           anchors → files → line ranges; shared with check:gloss
-scripts/check-gloss.ts  the CLI validator
+  lock.ts               gloss.lock: hash of each faced span
+scripts/check-gloss.ts  the CLI validator (`--accept` rewrites the lock)
+scripts/export-gloss.ts freeze one project into export/<id>/
 tests/                  node:test — parser, validator, loader, API
-examples/shortly/       sample project: gloss.md + src/
+examples/shortly/       sample project: gloss.md + gloss.lock + src/
 .cursor/skills/write-gloss/   how an agent drafts gloss.md
 ```
 

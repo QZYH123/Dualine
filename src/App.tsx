@@ -89,7 +89,7 @@ export default function App() {
         highlighter={highlighter}
         source={loaded.source}
         warnings={loaded.warnings}
-        catalogDefault={requestedProjectId() === null}
+        catalogDefault={loaded.source !== "export" && requestedProjectId() === null}
         stale={stale}
         locale={locale}
         noteLocale={noteLocale}

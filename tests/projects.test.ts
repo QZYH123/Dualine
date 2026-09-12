@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { LOCK_MISSING } from "../server/lock.js";
 import { listProjects, loadProject } from "../server/projects.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -104,6 +105,7 @@ describe("loadProject", () => {
     assert.deepEqual(detail.warnings, [
       "c1.p2.a1 → src/gone.ts#L1: file missing",
       "c1.p3.a1 → src/a.ts#L99: file has 3 lines",
+      LOCK_MISSING,
     ]);
   });
 
@@ -156,7 +158,7 @@ See [a](src/a.ts#L1).
       assert.ok(detail);
       assert.equal(detail.name, "Solo");
       assert.ok("src/a.ts" in detail.files);
-      assert.deepEqual(detail.warnings, []);
+      assert.deepEqual(detail.warnings, [LOCK_MISSING]);
       assert.match(detail.rev, /^\d+$/);
     } finally {
       rmSync(parent, { recursive: true, force: true });

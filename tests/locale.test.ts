@@ -53,9 +53,10 @@ describe("chapterNum", () => {
 });
 
 describe("homeHref", () => {
-  test("keeps lang; optional project", () => {
+  test("keeps lang; optional project; frozen is relative", () => {
     assert.equal(homeHref("en"), "/?lang=en");
     assert.equal(homeHref("zh", "shortly"), "/?lang=zh&project=shortly");
+    assert.equal(homeHref("en", "shortly", true), "?lang=en");
   });
 });
 

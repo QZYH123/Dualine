@@ -1,12 +1,14 @@
 /**
  * Verify every gloss anchor and explicit passage ref points at a real file
- * and a line range inside that file.
+ * and a line range inside that file, and that the faced text still matches
+ * gloss.lock (unless --accept rewrites the lock).
  *
- *   npx tsx scripts/check-gloss.ts [projects-dir]
+ *   npx tsx scripts/check-gloss.ts [projects-dir] [--accept]
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildLock, checkLock, writeLock } from "../server/lock.js";
 import {
   checkRefs,
   collectRefs,
@@ -76,6 +78,7 @@ function glossEntries(root: string): { id: string; glossPath: string }[] {
 }
 
 export function runCheck(argv: string[] = process.argv.slice(2)): number {
+  const accept = argv.includes("--accept");
   const { root, status } = inspectRoot(resolveRoot(argv));
   if (status === "missing") {
     console.error(`check:gloss: projects dir not found: ${root}`);
@@ -113,9 +116,19 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
     const src = readFileSync(glossPath, "utf8");
     const located = collectRefs(src);
     refsChecked += located.length;
-    const found = checkRefs(dirname(glossPath), located);
+    const projectDir = dirname(glossPath);
+    const found = checkRefs(projectDir, located);
+    const okLocs = new Set(located.map((r) => r.loc));
+    for (const problem of found) okLocs.delete(problem.loc);
 
-    for (const problem of found) {
+    const rangeProblems = found.length;
+    if (accept && rangeProblems === 0) {
+      writeLock(projectDir, buildLock(projectDir, located));
+    }
+
+    const lockProblems = accept && rangeProblems === 0 ? [] : checkLock(projectDir, located, okLocs);
+
+    for (const problem of [...found, ...lockProblems]) {
       console.log(`${rel}: ${problem.message}`);
       problems += 1;
     }
