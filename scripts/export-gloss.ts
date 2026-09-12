@@ -11,7 +11,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "vite";
 import { loadProject } from "../server/projects.js";
-import { isValidProjectId, resolveProjectsDir } from "../server/validate.js";
+import { folderProjectId, resolveProjectsDir } from "../server/validate.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -29,9 +29,9 @@ export function frozenPayload(detail: NonNullable<ReturnType<typeof loadProject>
 
 export async function exportProject(projectDir: string, outDir?: string): Promise<string> {
   const dir = resolveProjectsDir(projectDir);
-  const id = basename(dir);
-  if (!isValidProjectId(id)) {
-    throw new Error(`folder name "${id}" is not a servable project id`);
+  const id = folderProjectId(dir);
+  if (!id) {
+    throw new Error(`folder name "${basename(dir)}" is not a servable project id`);
   }
   const detail = loadProject(id, dir);
   if (!detail) {

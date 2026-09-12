@@ -165,6 +165,21 @@ See [a](src/a.ts#L1).
     }
   });
 
+  test("a mixed-case folder name is served as its lowercase id", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-case-"));
+    const selfRoot = join(parent, "Dualine");
+    try {
+      mkdirSync(selfRoot);
+      writeFileSync(join(selfRoot, "gloss.md"), "# Dualine\n\nLead.\n\n## One\n\nHi.\n");
+      const listed = listProjects(selfRoot);
+      assert.equal(listed.length, 1);
+      assert.equal(listed[0].id, "dualine");
+      assert.ok(loadProject("dualine", selfRoot));
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   test("child projects win over a gloss.md sitting at the catalog root", () => {
     const mixed = mkdtempSync(join(tmpdir(), "gloss-mixed-"));
     try {

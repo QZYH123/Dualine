@@ -12,6 +12,7 @@ import { buildLock, checkLock, writeLock } from "../server/lock.js";
 import {
   checkRefs,
   collectRefs,
+  folderProjectId,
   inspectRoot,
   isValidProjectId,
   projectsRoot,
@@ -72,7 +73,7 @@ function glossEntries(root: string): { id: string; glossPath: string }[] {
   if (out.length > 0) return out;
   const self = join(root, "gloss.md");
   if (existsSync(self) && statSync(self).isFile()) {
-    out.push({ id: basename(resolve(root)), glossPath: self });
+    out.push({ id: folderProjectId(root) ?? basename(resolve(root)), glossPath: self });
   }
   return out;
 }

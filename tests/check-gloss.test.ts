@@ -46,6 +46,13 @@ describe("runCheck", () => {
     assert.equal(runCheck([self]), 0);
   });
 
+  test("mixed-case self folder is a valid id after lowercasing", () => {
+    const self = join(tmp, "Dualine");
+    mkdirSync(self);
+    writeFileSync(join(self, "gloss.md"), "# Dualine\n\nLead.\n\n## One\n\nHi.\n");
+    assert.equal(runCheck([self, "--accept"]), 0);
+  });
+
   test("unservable id is a problem", () => {
     const root = join(tmp, "ids");
     mkdirSync(join(root, "Bad Name"), { recursive: true });

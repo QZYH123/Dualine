@@ -1,10 +1,11 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, join, relative, resolve, sep } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { splitFrontmatter } from "../src/lib/gloss.js";
 import { checkLock } from "./lock.js";
 import {
   checkRefs,
   collectRefs,
+  folderProjectId,
   inspectRoot,
   isValidProjectId,
   projectsRoot,
@@ -69,8 +70,8 @@ function childProjects(root: string): ProjectSummary[] {
 }
 
 function selfProject(root: string): ProjectSummary | null {
-  const id = basename(resolve(root));
-  if (!isValidProjectId(id) || !hasGloss(root)) return null;
+  const id = folderProjectId(root);
+  if (!id || !hasGloss(root)) return null;
   try {
     const gloss = readFileSync(join(root, "gloss.md"), "utf8");
     return { id, ...metaFromGloss(id, gloss) };
@@ -106,7 +107,7 @@ export function resolveProjectDir(
     }
   }
   const abs = resolve(root);
-  if (basename(abs) === id && hasGloss(abs)) return abs;
+  if (folderProjectId(abs) === id && hasGloss(abs)) return abs;
   return null;
 }
 

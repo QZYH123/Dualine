@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, extname, join, resolve, sep } from "node:path";
+import { basename, dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   parseGloss,
@@ -64,6 +64,14 @@ export interface RefProblem {
 
 export function isValidProjectId(id: string): boolean {
   return ID_RE.test(id);
+}
+
+/** Folder name as a project id; `Dualine` → `dualine`. Invalid after lowercasing → null. */
+export function folderProjectId(dir: string): string | null {
+  const raw = basename(resolve(dir));
+  if (isValidProjectId(raw)) return raw;
+  const lower = raw.toLowerCase();
+  return isValidProjectId(lower) ? lower : null;
 }
 
 /**
