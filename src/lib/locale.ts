@@ -1,5 +1,5 @@
 /*
- * Chrome language. The wordmark stays Gloss · 对照.
+ * Chrome language. The wordmark stays Dualine · 对照.
  *
  * Order: ?lang= → gloss frontmatter `locale:` → CJK in the title/lead →
  * the browser → Chinese. Notices have no gloss, so they skip to the browser.
@@ -118,9 +118,9 @@ export interface Copy {
 export const COPY: Record<Locale, Copy> = {
   zh: {
     loading: "对照",
-    documentTitle: (name) => `${name} · Gloss 对照`,
-    defaultTitle: "Gloss · 对照阅读",
-    eyebrow: "Gloss · 对照笔记",
+    documentTitle: (name) => `${name} · Dualine`,
+    defaultTitle: "Dualine · 对照阅读",
+    eyebrow: "Dualine · 对照笔记",
     rail: "目录",
     chapters: "章节",
     sample: "示例",
@@ -154,10 +154,10 @@ export const COPY: Record<Locale, Copy> = {
     otherLang: "EN",
   },
   en: {
-    loading: "Gloss",
-    documentTitle: (name) => `${name} · Gloss`,
-    defaultTitle: "Gloss · paired reading",
-    eyebrow: "Gloss · a paired note",
+    loading: "Dualine",
+    documentTitle: (name) => `${name} · Dualine`,
+    defaultTitle: "Dualine · paired reading",
+    eyebrow: "Dualine · a paired note",
     rail: "Contents",
     chapters: "Chapters",
     sample: "sample",

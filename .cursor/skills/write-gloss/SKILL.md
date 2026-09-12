@@ -9,7 +9,7 @@ description: >
 
 # Write a Gloss
 
-Dualine (Gloss · 对照) is a **reader**. This skill **authors** `gloss.md`. Do not add a generator to Dualine.
+Dualine is a **reader**. This skill **authors** `gloss.md`. Do not add a generator to Dualine.
 
 A finished gloss is a short guided pass: the reader grasps the system, not a file tree.
 
@@ -45,7 +45,7 @@ locale: zh
 ---
 ```
 
-`locale: zh` or `en` is optional. Dualine's chrome follows the note (CJK in the title/lead → Chinese, otherwise English). `?lang=` overrides. Chapter numbers are 一、二、三… or 1, 2, 3 to match.
+`locale: zh` or `en` is optional. Dualine's chrome follows the note (CJK in the title/lead → Chinese, otherwise English). `?lang=` overrides. The wordmark is Dualine · 对照. Chapter numbers are 一、二、三… or 1, 2, 3 to match.
 
 **Structure**
 

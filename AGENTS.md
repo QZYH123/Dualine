@@ -1,4 +1,4 @@
-# AGENTS.md — Gloss (prose ↔ code reader)
+# AGENTS.md — Dualine (prose ↔ code reader)
 
 ## Mission
 Help people understand a project after vibe coding: prose tied to real code, in a calm paired-reading experience.

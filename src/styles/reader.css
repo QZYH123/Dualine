@@ -74,9 +74,9 @@ button {
   gap: 10px;
   margin: 0;
   font-family: var(--font-prose);
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 500;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.02em;
   color: var(--ink);
   text-decoration: none;
 }

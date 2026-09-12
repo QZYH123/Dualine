@@ -12,7 +12,7 @@ import {
 export function Wordmark({ as = "a", href = "/" }: { as?: "a" | "p"; href?: string }) {
   const inner = (
     <>
-      Gloss
+      Dualine
       <span className="wordmark__seal" aria-hidden="true" />
       <span className="wordmark__cjk">对照</span>
     </>

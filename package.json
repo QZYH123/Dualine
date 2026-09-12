@@ -1,9 +1,9 @@
 {
-  "name": "gloss",
+  "name": "dualine",
   "private": true,
   "version": "0.1.0",
   "license": "MIT",
-  "description": "A dual-pane prose↔code reader: essay on the left, real source on the right.",
+  "description": "Dualine: a facing-page reader. Essay on the left, the real code it faces on the right.",
   "type": "module",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
