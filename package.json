@@ -1,7 +1,7 @@
 {
   "name": "dualine",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "Dualine: a facing-page reader. Essay on the left, the real code it faces on the right.",
   "type": "module",
