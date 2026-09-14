@@ -681,7 +681,7 @@ Fresh-clone audit on `feature/round11-tool` @ `7db6df6`, README as the only guid
 
 ### Round 11 re-test
 
-- `npm run check` / `npm run build` after the write pass (see report).
+- `npm run check` / `npm run build` after the write pass: **180/180** tests green.
 - **R11-1 / R11-2:** moved `greet` → strip `已挪到 L12–L16 · dualine check --fix 可全部挪好`; no `?project=` leftover.
 - **R11-3:** `?note=does-not-exist` hint `/tmp/r11-tsnotes/gloss/does-not-exist.md`; notes listed.
 - **R11-4:** delete gloss.md → title 「这里还没有 gloss.md」 / EN 「There is no gloss.md here」; hint `dualine init`.
