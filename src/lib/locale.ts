@@ -150,6 +150,7 @@ export interface Copy {
   notFoundNote: (id: string) => string;
   unreachable: string;
   empty: string;
+  emptySingle: string;
   notDirectory: string;
   missingDir: string;
   emptyTip: string;
@@ -195,6 +196,7 @@ export const COPY: Record<Locale, Copy> = {
     notFoundNote: (id) => `找不到笔记 “${id}”`,
     unreachable: "API 未运行，读不到这个项目",
     empty: "这个目录下没有项目",
+    emptySingle: "这里还没有 gloss.md",
     notDirectory: "项目路径不是一个目录",
     missingDir: "找不到项目目录",
     emptyTip:
@@ -239,6 +241,7 @@ export const COPY: Record<Locale, Copy> = {
     notFoundNote: (id) => `No note “${id}”`,
     unreachable: "API is not running; this project cannot be read",
     empty: "No projects in this folder",
+    emptySingle: "There is no gloss.md here",
     notDirectory: "That path is not a folder",
     missingDir: "Cannot find the projects folder",
     emptyTip:

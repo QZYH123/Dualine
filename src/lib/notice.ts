@@ -126,7 +126,7 @@ export function noticeCopy(
       };
     case "empty":
       return {
-        title: copy.empty,
+        title: result.catalog.single ? copy.emptySingle : copy.empty,
         hint: "dualine init",
         tip: copy.emptyTip,
       };

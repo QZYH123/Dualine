@@ -112,6 +112,15 @@ describe("noticeCopy empty", () => {
     assert.equal(copy.hint, "dualine init");
     assert.equal(copy.tip, NOTICE_EMPTY_TIP);
   });
+
+  test("single-folder empty names gloss.md, not a catalog of projects", () => {
+    const copy = noticeCopy({
+      kind: "empty",
+      catalog: { root: "/tmp/r11-pycli", rootStatus: "ok", projects: [], single: true },
+    });
+    assert.equal(copy.title, "这里还没有 gloss.md");
+    assert.equal(copy.hint, "dualine init");
+  });
 });
 
 describe("noticeCopy unreachable", () => {

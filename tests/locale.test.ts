@@ -130,5 +130,11 @@ describe("noticeCopy en", () => {
     assert.equal(empty.hint, "dualine init");
     assert.equal(empty.tip, COPY.en.emptyTip);
     assert.match(COPY.en.emptyTip, /write-gloss/);
+
+    const emptySingle = noticeCopy(
+      { kind: "empty", catalog: { root: "/tmp/x", rootStatus: "ok", projects: [], single: true } },
+      "en",
+    );
+    assert.equal(emptySingle.title, COPY.en.emptySingle);
   });
 });
