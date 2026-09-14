@@ -8,11 +8,9 @@ A facing-page reader: the essay on the left, the real code it faces on the right
 
 ![滚着读，代码跟着走](docs/ritual.gif)
 
-## 试一下
+## 装一次
 
-### 一行打开
-
-包还是 `private`，不在 npm 上，所以现在还不是 `npx github:QZYH123/Dualine`。在 Dualine 仓库里装一次：
+需要 Node 20.19+ 或 22.12+。包还是 `private`，不在 npm 上，所以从仓库装：
 
 ```sh
 git clone https://github.com/QZYH123/Dualine.git
@@ -20,54 +18,24 @@ cd Dualine
 npm install && npm run build && npm link
 ```
 
-然后到任何有 `gloss.md` 的项目：
-
-```sh
-dualine .
-```
-
-浏览器会打开。`dualine check` 核对锚点，`dualine check --fix` 按锁改行号，`dualine export` 冻成静态页。没有 `gloss.md` 时，先 `dualine init`。
-
-改 Dualine 自己仍用两个端口的开发栈：
-
-```sh
-git clone https://github.com/QZYH123/Dualine.git
-cd Dualine
-npm install && npm run dev:all
-```
-
-打开 <http://localhost:5173>。需要 Node 20.19+ 或 22.12+。
-
-读 Dualine 自己：`GLOSS_PROJECTS_DIR=$PWD npm run dev:all`，然后 <http://localhost:5173/?project=dualine>。
-
-Dualine 只负责读。对照笔记是 `gloss.md`，手写或让 agent 用仓库里的 `write-gloss` 技能起草。
+之后任何地方都有 `dualine` 这条命令。
 
 ## 读自己的项目
 
-没有选择器。环境变量指到项目文件夹（里面有 `gloss.md`），或指到「每个子文件夹一个项目」的目录：
-
-```
-~/glosses/                ← GLOSS_PROJECTS_DIR
-  my-app/                 ← 项目 id：小写字母、数字、- 或 _
-    gloss.md
-    src/…
-```
+到项目文件夹里：
 
 ```sh
-GLOSS_PROJECTS_DIR=~/glosses/my-app npm run dev:all
+dualine init    # 还没有 gloss.md 时：写一份起步笔记，装上 write-gloss 技能
+dualine .       # 一个端口，浏览器自己打开
 ```
 
-打开 `http://localhost:5173/?project=my-app`。没有 `?project=` 时打开目录里的第一项。章节在 URL 里是 `#c3`。
+`init` 之后把它打印的那句话交给你的 agent，让它读 `.cursor/skills/write-gloss/SKILL.md`、为这个项目写 `gloss.md`。Dualine 只负责读，不生成散文。
 
-改 `gloss.md` 时桅头会出现 **已更新**，点了才重载，不抢阅读位置。
+改 `gloss.md` 时桅头会出现 **已更新**，点了才重载，不抢阅读位置。章节在 URL 里是 `#c3`。
 
 ## 写出对照笔记
 
-Markdown 加一种锚点：`[这句话](src/server.ts#L18-L59)` 对着真实行号。范本是 `examples/shortly/gloss.md`。
-
-大一点的仓库按子系统分开写。默认读根上的 `gloss.md`；同一项目还可以放 `gloss/<topic>.md`（文件名即笔记 id，锚点仍相对项目根）。打开某一篇用 `?note=<topic>`；只有 `gloss.md` 时，用法和从前完全一样。
-
-在项目文件夹里跑 `dualine init`。它写一份带一枚真锚点的起步 `gloss.md`，并把 write-gloss 技能装进 `.cursor/skills/`。把打印出的那句话交给 agent 起草；写完再 `dualine .`。
+Markdown 加一种锚点：`[这句话](src/server.ts#L18-L59)` 对着真实行号。
 
 ```md
 ---
@@ -83,45 +51,58 @@ lang: typescript
 整个服务是[三个 HTTP 接口](src/server.ts#L18-L59)……
 ```
 
-`#` 是标题，`##` 是章。`[这句话](src/server.ts#L18-L59)` 对着真实行号。没有锚点的段落继承上一段的代码。范本：`examples/shortly/gloss.md`。
+`#` 是标题，`##` 是章。没有锚点的段落继承上一段的代码。范本：`examples/shortly/gloss.md`。任何语言都会高亮，语法按文件后缀在用到时才加载。
+
+大一点的仓库按子系统分开写：根上的 `gloss.md` 是主篇，`gloss/<topic>.md` 每篇一个子系统（文件名即笔记 id，锚点仍相对项目根）。目录里它们排在章前，`?note=<topic>` 打开某一篇。只有 `gloss.md` 时，什么都不多显示。
+
+## 锚点会老
+
+代码会动，行号不会自己跟上。
 
 ```sh
-npm run check:gloss -- ~/glosses          # 锚点是否落在文件里，正文是否还对得上 gloss.lock
-npm run check:gloss -- ~/glosses --fix    # 原文还在、只是行号挪了：改 gloss.md 和锁
-npm run check:gloss -- ~/glosses --accept # 范围改对之后，重写锁
+dualine check .          # 锚点是否落在文件里，正文是否还对得上 gloss.lock
+dualine check . --fix    # 原文还在、只是行号挪了：改 gloss.md 和锁
+dualine check . --accept # 你有意改写了散文或范围之后，重写锁
 ```
 
-`gloss.lock` 记住每条锚点对着的**代码正文**。第一次 `check` 写下它作基线；行号挪了用 `--fix`，你有意改写散文或范围再用 `--accept`。找不到原文或出现多处，仍算问题。和 `gloss.md` 一起提交。
+`gloss.lock` 记住每枚锚点面对的那几行代码的指纹。第一次干净通过的 `check` 写下它作基线；之后行号合法但指纹变了，说明代码真的改了，散文得重读。找不到原文或出现多处，仍算问题。锁按锚点目标记，不按段落位置——插一章、调个顺序，锁不动。和 `gloss.md` 一起提交。
+
+阅读器里的警示条只说「已挪到 L23–L64」，改是你在命令行里做的、能 diff 能提交的事。
 
 ## 带走一张对照页
 
 ```sh
-npm run export:gloss -- ~/glosses/my-app   # → export/my-app/
+dualine export .    # → export/<id>/
 ```
 
-打开其中的 `index.html`，不用跑 API。上面的在线演示就是这样冻出来的。
+打开其中的 `index.html`，不用跑任何东西。上面的在线演示就是这样冻出来的。
 
-## 运行说明
+## 改 Dualine 自己
 
-`dualine .` 是一个端口：静态页和 API 在一起。`npm run dev:all` 仍会同时起网页（:5173）和 API（127.0.0.1:8787），用来改 Dualine 自己。一次 `Ctrl-C` 两边都停。端口被占用时换一个：`PORT=8790 npm run dev:all`。只跑 `npm run dev` 时，API 不在就回落到打包的 shortly 示例。`dualine` 若 8787 被占会接着试后面的端口；`PORT` 仍可指定。
+```sh
+npm run dev:all    # 网页 :5173 + API 127.0.0.1:8787，一次 Ctrl-C 两边都停
+npm run check      # 类型检查、校验 examples/ 和本仓库自己的 gloss.md、跑测试
+```
+
+读 Dualine 自己：`GLOSS_PROJECTS_DIR=$PWD npm run dev:all`，然后 <http://localhost:5173/?project=dualine>。只跑 `npm run dev` 时，API 不在就回落到打包的 shortly 示例。
+
+`GLOSS_PROJECTS_DIR` 也可以指到「每个子文件夹一个项目」的目录，子文件夹名就是 id（小写字母、数字、`-` 或 `_`），`?project=<id>` 选一个，没有时打开排在最前的。`npm run check:gloss -- <目录>` 校验整个目录。
 
 | 环境变量 | 默认 | |
 |---|---|---|
-| `GLOSS_PROJECTS_DIR` | 本仓库 `examples/` | 项目目录；会展开 `~/`、`$HOME/` |
-| `GLOSS_PROJECT_DIR` | （不设） | 单项目：这个文件夹就是唯一项目；文件夹名会收成 id |
+| `GLOSS_PROJECTS_DIR` | 本仓库 `examples/` | 多项目目录；会展开 `~/`、`$HOME/` |
+| `GLOSS_PROJECT_DIR` | （不设） | 单项目：这个文件夹就是唯一项目；文件夹名收成 id。`dualine .` 用的就是它 |
 | `GLOSS_SERVE_DIST` | （不设） | API 同时托管该目录的静态文件（CLI 指向仓库里的 `dist/`） |
-| `PORT` | `8787` | API 端口 |
+| `PORT` | `8787` | API 端口；`dualine` 被占时接着往后试 |
 | `HOST` | `127.0.0.1` | API 只绑本机。要对外必须显式 `HOST=0.0.0.0` |
-| `GLOSS_API` | `http://127.0.0.1:$PORT` | 网页代理 API 的地址 |
+| `GLOSS_API` | `http://127.0.0.1:$PORT` | 开发栈里网页代理 API 的地址 |
 
-对照需要大约 1100px 宽的窗口；更窄会直接说明，而不是把两栏叠起来。
-
-`npm run check` 会做类型检查、校验 `examples/` 和本仓库自己的 `gloss.md`、再跑测试。
+对照需要大约 1100px 宽的窗口；更窄会直接说明，而不是把两栏叠起来。跟随系统的深色模式有一套夜纸，没有开关。
 
 ## 还没做的事
 
 - Dualine 不从代码生成散文。
-- 没有项目选择器，没有远程 clone。换项目改 URL。
+- 没有远程 clone。
 - 窄屏不是目标。
 
-MIT。这是本地应用，不是 npm 库（`private: true`）。
+MIT。这是本地应用；`private: true`，还没发到 npm。
