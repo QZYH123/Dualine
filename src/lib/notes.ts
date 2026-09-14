@@ -24,7 +24,7 @@ export function isValidNoteId(id: string): boolean {
   return NOTE_ID_RE.test(id);
 }
 
-/** Lock loc for a note. The default note stays unprefixed so existing locks hold. */
+/** Prefix a lock loc or target key. The default note stays unprefixed. */
 export function noteLockLoc(noteId: string, loc: string): string {
   return !noteId || noteId === DEFAULT_NOTE_ID ? loc : `${noteId}:${loc}`;
 }

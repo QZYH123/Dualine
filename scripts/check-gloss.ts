@@ -8,7 +8,7 @@
  *
  * --fix rewrites unique relocations in the note they belong to, then updates
  * those lock entries. One gloss.lock per project; extra notes prefix their
- * locs. --fix --accept fixes first, then accepts whatever is still a valid
+ * lock keys. --fix --accept fixes first, then accepts whatever is still a valid
  * range. --fix --dry-run prints the moves and writes nothing.
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -144,7 +144,7 @@ function applyFix(
       projectDir,
       relocateLockSpans(
         lock,
-        moves.map((p) => ({ loc: p.loc, start: p.suggest.start, end: p.suggest.end })),
+        moves.map((p) => ({ loc: p.loc, ref: p.ref, start: p.suggest.start, end: p.suggest.end })),
       ),
     );
   }

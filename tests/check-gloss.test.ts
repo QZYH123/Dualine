@@ -123,11 +123,14 @@ describe("runCheck --fix", () => {
 
     const lockAfter = readLock(dest);
     assert.ok(lockAfter);
-    const moved = lockAfter.spans.find((s) => s.loc === span18.loc);
+    assert.equal(lockAfter.version, 2);
+    const moved = lockAfter.spans.find((s) => s.loc === "src/server.ts#L20-L61");
     assert.ok(moved);
     assert.equal(moved.start, 20);
     assert.equal(moved.end, 61);
     assert.equal(moved.sha256, span18.sha256);
+    assert.ok(!lockAfter.spans.some((s) => s.loc === "src/server.ts#L18-L59"));
+    assert.ok(!lockAfter.spans.some((s) => s.loc === span18.loc && span18.loc !== moved.loc));
 
     const second = capture(() => runCheck([dest]));
     assert.equal(second.code, 0);
@@ -164,10 +167,12 @@ describe("runCheck --fix", () => {
     assert.match(readFileSync(join(dir, "gloss/b.md"), "utf8"), /src\/a\.ts#L3/);
     const lock = readLock(dir);
     assert.ok(lock);
-    const a = lock.spans.find((s) => s.loc === "c1.p1.a1");
-    const b = lock.spans.find((s) => s.loc === "b:c1.p1.a1");
+    const a = lock.spans.find((s) => s.loc === "src/a.ts#L3-L3");
+    const b = lock.spans.find((s) => s.loc === "b:src/a.ts#L3-L3");
     assert.equal(a?.start, 3);
     assert.equal(b?.start, 3);
+    assert.ok(!lock.spans.some((s) => s.loc === "src/a.ts#L2-L2"));
+    assert.ok(!lock.spans.some((s) => s.loc === "b:src/a.ts#L2-L2"));
   });
 
   test("broken and ambiguous anchors stay problems after --fix", () => {
@@ -190,5 +195,44 @@ describe("runCheck --fix", () => {
     assert.match(gloss, /\[dup\]\(src\/b\.ts#L1\)/);
     assert.match(got.out, /src\/a\.ts#L2 → L3/);
     assert.match(got.out, /text found 2 times/);
+  });
+
+  test("inserting a chapter only reports the new anchors as unlocked", () => {
+    const dest = join(tmp, "shortly-insert");
+    cpSync(join(REPO, "examples/shortly"), dest, { recursive: true });
+    assert.equal(runCheck([dest, "--accept"]), 0);
+    const gloss = readFileSync(join(dest, "gloss.md"), "utf8");
+    writeFileSync(
+      join(dest, "gloss.md"),
+      gloss.replace(
+        "## 它做什么",
+        "## 插进来\n\nSee [boot](src/server.ts#L1) and [entry](src/index.ts#L1).\n\n## 它做什么",
+      ),
+    );
+    const got = capture(() => runCheck([dest]));
+    assert.equal(got.code, 1);
+    assert.match(got.out, /2 problems/);
+    assert.equal([...got.out.matchAll(/not in gloss\.lock/g)].length, 2);
+    assert.match(got.out, /src\/server\.ts#L1/);
+    assert.match(got.out, /src\/index\.ts#L1/);
+    assert.doesNotMatch(got.out, /code changed since/);
+  });
+
+  test("reordering two passages is not a lock problem", () => {
+    const dest = join(tmp, "shortly-reorder");
+    cpSync(join(REPO, "examples/shortly"), dest, { recursive: true });
+    assert.equal(runCheck([dest, "--accept"]), 0);
+    const gloss = readFileSync(join(dest, "gloss.md"), "utf8");
+    const start = gloss.indexOf("## 启动");
+    const next = gloss.indexOf("## 一次缩短请求");
+    assert.ok(start >= 0 && next > start);
+    const chapter = gloss.slice(start, next);
+    const parts = chapter.split("\n\n");
+    assert.ok(parts.length >= 3);
+    const swapped = [parts[0], parts[2], parts[1], ...parts.slice(3)].join("\n\n");
+    writeFileSync(join(dest, "gloss.md"), `${gloss.slice(0, start)}${swapped}${gloss.slice(next)}`);
+    const got = capture(() => runCheck([dest]));
+    assert.equal(got.code, 0);
+    assert.match(got.out, /0 problems/);
   });
 });

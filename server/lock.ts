@@ -1,12 +1,13 @@
 /*
- * A gloss.lock is the facing-page's memory: each claim's loc maps to a hash
- * of the code it faces. Line numbers may move; if the text of the span is
- * the same, the facing still holds. If the text changed, the lock says so.
+ * A gloss.lock is the facing-page's memory: each claim's target
+ * (path#Lstart-Lend) maps to a hash of the code it faces. Prose may move;
+ * if the text of the span is the same, the facing still holds. If the text
+ * changed, the lock says so.
  */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { CodeRef } from "../src/lib/gloss.js";
+import { refKey, type CodeRef } from "../src/lib/gloss.js";
 import { relocate } from "./relocate.js";
 import {
   checkRefs,
@@ -30,7 +31,7 @@ export interface LockSpan {
 }
 
 export interface GlossLock {
-  version: 1;
+  version: 1 | 2;
   spans: LockSpan[];
 }
 
@@ -59,20 +60,57 @@ export function hashRef(projectDir: string, ref: CodeRef): string | null {
 }
 
 export function buildLock(projectDir: string, refs: LocatedRef[]): GlossLock {
+  const seen = new Set<string>();
   const spans: LockSpan[] = [];
   for (const { loc, ref } of refs) {
+    const key = lockSpanKey(loc, ref);
+    if (seen.has(key)) continue;
     const sha256 = hashRef(projectDir, ref);
     if (!sha256) continue;
-    spans.push({
-      loc,
-      file: ref.file,
-      start: ref.start,
-      end: ref.end,
-      sha256,
-    });
+    seen.add(key);
+    spans.push({ loc: key, file: ref.file, start: ref.start, end: ref.end, sha256 });
   }
   spans.sort((a, b) => a.loc.localeCompare(b.loc));
-  return { version: 1, spans };
+  return { version: 2, spans };
+}
+
+export const LOCK_VERSION = 2;
+/** v1 positional keys, with an optional note prefix (`b:c1.p1.a1`). */
+export const V1_LOCK_KEY_RE = /^(\w+:)?c\d+\.p\d+\.a\d+$/;
+
+function notePrefix(loc: string): string {
+  const colon = loc.indexOf(":");
+  if (colon <= 0) return "";
+  const id = loc.slice(0, colon);
+  if (!/^[a-z0-9][a-z0-9-_]*$/.test(id)) return "";
+  return `${id}:`;
+}
+
+/** Lock lookup key: note prefix (as today) + canonical `path#Lstart-Lend`. */
+export function lockSpanKey(loc: string, ref: CodeRef): string {
+  return `${notePrefix(loc)}${refKey(ref)}`;
+}
+
+export function isV1Lock(lock: GlossLock): boolean {
+  if (lock.version === 1) return true;
+  if (lock.version === 2) return false;
+  return lock.spans.length > 0 && lock.spans.every((s) => V1_LOCK_KEY_RE.test(s.loc));
+}
+
+function lockVersion(raw: unknown, spans: LockSpan[]): 1 | 2 {
+  if (raw === 2) return 2;
+  if (raw === 1) return 1;
+  if (spans.length > 0 && spans.every((s) => V1_LOCK_KEY_RE.test(s.loc))) return 1;
+  return 2;
+}
+
+function spanFor(
+  byLoc: Map<string, LockSpan>,
+  lock: GlossLock,
+  loc: string,
+  ref: CodeRef,
+): LockSpan | undefined {
+  return isV1Lock(lock) ? byLoc.get(loc) : byLoc.get(lockSpanKey(loc, ref));
 }
 
 export function readLock(projectDir: string): GlossLock | null {
@@ -82,7 +120,7 @@ export function readLock(projectDir: string): GlossLock | null {
     const raw: unknown = JSON.parse(readFileSync(p, "utf8"));
     if (!raw || typeof raw !== "object") return null;
     const rec = raw as { version?: unknown; spans?: unknown };
-    if (rec.version !== 1 || !Array.isArray(rec.spans)) return null;
+    if (!Array.isArray(rec.spans)) return null;
     const spans: LockSpan[] = [];
     for (const item of rec.spans) {
       if (!item || typeof item !== "object") continue;
@@ -98,7 +136,7 @@ export function readLock(projectDir: string): GlossLock | null {
       }
       spans.push({ loc: s.loc, file: s.file, start: s.start, end: s.end, sha256: s.sha256 });
     }
-    return { version: 1, spans };
+    return { version: lockVersion(rec.version, spans), spans };
   } catch {
     return null;
   }
@@ -121,8 +159,9 @@ function driftProblem(loc: string, ref: CodeRef, suffix: string): RefProblem {
 /**
  * Refs that already failed checkRefs (missing file / bad range) are skipped —
  * those problems speak first. No lock yet is not a problem; the first
- * successful check writes the baseline. A loc the lock has never seen is
- * `unlocked` (CLI bookkeeping), not drift.
+ * successful check writes the baseline. A target the lock has never seen is
+ * `unlocked` (CLI bookkeeping), not drift. v1 files are looked up by
+ * positional loc; v2 files by the faced target.
  */
 export function checkLock(
   projectDir: string,
@@ -136,7 +175,7 @@ export function checkLock(
   const out: RefProblem[] = [];
   for (const { loc, ref } of refs) {
     if (!okLocs.has(loc)) continue;
-    const remembered = byLoc.get(loc);
+    const remembered = spanFor(byLoc, lock, loc, ref);
     const sha = hashRef(projectDir, ref);
     if (!sha) continue;
     if (!remembered) {
@@ -156,7 +195,7 @@ export function checkLock(
 }
 
 /**
- * Reconstruct the locked block from a v1 hash-only span: a same-length
+ * Reconstruct the locked block from a hash-only span: a same-length
  * window whose sha256 matches. Several windows with that hash share the
  * same text; relocate() then says unique vs ambiguous.
  */
@@ -175,15 +214,28 @@ export function recoverLockedText(
 
 export function relocateLockSpans(
   lock: GlossLock,
-  updates: ReadonlyArray<{ loc: string; start: number; end: number }>,
+  updates: ReadonlyArray<{ loc: string; ref: CodeRef; start: number; end: number }>,
 ): GlossLock {
-  const byLoc = new Map(updates.map((u) => [u.loc, u]));
+  const v1 = isV1Lock(lock);
+  const byOld = new Map<string, { start: number; end: number }>();
+  for (const u of updates) {
+    byOld.set(v1 ? u.loc : lockSpanKey(u.loc, u.ref), {
+      start: u.start,
+      end: u.end,
+    });
+  }
+  const out = new Map<string, LockSpan>();
+  for (const s of lock.spans) {
+    const u = byOld.get(s.loc);
+    const start = u?.start ?? s.start;
+    const end = u?.end ?? s.end;
+    const loc = lockSpanKey(s.loc, { file: s.file, start, end });
+    if (out.has(loc)) continue;
+    out.set(loc, { loc, file: s.file, start, end, sha256: s.sha256 });
+  }
   return {
-    version: 1,
-    spans: lock.spans.map((s) => {
-      const u = byLoc.get(s.loc);
-      return u ? { ...s, start: u.start, end: u.end } : s;
-    }),
+    version: LOCK_VERSION,
+    spans: [...out.values()].sort((a, b) => a.loc.localeCompare(b.loc)),
   };
 }
 
@@ -212,7 +264,7 @@ export function hintRelocation(
 
   return problems.map((p) => {
     if (p.reason !== "range" && p.reason !== "drift") return p;
-    const span = byLoc.get(p.loc);
+    const span = spanFor(byLoc, lock, p.loc, p.ref);
     if (!span) return p;
     const lines = linesOf(p.ref.file);
     if (!lines) return p;

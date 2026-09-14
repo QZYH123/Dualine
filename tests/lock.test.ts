@@ -76,7 +76,9 @@ describe("gloss.lock", () => {
     assert.match(first.out, /0 problems/);
     const lock = readLock(dir);
     assert.ok(lock);
+    assert.equal(lock.version, 2);
     assert.equal(lock.spans.length, 1);
+    assert.equal(lock.spans[0].loc, "src/a.ts#L1-L2");
     assert.match(lock.spans[0].sha256, /^[a-f0-9]{64}$/);
     assert.equal(runCheck([dir]), 0);
 
@@ -140,20 +142,77 @@ describe("gloss.lock", () => {
     const lock = readLock(dir);
     assert.ok(lock);
     const locs = lock.spans.map((s) => s.loc).sort();
-    assert.deepEqual(locs, ["b:c1.p1.a1", "c1.p1.a1"]);
+    assert.equal(lock.version, 2);
+    assert.deepEqual(locs, ["b:src/a.ts#L1-L1", "src/a.ts#L1-L1"]);
   });
 
-  test("same text at new lines is still a match", () => {
+  test("same text at the same target is still a match when the file grows below", () => {
     const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
     writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));
     writeFileSync(
       join(dir, "src/a.ts"),
-      "// pad\nexport const a = 1;\nexport const b = 2;\n",
-    );
-    writeFileSync(
-      join(dir, "gloss.md"),
-      "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L2-L3).\n",
+      "export const a = 1;\nexport const b = 2;\n// pad\n",
     );
     assert.equal(runCheck([dir]), 0);
+  });
+
+  test("duplicate target in two passages is one lock entry", () => {
+    const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
+    writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));
+    writeFileSync(
+      join(dir, "gloss.md"),
+      "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1-L2).\n\n## Two\n\nAgain [a](src/a.ts#L1-L2).\n",
+    );
+    const got = capture(() => runCheck([dir]));
+    assert.equal(got.code, 0);
+    assert.match(got.out, /0 problems/);
+    const lock = readLock(dir);
+    assert.ok(lock);
+    assert.equal(lock.spans.length, 1);
+    assert.equal(lock.spans[0]?.loc, "src/a.ts#L1-L2");
+    writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));
+    assert.equal(readLock(dir)?.spans.length, 1);
+  });
+
+  test("v1 positional lock is honoured, then --accept writes v2 keys", () => {
+    const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
+    const src = readFileSync(join(dir, "src/a.ts"), "utf8");
+    const slice = spanSlice(src, 1, 2);
+    assert.ok(slice);
+    writeFileSync(
+      join(dir, "gloss.lock"),
+      `${JSON.stringify(
+        {
+          version: 1,
+          spans: [
+            {
+              loc: "c1.p1.a1",
+              file: "src/a.ts",
+              start: 1,
+              end: 2,
+              sha256: spanHash(slice),
+            },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    assert.equal(runCheck([dir]), 0);
+    const before = readLock(dir);
+    assert.ok(before);
+    assert.equal(before.version, 1);
+    assert.deepEqual(
+      before.spans.map((s) => s.loc),
+      ["c1.p1.a1"],
+    );
+    assert.equal(runCheck([dir, "--accept"]), 0);
+    const after = readLock(dir);
+    assert.ok(after);
+    assert.equal(after.version, 2);
+    assert.deepEqual(
+      after.spans.map((s) => s.loc),
+      ["src/a.ts#L1-L2"],
+    );
   });
 });

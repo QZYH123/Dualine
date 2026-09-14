@@ -99,14 +99,16 @@ describe("checkGloss suggest / ambiguous", () => {
     assert.equal(drift[0]?.reason, "drift");
     assert.deepEqual(drift[0]?.suggest, { start: 2, end: 3 });
 
-    writeFileSync(
-      join(dir, "gloss.md"),
-      "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L20-L21).\n",
+    const dir2 = projectWith(
+      "pad\npad\none\ntwo\n",
+      "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L3-L4).\n",
     );
-    const range = checkGloss(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8")));
+    writeLock(dir2, buildLock(dir2, collectRefs(readFileSync(join(dir2, "gloss.md"), "utf8"))));
+    writeFileSync(join(dir2, "src/a.ts"), "one\ntwo\n");
+    const range = checkGloss(dir2, collectRefs(readFileSync(join(dir2, "gloss.md"), "utf8")));
     assert.equal(range.length, 1);
     assert.equal(range[0]?.reason, "range");
-    assert.deepEqual(range[0]?.suggest, { start: 2, end: 3 });
+    assert.deepEqual(range[0]?.suggest, { start: 1, end: 2 });
   });
 
   test("ambiguous when the locked block is in the file more than once", () => {
