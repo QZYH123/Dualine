@@ -47,3 +47,7 @@ Grammar chosen by file extension, loaded on demand (Shiki dynamic import). Unkno
 ## Log
 
 - 2026-09-15 Round 11 opened on `feature/round11-tool`. D1–D4 delegated to `backend`; D1+D3 first in parallel (disjoint files), D2 next, D4 last. Dogfood D2 on this repo's own gloss.
+- 2026-09-15 D1–D4 landed (153 tests). Verified end-to-end by hand: `dualine init /tmp/pyapp` → `dualine check` (lock written) → `dualine /tmp/pyapp` shows Python highlighted on one port, no warn strip. Main chunk 756 → 405 kB. D2 dogfood: hoisting an import in `gloss.ts` shifted five anchors; `check --fix` moved all five.
+- **D2 addendum — the lock is a baseline, not a gate.** A fresh project has nothing to drift from, so the first clean `check` writes `gloss.lock` instead of failing on its absence. The reader's warn strip only speaks about anchors that do not land or whose code changed; lock bookkeeping (`not in lock`) stays in the CLI. Reason: a writer who adds an anchor and opens the reader must not be greeted by a warning about a file they have never heard of.
+- **D2 addendum — lock keeps hashes.** Relocation recovers the faced text by finding a same-length window with the same hash; exact moves only. No schema change, no literal code stored in the lock.
+- D5 (multiple notes, `gloss/<id>.md`, `?note=`) promoted to this round: friction is gone, so the next ceiling is "one note per project" for real repos. IA: notes appear in the rail above 目录 and as `<optgroup>`s in the mid-width select; nothing new when a project has one note.

@@ -15,18 +15,20 @@ A finished gloss is a short guided pass: the reader grasps the system, not a fil
 
 ## Output
 
-Write `gloss.md` at the root of the project being explained (alongside its source). Dualine treats that folder as one project.
+Write `gloss.md` at the root of the project being explained (alongside its source). `dualine .` in that folder reads it; the folder name may be anything.
 
 ```
-<parent>/                 ← GLOSS_PROJECTS_DIR
-  <id>/                   ← folder name is the project id
-    gloss.md
-    src/…                 ← or whatever the anchors point at
+<project>/
+  gloss.md                ← the main note (dualine init writes a starter)
+  gloss/<topic>.md        ← optional further notes, one subsystem each
+  gloss.lock              ← written by the first `dualine check`; commit it
+  src/…                   ← or whatever the anchors point at
 ```
 
-- `<id>` must match `^[a-z0-9][a-z0-9-_]*$`. Capitals, spaces, or a leading hyphen → Dualine skips the folder. If the repo name is invalid, say so and use a valid-id symlink or copy; do not silently rename a git checkout.
-- Dualine's env points at **`<parent>`**, not at `<id>/`.
+- If a starter `gloss.md` from `dualine init` exists, replace its placeholder prose; keep the frontmatter keys.
+- Further notes go in `gloss/<id>.md` with `<id>` matching `^[a-z0-9][a-z0-9-_]*$`; anchors there are still relative to the project root. Open one with `?note=<id>`.
 - Dualine sends (a) every file an anchor names, plus (b) everything under `src/`. A file outside `src/` that never appears in an anchor will not load.
+- Multi-project folders (`GLOSS_PROJECTS_DIR=<parent>`, one subfolder per project, subfolder name = id) still work; only there does the id rule apply to folder names.
 
 Canonical quality: Dualine's `examples/shortly/gloss.md` (if that repo is available).
 
@@ -92,23 +94,26 @@ Follow a request or data path, not the directory listing. Name real structures, 
 2. **Outline** chapters as that path. Do not outline files.
 3. **Draft** `gloss.md`. For each claim, read the file, then write the sentence with an accurate anchor.
 4. **Check.**
-   - Dualine checkout available: `npm run check:gloss -- <parent>` from that repo. Fix every `file has N lines` / missing-file / `code changed since gloss.lock` line. When the ranges are right, `npm run check:gloss -- <parent> --accept` writes `gloss.lock`. Stop at `0 problems`.
-   - Otherwise: for each `path#Lstart-Lend`, the file exists under the project folder, `1 ≤ start ≤ end ≤ line count`.
+   - `dualine check .` (or `npm run check:gloss -- <folder>` from a Dualine checkout). Fix every `file has N lines` / missing-file line. The first clean run writes `gloss.lock`. Stop at `0 problems`.
+   - Later, when the code has moved: `dualine check . --fix` rewrites line numbers for spans whose text is found intact elsewhere. `code changed since gloss.lock` means the faced code itself changed — re-read it, fix the prose, then `dualine check . --accept`.
+   - Without the CLI: for each `path#Lstart-Lend`, the file exists under the project folder, `1 ≤ start ≤ end ≤ line count`.
 5. **Handoff** (see below). Do not start Dualine unless the user asked you to.
 
 ## Open in Dualine
 
-Clone [QZYH123/Dualine](https://github.com/QZYH123/Dualine) if needed, then:
+With the CLI installed (`npm link` inside a [Dualine](https://github.com/QZYH123/Dualine) checkout after `npm run build`):
 
 ```sh
-cd /path/to/Dualine
-GLOSS_PROJECTS_DIR=/absolute/path/to/<parent> npm run dev:all
+dualine .            # one port, opens the browser
+dualine check .      # anchors land? lock in step?
+dualine export .     # a static facing-page in export/<id>/
 ```
 
-Open `http://localhost:5173/?project=<id>`. The catalog is sorted by id; with no query, the first listed id opens — always pass `?project=` when you mean a specific one. If `<parent>` has no child projects but `<parent>/gloss.md` exists and the folder name is a valid id, Dualine treats that folder as the one project — you can point `GLOSS_PROJECTS_DIR` at `<id>/` itself.
-
-`check:gloss` uses the same parent folder:
+Without the CLI, from the Dualine checkout:
 
 ```sh
+GLOSS_PROJECTS_DIR=/absolute/path/to/<parent> npm run dev:all
 npm run check:gloss -- /absolute/path/to/<parent>
 ```
+
+Open `http://localhost:5173/?project=<id>`. The catalog is sorted by id; with no query, the first listed id opens — pass `?project=` when you mean a specific one.
