@@ -1,23 +1,34 @@
 /**
- * Freeze one project into a static facing-page.
+ * Freeze one project into a static facing-page (every note, when there are several).
  *
  *   npx tsx scripts/export-gloss.ts [project-dir]
  *
- * Writes export/<id>/ — open index.html, no API.
+ * Writes export/<id>/ — open index.html, no API. One note stays the same
+ * JSON shape; extra notes sit in `byNote` and switch via `?note=`.
  */
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "vite";
-import { loadProject } from "../server/projects.js";
+import { listNotes } from "../server/notes.js";
+import { loadProject, type ProjectDetail } from "../server/projects.js";
 import { packageRoot } from "../server/root.js";
 import { resolveProjectsDir, slugifyProjectId } from "../server/validate.js";
 
 const REPO_ROOT = packageRoot();
 
-export function frozenPayload(detail: NonNullable<ReturnType<typeof loadProject>>) {
-  return {
+type FrozenNote = {
+  gloss: string;
+  files: Record<string, string>;
+  warnings: ProjectDetail["warnings"];
+};
+
+export function frozenPayload(
+  detail: NonNullable<ReturnType<typeof loadProject>>,
+  all?: ProjectDetail[],
+) {
+  const base = {
     id: detail.id,
     name: detail.name,
     tagline: detail.tagline,
@@ -26,6 +37,12 @@ export function frozenPayload(detail: NonNullable<ReturnType<typeof loadProject>
     files: detail.files,
     warnings: detail.warnings,
   };
+  if (!all || all.length <= 1) return base;
+  const byNote: Record<string, FrozenNote> = {};
+  for (const d of all) {
+    byNote[d.note] = { gloss: d.gloss, files: d.files, warnings: d.warnings };
+  }
+  return { ...base, byNote };
 }
 
 export async function exportProject(projectDir: string, outDir?: string): Promise<string> {
@@ -35,8 +52,11 @@ export async function exportProject(projectDir: string, outDir?: string): Promis
   if (!detail) {
     throw new Error(`no gloss.md in ${dir}`);
   }
+  const extras = listNotes(dir)
+    .map((n) => loadProject(id, dir, { single: true, note: n.id }))
+    .filter((d): d is ProjectDetail => d != null);
   const payloadPath = join(mkdtempSync(join(tmpdir(), "gloss-export-")), "payload.json");
-  writeFileSync(payloadPath, JSON.stringify(frozenPayload(detail)));
+  writeFileSync(payloadPath, JSON.stringify(frozenPayload(detail, extras)));
   const dest = outDir ? resolveProjectsDir(outDir) : join(process.cwd(), "export", id);
   process.env.GLOSS_EXPORT_PAYLOAD = payloadPath;
   process.env.GLOSS_EXPORT_OUT = dest;
