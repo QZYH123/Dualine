@@ -32,7 +32,7 @@ body {
 }
 
 ::selection {
-  background: rgba(168, 71, 46, 0.16);
+  background: var(--selection);
 }
 
 button {
@@ -470,7 +470,7 @@ button {
   color: var(--ink-2);
   padding: 0.04em 0.28em;
   margin: 0 0.04em;
-  background: rgba(30, 29, 26, 0.035);
+  background: var(--inline-code-wash);
   border-radius: 3px;
 }
 

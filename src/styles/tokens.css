@@ -38,6 +38,10 @@
   --code-punct: #7d796f;
   --code-dim: 0.5;
 
+  /* washes that are not the accent */
+  --selection: rgba(168, 71, 46, 0.16);
+  --inline-code-wash: rgba(30, 29, 26, 0.035);
+
   /* type */
   --font-prose: "Source Serif 4", "Noto Serif SC", "Songti SC", "Noto Serif CJK SC", "STSong", serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -64,4 +68,42 @@
   --ease-settle: cubic-bezier(0.2, 0.7, 0.15, 1);
   --dur-align: 460ms;
   --dur-fade: 220ms;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Night paper. Same ink, same 朱, the lamp turned down.
+   Follows the system; there is no switch in the chrome.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b1a17;
+    --paper-code: #1f1e1a;
+    --paper-raised: #24221e;
+
+    --ink: #e6e2d8;
+    --ink-2: #b9b4a7;
+    --ink-3: #85806f;
+    --ink-4: #5b574e;
+
+    --rule: #302e29;
+    --rule-strong: #423f38;
+
+    --zhu: #d2684a;
+    --zhu-deep: #e07d60;
+    --zhu-wash: rgba(210, 104, 74, 0.11);
+    --zhu-wash-strong: rgba(210, 104, 74, 0.2);
+    --zhu-hair: rgba(210, 104, 74, 0.6);
+
+    --code-fg: #d6d2c8;
+    --code-comment: #6c6759;
+    --code-keyword: #94a7c9;
+    --code-string: #c6a06d;
+    --code-number: #c6a06d;
+    --code-type: #7fb4ad;
+    --code-function: #e6e2d8;
+    --code-punct: #85806f;
+
+    --selection: rgba(210, 104, 74, 0.3);
+    --inline-code-wash: rgba(230, 226, 216, 0.07);
+  }
 }
