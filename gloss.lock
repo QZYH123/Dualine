@@ -179,9 +179,9 @@
     {
       "loc": "c7.p22.a1",
       "file": "src/lib/highlight.ts",
-      "start": 100,
-      "end": 109,
-      "sha256": "8b420beda6f159d24126434ac44f381c6691da268b3c6c81b3ed5f4087effcd5"
+      "start": 165,
+      "end": 215,
+      "sha256": "0d0b5109e22690801eb49d0a6cc173ce9b83a8edf402320ca603cfcf20c4529b"
     },
     {
       "loc": "c8.p25.a1",

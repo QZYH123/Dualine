@@ -64,7 +64,7 @@ dualine 只做一件事：让人读完一篇短文，觉得自己摸清了一个
 
 点这样一行，[`jumpToAnchor`](src/reader/Reader.tsx#L133-L170) 把解释它的段落送到阅读线；滚动停稳之后再 pin，代码才稳住，好让你对着读。拖过一行选中文字，不会误针定。
 
-高亮是 Shiki 做的，颜色却不跟主题走：token 被标成 CSS 类，朱、墨、纸都在样式里。[语言只预装了 TypeScript、JavaScript 和 JSON](src/lib/highlight.ts#L100-L109)，这份笔记因此只指 `.ts` / `.tsx`。
+高亮是 Shiki 做的，颜色却不跟主题走：token 被标成 CSS 类，朱、墨、纸都在样式里。[语法按文件后缀按需加载](src/lib/highlight.ts#L165-L215)，这份笔记仍多指 `.ts` / `.tsx`，但别的语言不再是灰字。
 
 ## 还没做的事
 
