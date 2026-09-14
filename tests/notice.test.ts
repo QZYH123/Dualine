@@ -8,8 +8,10 @@ import {
   NOTICE_UNREACHABLE_TIP,
   NOTICE_WINDOWS_PATH_TIP,
   noDirTip,
+  notePath,
   noticeCopy,
   noticeShowsBack,
+  projectPath,
   warningStripExpandable,
   warningStripText,
 } from "../src/lib/notice.js";
@@ -73,6 +75,21 @@ describe("NOTICE_NO_DIR_TIP", () => {
   test("asks for an absolute folder path", () => {
     assert.match(NOTICE_NO_DIR_TIP, /GLOSS_PROJECTS_DIR/);
     assert.match(NOTICE_NO_DIR_TIP, /绝对路径/);
+  });
+});
+
+describe("notePath / projectPath", () => {
+  test("single-folder mode does not double the project id", () => {
+    const catalog = { root: "/tmp/r11-tsnotes", rootStatus: "ok" as const, projects: [], single: true };
+    assert.equal(notePath(catalog, "r11-tsnotes", "does-not-exist"), "/tmp/r11-tsnotes/gloss/does-not-exist.md");
+    assert.equal(notePath(catalog, "r11-tsnotes", "gloss"), "/tmp/r11-tsnotes/gloss.md");
+    assert.equal(projectPath(catalog, "r11-tsnotes"), "/tmp/r11-tsnotes/gloss.md");
+  });
+
+  test("catalog mode still nests id under the projects root", () => {
+    const catalog = { root: "/tmp/glosses", rootStatus: "ok" as const, projects: [] };
+    assert.equal(notePath(catalog, "shortly", "api"), "/tmp/glosses/shortly/gloss/api.md");
+    assert.equal(projectPath(catalog, "shortly"), "/tmp/glosses/shortly/gloss.md");
   });
 });
 

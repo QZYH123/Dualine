@@ -79,12 +79,18 @@ export function warningStripExpandable(warnings: readonly StripWarning[]): boole
   return warnings.length > 1;
 }
 
+/** Project folder as shown on a notice. Single-folder mode is the root itself. */
+export function projectDirHint(catalog: Catalog, projectId: string): string {
+  if (catalog.single && catalog.root) return catalog.root;
+  return catalog.root ? `${catalog.root}/${projectId}` : `GLOSS_PROJECTS_DIR/${projectId}`;
+}
+
 export function projectPath(catalog: Catalog, id: string): string {
-  return catalog.root ? `${catalog.root}/${id}/gloss.md` : `GLOSS_PROJECTS_DIR/${id}/gloss.md`;
+  return `${projectDirHint(catalog, id)}/gloss.md`;
 }
 
 export function notePath(catalog: Catalog, projectId: string, noteId: string): string {
-  const base = catalog.root ? `${catalog.root}/${projectId}` : `GLOSS_PROJECTS_DIR/${projectId}`;
+  const base = projectDirHint(catalog, projectId);
   return !noteId || noteId === DEFAULT_NOTE_ID ? `${base}/gloss.md` : `${base}/gloss/${noteId}.md`;
 }
 
