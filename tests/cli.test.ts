@@ -4,7 +4,7 @@ import { describe, test } from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv } from "../server/args.js";
-import { pickFreePort, portFromEnv } from "../server/port.js";
+import { chooseListenPort, pickFreePort, portFromEnv } from "../server/port.js";
 import { packageRoot } from "../server/root.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -147,5 +147,25 @@ describe("portFromEnv / pickFreePort", () => {
   test("pickFreePort returns a free start port", async () => {
     const picked = await pickFreePort(49152, "127.0.0.1", 20);
     assert.ok(picked >= 49152);
+  });
+
+  test("chooseListenPort starts at PORT and skips a bound one", async () => {
+    const blocker = createServer();
+    await new Promise<void>((resolve, reject) => {
+      blocker.listen(0, "127.0.0.1", () => resolve());
+      blocker.once("error", reject);
+    });
+    const addr = blocker.address();
+    if (!addr || typeof addr === "string") throw new Error("no address");
+    const used = addr.port;
+    try {
+      const picked = await chooseListenPort({ PORT: String(used) }, "127.0.0.1");
+      assert.notEqual(picked, used);
+      assert.ok(picked > used);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        blocker.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
   });
 });

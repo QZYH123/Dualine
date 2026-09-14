@@ -6,7 +6,7 @@ import { exportProject } from "../scripts/export-gloss.js";
 import { parseArgv, type CliArgs } from "./args.js";
 import { createApiServer, listenHttp } from "./index.js";
 import { InitError, runInit } from "./init.js";
-import { pickFreePort, portFromEnv } from "./port.js";
+import { chooseListenPort } from "./port.js";
 import { packageRoot } from "./root.js";
 import { resolveProjectsDir } from "./validate.js";
 
@@ -88,10 +88,9 @@ async function serve(args: Extract<CliArgs, { cmd: "serve" }>): Promise<number> 
   }
 
   const host = process.env.HOST?.trim() || "127.0.0.1";
-  const fromEnv = portFromEnv();
   let port: number;
   try {
-    port = fromEnv ?? (await pickFreePort(8787, host));
+    port = await chooseListenPort(process.env, host);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(message);

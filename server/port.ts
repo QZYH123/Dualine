@@ -35,3 +35,11 @@ export function portFromEnv(env: NodeJS.ProcessEnv = process.env): number | null
   if (!Number.isInteger(n) || n <= 0) return null;
   return n;
 }
+
+/** Preferred port, then the next free one — `dualine` 被占时接着往后试. */
+export async function chooseListenPort(
+  env: NodeJS.ProcessEnv = process.env,
+  host = "127.0.0.1",
+): Promise<number> {
+  return pickFreePort(portFromEnv(env) ?? 8787, host);
+}
