@@ -22,6 +22,8 @@ export interface Catalog {
   root?: string;
   rootStatus?: RootStatus;
   projects: ProjectSummary[];
+  /** API single-folder mode: the catalog lists exactly one project. */
+  single?: boolean;
 }
 
 export interface ProjectPayload {
@@ -74,11 +76,13 @@ export function catalogFromListBody(body: unknown): Catalog {
       }
     }
   }
-  return {
+  const catalog: Catalog = {
     projects,
     root: typeof rec.root === "string" ? rec.root : undefined,
     rootStatus: parseRootStatus(rec.rootStatus),
   };
+  if (rec.single === true) catalog.single = true;
+  return catalog;
 }
 
 export function isUsablePayload(body: unknown): body is ProjectPayload {

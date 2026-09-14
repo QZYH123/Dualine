@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { splitFrontmatter } from "../src/lib/gloss.js";
 import { checkLock } from "./lock.js";
 import {
@@ -11,14 +11,22 @@ import {
   projectsRoot,
   readTextFile,
   safeResolve,
+  slugifyProjectId,
 } from "./validate.js";
 
 export {
   inspectRoot,
   isValidProjectId,
   projectsRoot,
+  serveScope,
+  slugifyProjectId,
   type RootStatus,
 } from "./validate.js";
+
+export interface ProjectOpts {
+  /** This folder is the only project; id is the slugified folder name. */
+  single?: boolean;
+}
 
 export const MAX_FILES = 200;
 const SKIP_DIRS = new Set(["node_modules", "dist"]);
@@ -80,12 +88,31 @@ function selfProject(root: string): ProjectSummary | null {
   }
 }
 
+function singleProject(root: string): ProjectSummary | null {
+  if (!hasGloss(root)) return null;
+  const id = slugifyProjectId(basename(resolve(root)));
+  try {
+    const gloss = readFileSync(join(root, "gloss.md"), "utf8");
+    return { id, ...metaFromGloss(id, gloss) };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Folder of child projects, or — if none — the folder itself when it has gloss.md
  * and a servable name. Children win when both exist.
+ * Single-folder mode: this folder is the only project (slug id), even if children exist.
  */
-export function listProjects(root = projectsRoot()): ProjectSummary[] {
+export function listProjects(
+  root = projectsRoot(),
+  opts?: ProjectOpts,
+): ProjectSummary[] {
   if (inspectRoot(root).status !== "ok") return [];
+  if (opts?.single) {
+    const self = singleProject(root);
+    return self ? [self] : [];
+  }
   const children = childProjects(root);
   if (children.length > 0) return children;
   const self = selfProject(root);
@@ -96,8 +123,14 @@ export function listProjects(root = projectsRoot()): ProjectSummary[] {
 export function resolveProjectDir(
   id: string,
   root = projectsRoot(),
+  opts?: ProjectOpts,
 ): string | null {
   if (!isValidProjectId(id)) return null;
+  const abs = resolve(root);
+  if (opts?.single) {
+    if (slugifyProjectId(basename(abs)) === id && hasGloss(abs)) return abs;
+    return null;
+  }
   const child = safeResolve(root, id);
   if (child) {
     try {
@@ -106,7 +139,6 @@ export function resolveProjectDir(
       /* fall through to self */
     }
   }
-  const abs = resolve(root);
   if (folderProjectId(abs) === id && hasGloss(abs)) return abs;
   return null;
 }
@@ -144,8 +176,9 @@ export function projectStamp(projectDir: string): string {
 export function loadProject(
   id: string,
   root = projectsRoot(),
+  opts?: ProjectOpts,
 ): ProjectDetail | null {
-  const projectDir = resolveProjectDir(id, root);
+  const projectDir = resolveProjectDir(id, root, opts);
   if (!projectDir) return null;
   return loadFromDir(id, projectDir);
 }

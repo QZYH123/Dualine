@@ -70,6 +70,21 @@ describe("afterList", () => {
     assert.deepEqual(next, { kind: "continue", id: "shortly", catalog: { ...okCatalog, projects: [shortly] } });
   });
 
+  test("no request opens a slug id when it is the only listing", () => {
+    const body = {
+      root: "/tmp/MyApp",
+      rootStatus: "ok" as const,
+      projects: [{ id: "myapp", name: "MyApp" }],
+      single: true,
+    };
+    const next = afterList(null, { status: 200, body });
+    assert.equal(next.kind, "continue");
+    if (next.kind === "continue") {
+      assert.equal(next.id, "myapp");
+      assert.equal(next.catalog.single, true);
+    }
+  });
+
   test("a named project continues even if it is not in the catalog yet", () => {
     const next = afterList("my-app", { status: 200, body: okCatalog });
     assert.equal(next.kind, "continue");
@@ -138,7 +153,9 @@ describe("catalogFromListBody / isUsablePayload", () => {
     assert.deepEqual(catalog.projects, [{ id: "ok" }]);
     assert.equal(catalog.root, "/tmp/g");
     assert.equal(catalog.rootStatus, undefined);
+    assert.equal(catalog.single, undefined);
     assert.deepEqual(catalogFromListBody(null).projects, []);
+    assert.equal(catalogFromListBody({ projects: [], single: true }).single, true);
   });
 
   test("payload needs gloss string and files object", () => {

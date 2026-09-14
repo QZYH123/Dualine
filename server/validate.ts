@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, extname, join, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, extname, join, resolve, sep } from "node:path";
 import {
   parseGloss,
   sameRef,
@@ -10,8 +9,9 @@ import {
   type Inline,
 } from "../src/lib/gloss.js";
 import { looksLikeWindowsPath } from "../src/lib/paths.js";
+import { packageRoot } from "./root.js";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const REPO_ROOT = packageRoot();
 
 export const ID_RE = /^[a-z0-9][a-z0-9-_]*$/;
 export const MAX_FILE_BYTES = 512 * 1024;
@@ -72,6 +72,35 @@ export function folderProjectId(dir: string): string | null {
   if (isValidProjectId(raw)) return raw;
   const lower = raw.toLowerCase();
   return isValidProjectId(lower) ? lower : null;
+}
+
+/**
+ * Single-folder id: lowercase, non `[a-z0-9-_]` → `-`, collapse, trim.
+ * Empty or still invalid → `project`. `MyApp` → `myapp`; `my app` → `my-app`.
+ */
+export function slugifyProjectId(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-_]+|[-_]+$/g, "");
+  return slug && isValidProjectId(slug) ? slug : "project";
+}
+
+/** Catalog root (`GLOSS_PROJECTS_DIR`) or one folder (`GLOSS_PROJECT_DIR`). */
+export function serveScope(): {
+  root: string;
+  single: boolean;
+  distDir: string | null;
+} {
+  const project = process.env.GLOSS_PROJECT_DIR;
+  const distRaw = process.env.GLOSS_SERVE_DIST;
+  const distDir =
+    distRaw != null && distRaw.trim() !== "" ? resolve(distRaw.trim()) : null;
+  if (project != null && project.trim() !== "") {
+    return { root: resolveProjectsDir(project), single: true, distDir };
+  }
+  return { root: projectsRoot(), single: false, distDir };
 }
 
 /**

@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { LOCK_MISSING } from "../server/lock.js";
-import { listProjects, loadProject } from "../server/projects.js";
+import { listProjects, loadProject, resolveProjectDir } from "../server/projects.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXAMPLES = resolve(REPO, "examples");
@@ -217,6 +217,115 @@ See [a](src/a.ts#L1).
     } finally {
       if (prev === undefined) delete process.env.GLOSS_PROJECTS_DIR;
       else process.env.GLOSS_PROJECTS_DIR = prev;
+    }
+  });
+});
+
+describe("single-folder mode", () => {
+  function writeMini(dir: string, extra = ""): void {
+    mkdirSync(dir, { recursive: true });
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\n");
+    writeFileSync(
+      join(dir, "gloss.md"),
+      `---
+name: Mini
+---
+
+# Mini
+
+Lead.
+
+## One
+
+See [a](src/a.ts#L1).
+${extra}`,
+    );
+  }
+
+  test("MyApp slugifies to myapp; body, rev, and warnings work", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-myapp-"));
+    const dir = join(parent, "MyApp");
+    try {
+      writeMini(dir, "\n@[src/gone.ts#L1]\nMissing.\n");
+      const listed = listProjects(dir, { single: true });
+      assert.equal(listed.length, 1);
+      assert.equal(listed[0]?.id, "myapp");
+      assert.equal(resolveProjectDir("myapp", dir, { single: true }), resolve(dir));
+      assert.equal(resolveProjectDir("MyApp", dir, { single: true }), null);
+      const detail = loadProject("myapp", dir, { single: true });
+      assert.ok(detail);
+      assert.equal(detail.id, "myapp");
+      assert.ok("src/a.ts" in detail.files);
+      assert.match(detail.rev, /^\d+$/);
+      assert.ok(detail.warnings.some((w) => w.includes("src/gone.ts")));
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("my app slugifies to my-app", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-my-app-"));
+    const dir = join(parent, "my app");
+    try {
+      writeMini(dir);
+      const listed = listProjects(dir, { single: true });
+      assert.deepEqual(
+        listed.map((p) => p.id),
+        ["my-app"],
+      );
+      assert.ok(loadProject("my-app", dir, { single: true }));
+      assert.equal(listProjects(dir).length, 0);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("a folder already named with a valid id keeps that id", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-valid-id-"));
+    const dir = join(parent, "shortly");
+    try {
+      writeMini(dir);
+      const listed = listProjects(dir, { single: true });
+      assert.equal(listed[0]?.id, "shortly");
+      assert.ok(loadProject("shortly", dir, { single: true }));
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("single mode ignores child projects and lists only the folder", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-single-child-"));
+    const dir = join(parent, "MyApp");
+    try {
+      writeMini(dir);
+      mkdirSync(join(dir, "child"));
+      writeFileSync(join(dir, "child", "gloss.md"), "# Child\n\nHi.\n");
+      assert.deepEqual(
+        listProjects(dir, { single: true }).map((p) => p.id),
+        ["myapp"],
+      );
+      assert.deepEqual(
+        listProjects(dir).map((p) => p.id),
+        ["child"],
+      );
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("catalog mode spaced name", () => {
+  test("catalog mode does not slugify a spaced folder name", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-space-cat-"));
+    const self = join(parent, "my app");
+    try {
+      mkdirSync(self);
+      writeFileSync(join(self, "gloss.md"), "# Spaced\n\nLead.\n\n## One\n\nHi.\n");
+      assert.deepEqual(listProjects(self), []);
+      assert.equal(loadProject("my-app", self), null);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
     }
   });
 });

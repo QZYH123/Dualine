@@ -186,4 +186,33 @@ describe("handle catalog against an explicit root", () => {
       rmSync(parent, { recursive: true, force: true });
     }
   });
+
+  test("single-folder mode lists a slug id for MyApp", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-handle-single-"));
+    const dir = join(parent, "MyApp");
+    try {
+      mkdirSync(dir);
+      writeFileSync(join(dir, "gloss.md"), "# MyApp\n\nLead.\n\n## One\n\nHi.\n");
+      const listed = handle("GET", "/api/projects", dir, { single: true });
+      const body = listed.body as { projects: { id: string }[]; single: boolean };
+      assert.equal(body.single, true);
+      assert.deepEqual(
+        body.projects.map((p) => p.id),
+        ["myapp"],
+      );
+      assert.equal(handle("GET", "/api/projects/myapp", dir, { single: true }).status, 200);
+      assert.equal(handle("GET", "/api/projects/myapp/rev", dir, { single: true }).status, 200);
+      const catalog = handle("GET", "/api/projects", dir).body as {
+        projects: { id: string }[];
+        single: boolean;
+      };
+      assert.equal(catalog.single, false);
+      assert.deepEqual(
+        catalog.projects.map((p) => p.id),
+        ["myapp"],
+      );
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
 });

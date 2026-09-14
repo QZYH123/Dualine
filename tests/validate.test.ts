@@ -20,6 +20,8 @@ import {
   readTextFile,
   refLabel,
   resolveProjectsDir,
+  serveScope,
+  slugifyProjectId,
 } from "../server/validate.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -130,6 +132,48 @@ describe("checkRefs", () => {
     assert.equal(problems[1]?.message, "r1 → src/ok.ts#L1-L99: file has 3 lines");
     assert.equal(problems[2]?.reason, "range");
     assert.equal(problems[2]?.message, "r0 → src/ok.ts#L0-L1: file has 3 lines");
+  });
+});
+
+describe("slugifyProjectId / serveScope", () => {
+  test("slugifies folder names; empty collapses to project", () => {
+    assert.equal(slugifyProjectId("MyApp"), "myapp");
+    assert.equal(slugifyProjectId("my app"), "my-app");
+    assert.equal(slugifyProjectId("shortly"), "shortly");
+    assert.equal(slugifyProjectId("Hello_World"), "hello_world");
+    assert.equal(slugifyProjectId("a--b"), "a-b");
+    assert.equal(slugifyProjectId("---"), "project");
+    assert.equal(slugifyProjectId(""), "project");
+    assert.equal(slugifyProjectId("..."), "project");
+  });
+
+  test("GLOSS_PROJECT_DIR is single-folder; GLOSS_SERVE_DIST is the static root", () => {
+    const prevProject = process.env.GLOSS_PROJECT_DIR;
+    const prevProjects = process.env.GLOSS_PROJECTS_DIR;
+    const prevDist = process.env.GLOSS_SERVE_DIST;
+    try {
+      delete process.env.GLOSS_PROJECT_DIR;
+      delete process.env.GLOSS_PROJECTS_DIR;
+      delete process.env.GLOSS_SERVE_DIST;
+      const def = serveScope();
+      assert.equal(def.single, false);
+      assert.equal(def.root, resolve(REPO, "examples"));
+      assert.equal(def.distDir, null);
+
+      process.env.GLOSS_PROJECT_DIR = projectDir;
+      process.env.GLOSS_SERVE_DIST = join(tmp, "dist-out");
+      const one = serveScope();
+      assert.equal(one.single, true);
+      assert.equal(one.root, resolve(projectDir));
+      assert.equal(one.distDir, resolve(join(tmp, "dist-out")));
+    } finally {
+      if (prevProject === undefined) delete process.env.GLOSS_PROJECT_DIR;
+      else process.env.GLOSS_PROJECT_DIR = prevProject;
+      if (prevProjects === undefined) delete process.env.GLOSS_PROJECTS_DIR;
+      else process.env.GLOSS_PROJECTS_DIR = prevProjects;
+      if (prevDist === undefined) delete process.env.GLOSS_SERVE_DIST;
+      else process.env.GLOSS_SERVE_DIST = prevDist;
+    }
   });
 });
 

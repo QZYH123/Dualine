@@ -8,6 +8,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { packageRoot } from "../server/root.js";
 import { buildLock, checkLock, writeLock } from "../server/lock.js";
 import {
   checkRefs,
@@ -20,7 +21,7 @@ import {
   resolveProjectsDir,
 } from "../server/validate.js";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const REPO_ROOT = packageRoot();
 const DEFAULT_EXAMPLES = resolve(REPO_ROOT, "examples");
 
 function shortlyFixturePaths(): Set<string> {
