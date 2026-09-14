@@ -93,6 +93,21 @@ describe("notePath / projectPath", () => {
   });
 });
 
+describe("noticeCopy missing note", () => {
+  test("frozen export names the relative gloss file, not GLOSS_PROJECTS_DIR", () => {
+    const copy = noticeCopy({
+      kind: "not-found",
+      id: "r11-tsnotes",
+      catalog: { projects: [] },
+      note: "nope",
+      notes: [{ id: "gloss", title: "Main", chapters: [] }],
+      frozen: true,
+    });
+    assert.equal(copy.hint, "gloss/nope.md");
+    assert.match(copy.title, /nope/);
+  });
+});
+
 describe("noticeCopy empty", () => {
   test("points at dualine init, not a fake <id> path", () => {
     const copy = noticeCopy({

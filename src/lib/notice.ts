@@ -109,7 +109,11 @@ export function noticeCopy(
       if (result.note) {
         return {
           title: copy.notFoundNote(result.note),
-          hint: notePath(result.catalog, result.id, result.note),
+          hint: result.frozen
+            ? !result.note || result.note === DEFAULT_NOTE_ID
+              ? "gloss.md"
+              : `gloss/${result.note}.md`
+            : notePath(result.catalog, result.id, result.note),
           tip: (result.notes?.length ?? 0) > 0 ? copy.alsoHere : copy.emptyTip,
         };
       }
