@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
   CATALOG_DEFAULT_HINT,
+  showCatalogDefaultHint,
   NOTICE_EMPTY_TIP,
   NOTICE_NO_DIR_TIP,
   NOTICE_UNREACHABLE_TIP,
@@ -54,6 +55,16 @@ describe("CATALOG_DEFAULT_HINT", () => {
   test("names the first listed id and the ?project= query", () => {
     assert.match(CATALOG_DEFAULT_HINT, /目录第一项/);
     assert.match(CATALOG_DEFAULT_HINT, /\?project=/);
+  });
+});
+
+describe("showCatalogDefaultHint", () => {
+  test("only on a live catalog home, never in single-folder or export", () => {
+    assert.equal(showCatalogDefaultHint({ source: "api", requestedId: null }), true);
+    assert.equal(showCatalogDefaultHint({ source: "api", requestedId: null, single: true }), false);
+    assert.equal(showCatalogDefaultHint({ source: "api", requestedId: "shortly" }), false);
+    assert.equal(showCatalogDefaultHint({ source: "export", requestedId: null }), false);
+    assert.equal(showCatalogDefaultHint({ source: "sample", requestedId: null }), true);
   });
 });
 

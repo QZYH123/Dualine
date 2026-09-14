@@ -56,6 +56,8 @@ export type LoadResult =
       rev?: string;
       note: string;
       notes: NoteSummary[];
+      /** API single-folder mode (`dualine .`): no catalog, no `?project=`. */
+      single?: boolean;
     }
   | { kind: "not-found"; id: string; catalog: Catalog; note?: string; notes?: NoteSummary[]; frozen?: boolean }
   | { kind: "empty"; catalog: Catalog }
@@ -197,6 +199,7 @@ export async function loadProject(
         ...body,
         notes: parseNoteSummaries(body.notes),
       }),
+      ...(listed.catalog.single ? { single: true } : {}),
     };
   }
   return decided;

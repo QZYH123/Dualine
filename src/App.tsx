@@ -9,7 +9,7 @@ import {
 } from "./lib/load";
 import { DEFAULT_NOTE_ID } from "./lib/notes";
 import { COPY, chromeLocale, glossLocale, homeHref, htmlLang, noteHref, type Locale } from "./lib/locale";
-import { noticeCopy, noticeShowsBack } from "./lib/notice";
+import { noticeCopy, noticeShowsBack, showCatalogDefaultHint } from "./lib/notice";
 import { Reader } from "./reader/Reader";
 import { LangSwitch, Wordmark } from "./reader/Masthead";
 
@@ -96,7 +96,11 @@ export default function App() {
         highlighter={highlighter}
         source={loaded.source}
         warnings={loaded.warnings}
-        catalogDefault={loaded.source !== "export" && requestedProjectId() === null}
+        catalogDefault={showCatalogDefaultHint({
+          source: loaded.source,
+          requestedId: requestedProjectId(),
+          single: loaded.single,
+        })}
         stale={stale}
         locale={locale}
         noteLocale={noteLocale}

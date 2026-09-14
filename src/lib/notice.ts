@@ -39,8 +39,17 @@ export function noDirTip(root?: string, locale: Locale = "zh"): string {
 /**
  * Quiet extra on the warn strip when `/` opened the catalog's first id.
  * Not a redirect, not a shortly preference — just how the list works.
+ * Single-folder CLI (`dualine .`) has no catalog; do not show it there.
  */
 export const CATALOG_DEFAULT_HINT = COPY.zh.catalogDefault;
+
+export function showCatalogDefaultHint(opts: {
+  source: "api" | "sample" | "export";
+  requestedId: string | null;
+  single?: boolean;
+}): boolean {
+  return opts.source !== "export" && opts.requestedId === null && opts.single !== true;
+}
 
 export type StripWarning = string | ProjectWarning;
 
