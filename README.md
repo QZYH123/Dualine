@@ -65,6 +65,8 @@ GLOSS_PROJECTS_DIR=~/glosses/my-app npm run dev:all
 
 Markdown 加一种锚点：`[这句话](src/server.ts#L18-L59)` 对着真实行号。范本是 `examples/shortly/gloss.md`。
 
+大一点的仓库按子系统分开写。默认读根上的 `gloss.md`；同一项目还可以放 `gloss/<topic>.md`（文件名即笔记 id，锚点仍相对项目根）。打开某一篇用 `?note=<topic>`；只有 `gloss.md` 时，用法和从前完全一样。
+
 在项目文件夹里跑 `dualine init`。它写一份带一枚真锚点的起步 `gloss.md`，并把 write-gloss 技能装进 `.cursor/skills/`。把打印出的那句话交给 agent 起草；写完再 `dualine .`。
 
 ```md
