@@ -26,7 +26,7 @@ npm install && npm run build && npm link
 dualine .
 ```
 
-浏览器会打开。`dualine check` 核对锚点，`dualine export` 冻成静态页。`dualine init` 还没写。
+浏览器会打开。`dualine check` 核对锚点，`dualine check --fix` 按锁改行号，`dualine export` 冻成静态页。`dualine init` 还没写。
 
 改 Dualine 自己仍用两个端口的开发栈：
 
@@ -85,10 +85,11 @@ lang: typescript
 
 ```sh
 npm run check:gloss -- ~/glosses          # 锚点是否落在文件里，正文是否还对得上 gloss.lock
+npm run check:gloss -- ~/glosses --fix    # 原文还在、只是行号挪了：改 gloss.md 和锁
 npm run check:gloss -- ~/glosses --accept # 范围改对之后，重写锁
 ```
 
-`gloss.lock` 记住每条锚点对着的**代码正文**。行号整体挪了、字没变，仍然通过；行号还合法、字变了，检查失败。和 `gloss.md` 一起提交。
+`gloss.lock` 记住每条锚点对着的**代码正文**。行号整体挪了、字没变，仍然通过；行号还合法、字变了，检查失败。`--fix` 按锁里的原文去找新位置，只改行号；找不到或出现多处，仍算问题。`--fix --accept` 先挪行号，再接受剩下的。和 `gloss.md` 一起提交。
 
 ## 带走一张对照页
 
