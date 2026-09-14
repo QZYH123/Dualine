@@ -7,13 +7,14 @@
  */
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "vite";
 import { loadProject } from "../server/projects.js";
-import { folderProjectId, resolveProjectsDir } from "../server/validate.js";
+import { packageRoot } from "../server/root.js";
+import { resolveProjectsDir, slugifyProjectId } from "../server/validate.js";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const REPO_ROOT = packageRoot();
 
 export function frozenPayload(detail: NonNullable<ReturnType<typeof loadProject>>) {
   return {
@@ -29,17 +30,14 @@ export function frozenPayload(detail: NonNullable<ReturnType<typeof loadProject>
 
 export async function exportProject(projectDir: string, outDir?: string): Promise<string> {
   const dir = resolveProjectsDir(projectDir);
-  const id = folderProjectId(dir);
-  if (!id) {
-    throw new Error(`folder name "${basename(dir)}" is not a servable project id`);
-  }
-  const detail = loadProject(id, dir);
+  const id = slugifyProjectId(basename(dir));
+  const detail = loadProject(id, dir, { single: true });
   if (!detail) {
     throw new Error(`no gloss.md in ${dir}`);
   }
   const payloadPath = join(mkdtempSync(join(tmpdir(), "gloss-export-")), "payload.json");
   writeFileSync(payloadPath, JSON.stringify(frozenPayload(detail)));
-  const dest = outDir ?? join(REPO_ROOT, "export", id);
+  const dest = outDir ? resolveProjectsDir(outDir) : join(process.cwd(), "export", id);
   process.env.GLOSS_EXPORT_PAYLOAD = payloadPath;
   process.env.GLOSS_EXPORT_OUT = dest;
   await build({ configFile: join(REPO_ROOT, "vite.config.ts") });
@@ -47,9 +45,29 @@ export async function exportProject(projectDir: string, outDir?: string): Promis
 }
 
 export async function runExport(argv: string[] = process.argv.slice(2)): Promise<number> {
-  const arg = argv.find((a) => !a.startsWith("-")) ?? ".";
+  const positional: string[] = [];
+  let out: string | undefined;
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]!;
+    if (a === "--out") {
+      const next = argv[i + 1];
+      if (!next || next.startsWith("-")) {
+        console.error("export:gloss: --out needs a directory");
+        return 1;
+      }
+      out = next;
+      i += 1;
+      continue;
+    }
+    if (a.startsWith("--out=")) {
+      out = a.slice("--out=".length);
+      continue;
+    }
+    if (!a.startsWith("-")) positional.push(a);
+  }
+  const arg = positional[0] ?? ".";
   try {
-    const dest = await exportProject(arg);
+    const dest = await exportProject(arg, out);
     console.log(`exported ${dest}`);
     return 0;
   } catch (err) {
