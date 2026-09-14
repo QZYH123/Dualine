@@ -1,7 +1,7 @@
-import { memo, useMemo, useRef, useState, type RefObject } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { HighlighterCore } from "shiki/core";
 import { hitAtLine, type CodeRef, type GlossHit, type ProjectFile } from "../lib/gloss";
-import { tokenize, type TokenLine } from "../lib/highlight";
+import { ensureLanguage, tokenize, type TokenLine } from "../lib/highlight";
 import type { Copy } from "../lib/locale";
 
 interface CodePaneProps {
@@ -22,7 +22,9 @@ interface CodePaneProps {
 
 const LANG_LABEL: Record<string, string> = {
   typescript: "TypeScript",
+  tsx: "TypeScript",
   javascript: "JavaScript",
+  jsx: "JavaScript",
   json: "JSON",
   python: "Python",
 };
@@ -41,9 +43,24 @@ export const CodePane = memo(function CodePane({
   onLineClick,
   copy,
 }: CodePaneProps) {
+  const lang = file?.lang ?? "";
+  const [grammarGen, setGrammarGen] = useState(0);
+
+  useEffect(() => {
+    if (!file || !lang) return;
+    if (highlighter.getLoadedLanguages().includes(lang)) return;
+    let cancelled = false;
+    void ensureLanguage(lang).then((loaded) => {
+      if (!cancelled && loaded) setGrammarGen((n) => n + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [file, lang, highlighter]);
+
   const lines: TokenLine[] = useMemo(
-    () => (file ? tokenize(highlighter, file.content.replace(/\n$/, ""), file.lang) : []),
-    [file, highlighter],
+    () => (file ? tokenize(highlighter, file.content.replace(/\n$/, ""), lang) : []),
+    [file, highlighter, lang, grammarGen],
   );
 
   // Which anchor (if any) explains each line — resolved once per file.

@@ -47,7 +47,7 @@ export interface GlossDoc {
 
 export interface ProjectFile {
   path: string;
-  lang: string;
+  lang: string; // path first; frontmatter `lang` is only a hint
   content: string;
 }
 
@@ -55,7 +55,7 @@ export interface Project {
   id: string;
   name: string;
   tagline: string;
-  lang: string;
+  lang: string; // frontmatter `lang`: hint when the path has no mapping
   /** Raw `locale:` from the gloss frontmatter, if any (`zh` / `en`). */
   locale?: string;
   doc: GlossDoc;
@@ -321,7 +321,7 @@ export function buildProject(
   const lang = meta.lang ?? "typescript";
   const projectFiles: Record<string, ProjectFile> = {};
   for (const [path, content] of Object.entries(files)) {
-    projectFiles[path] = { path, lang: langFor(path, lang), content };
+    projectFiles[path] = { path, lang: resolveFileLanguage(path, lang), content };
   }
   return {
     id,
@@ -334,27 +334,4 @@ export function buildProject(
   };
 }
 
-function langFor(path: string, fallback: string): string {
-  const ext = path.split(".").pop() ?? "";
-  switch (ext) {
-    case "ts":
-    case "tsx":
-      return "typescript";
-    case "js":
-    case "jsx":
-    case "mjs":
-      return "javascript";
-    case "py":
-      return "python";
-    case "json":
-      return "json";
-    case "md":
-      return "markdown";
-    case "css":
-      return "css";
-    case "html":
-      return "html";
-    default:
-      return fallback;
-  }
-}
+import { resolveFileLanguage } from "./language.js";
