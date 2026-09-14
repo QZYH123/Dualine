@@ -4,7 +4,7 @@ export type CliArgs =
   | { cmd: "serve"; dir: string; open: boolean }
   | { cmd: "check"; dir: string; accept: boolean; fix: boolean; dryRun: boolean }
   | { cmd: "export"; dir: string; out?: string }
-  | { cmd: "init"; dir: string }
+  | { cmd: "init"; dir: string; force: boolean }
   | { cmd: "error"; message: string };
 
 const SUBS = new Set(["check", "export", "init"]);
@@ -93,7 +93,7 @@ function parseSub(cmd: string, argv: string[]): CliArgs {
     if (unknown) return { cmd: "error", message: unknown };
     return out === undefined ? { cmd: "export", dir } : { cmd: "export", dir, out };
   }
-  const unknown = unknownFlag(flags, new Set());
+  const unknown = unknownFlag(flags, new Set(["--force"]));
   if (unknown) return { cmd: "error", message: unknown };
-  return { cmd: "init", dir };
+  return { cmd: "init", dir, force: flags.has("--force") };
 }

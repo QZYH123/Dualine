@@ -82,8 +82,19 @@ describe("parseArgv", () => {
       dir: ".",
       out: "dest",
     });
-    assert.deepEqual(parseArgv(["init"]), { cmd: "init", dir: "." });
-    assert.deepEqual(parseArgv(["init", "app"]), { cmd: "init", dir: "app" });
+    assert.deepEqual(parseArgv(["init"]), { cmd: "init", dir: ".", force: false });
+    assert.deepEqual(parseArgv(["init", "app"]), { cmd: "init", dir: "app", force: false });
+    assert.deepEqual(parseArgv(["init", "--force"]), { cmd: "init", dir: ".", force: true });
+    assert.deepEqual(parseArgv(["init", "app", "--force"]), {
+      cmd: "init",
+      dir: "app",
+      force: true,
+    });
+    assert.deepEqual(parseArgv(["init", "--force", "app"]), {
+      cmd: "init",
+      dir: "app",
+      force: true,
+    });
   });
 
   test("unknown flags and missing --out value are errors", () => {

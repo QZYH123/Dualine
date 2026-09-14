@@ -29,7 +29,8 @@
     "server",
     "scripts",
     "examples",
-    "tests"
+    "tests",
+    ".cursor/skills/write-gloss"
   ],
   "scripts": {
     "dev": "vite",

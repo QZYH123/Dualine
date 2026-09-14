@@ -5,6 +5,7 @@ import { runCheck } from "../scripts/check-gloss.js";
 import { exportProject } from "../scripts/export-gloss.js";
 import { parseArgv, type CliArgs } from "./args.js";
 import { createApiServer, listenHttp } from "./index.js";
+import { InitError, runInit } from "./init.js";
 import { pickFreePort, portFromEnv } from "./port.js";
 import { packageRoot } from "./root.js";
 import { resolveProjectsDir } from "./validate.js";
@@ -16,13 +17,14 @@ export { packageRoot } from "./root.js";
 const HELP = `dualine [dir]             打开对照阅读（默认当前目录）
 dualine check [dir]       核对锚点与 gloss.lock
 dualine export [dir]      冻成静态页
-dualine init [dir]        起草 gloss.md（尚未实现）
+dualine init [dir]        写起步 gloss.md，装上 write-gloss
 
   --no-open               不要打开浏览器
   --out <dir>             export 输出目录
   --accept                check 通过后重写锁
   --fix                   按锁里的原文改写行号
   --dry-run               只打印 --fix 将要改的，不写盘
+  --force                 覆写已有的 gloss.md 和技能
   --help, --version
 `;
 
@@ -72,8 +74,8 @@ async function serve(args: Extract<CliArgs, { cmd: "serve" }>): Promise<number> 
     return 1;
   }
   if (!isGlossFile(dir)) {
-    console.error("这个目录没有 gloss.md。先跑 dualine init。");
-    console.error("No gloss.md here. Run dualine init first.");
+    console.error("这里还没有 gloss.md。先 dualine init，再让 agent 用 write-gloss 技能起草。");
+    console.error("No gloss.md here. Run dualine init, then let an agent draft with the write-gloss skill.");
     return 1;
   }
 
@@ -142,8 +144,23 @@ export async function runCli(argv: string[]): Promise<number> {
       console.error(args.message);
       return 1;
     case "init":
-      console.log("not yet");
-      return 1;
+      try {
+        const result = runInit(args.dir, { force: args.force });
+        console.log(result.glossPath);
+        console.log(result.skillStatus === "skipped" ? "已存在，跳过" : "已安装");
+        console.log("");
+        console.log("下一步：让 agent 读 .cursor/skills/write-gloss/SKILL.md，为这个项目写 gloss.md。");
+        console.log("写完：dualine .");
+        return 0;
+      } catch (err) {
+        if (err instanceof InitError) {
+          console.error(err.message);
+          return err.exitCode;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(message);
+        return 1;
+      }
     case "check":
       return runCheck([
         args.dir,
