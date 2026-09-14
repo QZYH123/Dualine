@@ -637,3 +637,58 @@ Grok Build on `feature/gloss-reader-v1` @ `2cb6743`. Live base `http://127.0.0.1
 - Local v0.1 stands. No push, no merge to main. Not claiming publish-done.
 
 
+---
+
+## Round 11 — CLI, notes, lock, night (2026-09-15 UTC+8)
+
+Fresh-clone audit on `feature/round11-tool` @ `7db6df6`, README as the only guide. `npm install && npm run build && npm link` — link wrote the bin under this agent's npm prefix (`~/.local/share/cursor-agent/versions/bin`), which was not on `PATH`; used that `dualine` (no sudo). Three /tmp projects: Python CLI (`app/`, no `src/`), Go (`cmd/x` + `internal/`), TS (`src/` + `gloss.md` + `gloss/api.md`). Playwright 1440×900 / 1200×900 + `color_scheme='dark'` once each; exports via `dualine export` and Pages `npx tsx scripts/export-gloss.ts .` served statically. Break cases: move / `--fix` / text drift / insert chapter / delete gloss.md / unknown `?note=` / no-gloss refusal / init twice / `--force` / `My App` → `my-app` / `PORT` busy / `--help` `--version`. Write pass on the same branch. No push.
+
+### Journey notes
+
+1. **README → `dualine .`** — After build + link, `dualine init` / `check` / `. --no-open` is the path. Single-folder opens without `?project=`. Python and Go highlight lazily. Pin / Esc / reverse / rail @1440 / select @1200 work. TS notes appear in the rail above 目录 and as `<optgroup>`s; rail and select both switch `?note=`. 999 gate still 「对照需要更宽的窗口 · ≥ 1100px」. No 示例 chip. Pages export `export/dualine/index.html` opens statically (pin works).
+
+2. **Lock / `--fix`** — Move a faced function: CLI `suggest` + `moved to L8-L12`; `--fix` → 0 problems. Edit faced text: `code changed since gloss.lock` in CLI and strip. Insert a chapter above existing anchors: lock bytes unchanged. Target-keyed lock holds.
+
+3. **Notices** — No `gloss.md`: CLI refusal names `dualine init`. Delete `gloss.md` while serving: empty notice, hint `dualine init` (title was leftover catalog copy). Unknown `?note=`: lists notes; hint doubled the folder (`/tmp/r11-tsnotes/r11-tsnotes/…`). Frozen export miss used `GLOSS_PROJECTS_DIR/…`.
+
+4. **Night paper** — Body prose ~13:1, code tokens ≥6.8:1 vs `--paper-code`. No leftover light surfaces. Dark `--ink-4` (rail label, line nums, 999 hint) was 2.32–2.42:1. Warn strip on a moved span showed the English lock loc plus leftover `目录第一项 · 用 ?project=<id> 指定` — not 「已挪到」.
+
+5. **PORT / init** — Unset `PORT`, 8787 busy → 8788. `PORT=<busy>` used to error; README said 接着往后试. `My App` slug `my-app`. `init` twice refuses; `--force` overwrites. `--help` / `--version` print. Python `init` still faces `app/__init__.py` (sorted walk), not `app/cli.py`.
+
+### Round 11 issues
+
+| id | sev | status | issue | proposed / done |
+|----|-----|--------|-------|-----------------|
+| R11-ritual | — | **ok** | pin / Esc / reverse / rail @1440 / select @1200; TS notes via rail and select; Python+Go highlight; 999 gate; Pages export opens | no product change |
+| R11-lock | — | **ok** | move → CLI suggest; `--fix` → 0; text edit → `code changed since`; insert chapter → lock unchanged | no product change |
+| R11-cli | — | **ok** | no-gloss refusal; init twice / `--force`; `My App` → `my-app`; `--help` `--version`; default 8787 busy → next | no product change |
+| R11-1 | high | **fixed** `d1f1b0c` | Single-folder warn strip appended leftover `目录第一项 · 用 ?project=<id> 指定` | `showCatalogDefaultHint` is false when `catalog.single` |
+| R11-2 | medium | **fixed** `fef474f` | One-line strip showed the English lock loc, not 「已挪到 L8–L12」 | single warning with `suggest` uses `warnMoved` + `--fix` hint |
+| R11-3 | medium | **fixed** `b7f55db` | Unknown `?note=` hint doubled the folder (`…/r11-tsnotes/r11-tsnotes/gloss/…`) | `notePath` / `projectPath` use the root itself in single-folder mode |
+| R11-4 | medium | **fixed** `f3ca2df` | Delete gloss.md: title was leftover 「这个目录下没有项目」 | single-folder empty title is 「这里还没有 gloss.md」; hint stays `dualine init` |
+| R11-5 | medium | **fixed** `1d9b106` | `PORT=<busy>` errored; README said 接着往后试 | `chooseListenPort` starts at `PORT` (or 8787) and skips a bound port |
+| R11-6 | medium | **fixed** `5ca5067` | Night `--ink-4` / comments 2.3–2.4:1 (rail, line nums, 999 hint) | dark `--ink-4` `#747066` (~3.5:1); `--code-comment` `#706b61` (~3.2:1) |
+| R11-7 | medium | **fixed** `76f27d0` | Frozen export `?note=` miss hinted `GLOSS_PROJECTS_DIR/…` | frozen hint is `gloss/<id>.md` |
+| R11-init | low | **for owner** | `init` on a Python `app/` package faces `app/__init__.py`, not `cli.py` | prefer `app/cli.py` / `__main__.py` over `__init__.py` when both exist |
+| R11-link | info | note | this agent's `npm link` prefix was not on `PATH` | environment; `node bin/dualine.js` works; not a Dualine bug |
+| R5-3 | low | deferred | Esc taught twice (masthead + chip) | skip; chip stays primary |
+| R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | skip; essay lead is enough |
+| R5-5 / R2-2e | low | deferred | Bridge drops after a few px of pinned prose scroll | skip; do not fight sync |
+| R5-6 / R2-7d | low | deferred | Light-mode rail label whisper | skip; night floor is R11-6 |
+| R5-7 | low | deferred | Pin chip can cover the last visible lines of a long focus span | still polish |
+| L3 | low | deferred | EN sample subtitle | would fight Chinese-first voice |
+
+### Round 11 re-test
+
+- `npm run check` / `npm run build` after the write pass (see report).
+- **R11-1 / R11-2:** moved `greet` → strip `已挪到 L12–L16 · dualine check --fix 可全部挪好`; no `?project=` leftover.
+- **R11-3:** `?note=does-not-exist` hint `/tmp/r11-tsnotes/gloss/does-not-exist.md`; notes listed.
+- **R11-4:** delete gloss.md → title 「这里还没有 gloss.md」 / EN 「There is no gloss.md here」; hint `dualine init`.
+- **R11-5:** `PORT=9340` busy → `http://127.0.0.1:9341`.
+- **R11-6:** dark rail label / 999 hint 3.52:1; prose 13.45:1; no whisper fail.
+- **R11-7:** unit: frozen miss hint `gloss/nope.md`.
+- Pages `export/dualine/index.html` static: title `dualine 是怎么对照的`, pin works, dark paper, 999 gate.
+- Still deferred: R5-3 dual Esc, first-open pin tip, bridge, light rail whisper, pin-chip occlusion, L3. Init entry heuristic left for owner.
+- Local-only. No push, no tag. Not claiming publish-done.
+
+
