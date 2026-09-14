@@ -44,10 +44,10 @@
       "sha256": "3b03f3afde65aed804071936c0c9173356935485f5c38636abf06d15f10a48ed"
     },
     {
-      "loc": "server/init.ts#L227-L247",
+      "loc": "server/init.ts#L286-L306",
       "file": "server/init.ts",
-      "start": 227,
-      "end": 247,
+      "start": 286,
+      "end": 306,
       "sha256": "20106e111f1ad2a37fa3ab78ae4282c820086572248b22a53332536061ca8af8"
     },
     {

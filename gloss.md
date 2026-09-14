@@ -28,7 +28,7 @@ dualine 只做一件事：让人读完一篇短文，觉得自己摸清了一个
 
 静态文件从 `dist/` 里出。[`/api` 先判，其余落到 `index.html`](server/index.ts#L179-L188)，`..` 不得越界。端口从 8787 往上[找第一个空的](server/port.ts#L18-L28)。
 
-没有 `gloss.md` 的文件夹不是死路。[`dualine init`](server/init.ts#L227-L247) 看一眼源文件，猜语言和入口，写一份只有一枚真锚点的起步笔记，再把 `write-gloss` 技能装进你的 `.cursor/skills/`。散文仍由你或你的 agent 来写；Dualine 不生成它。
+没有 `gloss.md` 的文件夹不是死路。[`dualine init`](server/init.ts#L286-L306) 看一眼源文件，猜语言和入口，写一份只有一枚真锚点的起步笔记，再把 `write-gloss` 技能装进你的 `.cursor/skills/`。散文仍由你或你的 agent 来写；Dualine 不生成它。
 
 一个项目可以有好几篇笔记。`gloss.md` 是主篇，[`gloss/` 下每个合法 id 的 `.md` 是一篇](server/notes.ts#L30-L67)，用 `?note=` 打开。目录里它们排在章前；只有一篇时，什么都不多显示。
 

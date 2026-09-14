@@ -2,7 +2,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSy
 import { basename, join, resolve } from "node:path";
 import { languageForPath } from "../src/lib/language.js";
 import { packageRoot } from "./root.js";
-import { lineCount, readTextFile, resolveProjectsDir, slugifyProjectId } from "./validate.js";
+import { fileLines, lineCount, readTextFile, resolveProjectsDir, slugifyProjectId } from "./validate.js";
 
 const SKIP_DIRS = new Set([
   ".git",
@@ -117,7 +117,53 @@ const ENTRY_RULES: ((rel: string) => boolean)[] = [
   },
 ];
 
-export function pickEntry(rels: readonly string[]): string | null {
+function pathDepth(rel: string): number {
+  const norm = rel.replace(/\\/g, "/");
+  if (!norm) return 0;
+  return norm.split("/").length;
+}
+
+function baseName(rel: string): string {
+  const norm = rel.replace(/\\/g, "/");
+  return norm.split("/").pop() ?? "";
+}
+
+function isSecondaryEntry(rel: string): boolean {
+  const base = baseName(rel);
+  if (base === "__main__.py" || base === "cli.py") return true;
+  const p = parseRel(rel);
+  return p.stem === "main" || p.stem === "app" || p.stem === "server";
+}
+
+function isInitPy(rel: string): boolean {
+  return baseName(rel) === "__init__.py";
+}
+
+function nonBlankLineCount(text: string): number {
+  return fileLines(text).filter((line) => line.trim() !== "").length;
+}
+
+function isThinEntry(rel: string, nonBlankLines?: Readonly<Record<string, number>>): boolean {
+  if (!nonBlankLines || !Object.hasOwn(nonBlankLines, rel)) return false;
+  return (nonBlankLines[rel] ?? 0) < 3;
+}
+
+function pickShallowestSorted(rels: readonly string[]): string | null {
+  if (!rels.length) return null;
+  const ranked = [...rels].sort((a, b) => {
+    const depthDelta = pathDepth(a) - pathDepth(b);
+    if (depthDelta !== 0) return depthDelta;
+    return a.localeCompare(b);
+  });
+  return ranked[0] ?? null;
+}
+
+export interface PickEntryOptions {
+  /** Non-blank line counts keyed by rel path. Missing keys are treated as substantial. */
+  nonBlankLines?: Readonly<Record<string, number>>;
+}
+
+export function pickEntry(rels: readonly string[], opts?: PickEntryOptions): string | null {
   const candidates = [...rels]
     .filter((rel) => sourceLang(rel))
     .sort((a, b) => a.localeCompare(b));
@@ -125,6 +171,12 @@ export function pickEntry(rels: readonly string[]): string | null {
     const hit = candidates.find(rule);
     if (hit) return hit;
   }
+  const secondary = pickShallowestSorted(candidates.filter(isSecondaryEntry));
+  if (secondary) return secondary;
+  const preferred = candidates.filter(
+    (rel) => !isInitPy(rel) && !isThinEntry(rel, opts?.nonBlankLines),
+  );
+  if (preferred.length) return preferred[0] ?? null;
   return candidates[0] ?? null;
 }
 
@@ -201,8 +253,15 @@ export function detectProject(dir: string): DetectedProject {
   }
   const rels = files.map((f) => f.rel);
   const lang = majorityLang(rels);
-  const withLines = files.filter((f) => lineCount(f.text) >= 1).map((f) => f.rel);
-  const entry = pickEntry(withLines);
+  const withLines = files.filter((f) => lineCount(f.text) >= 1);
+  const nonBlankLines: Record<string, number> = {};
+  for (const f of withLines) {
+    nonBlankLines[f.rel] = nonBlankLineCount(f.text);
+  }
+  const entry = pickEntry(
+    withLines.map((f) => f.rel),
+    { nonBlankLines },
+  );
   const lines = entry ? lineCount(files.find((f) => f.rel === entry)!.text) : 0;
   return { slug, lang, entry, lines };
 }

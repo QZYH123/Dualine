@@ -62,6 +62,20 @@ describe("pickEntry", () => {
     assert.equal(pickEntry(["README.md", "app/main.py"]), "app/main.py");
     assert.equal(pickEntry(["README.md", "notes.md"]), null);
   });
+
+  test("prefers cli.py over __init__.py; a lone package __init__.py still wins", () => {
+    assert.equal(pickEntry(["app/__init__.py", "app/cli.py"]), "app/cli.py");
+    assert.equal(pickEntry(["pkg/__init__.py"]), "pkg/__init__.py");
+  });
+
+  test("explicit src/index still wins over src/server when the index is a thin barrel", () => {
+    assert.equal(
+      pickEntry(["src/index.ts", "src/server.ts"], {
+        nonBlankLines: { "src/index.ts": 2, "src/server.ts": 8 },
+      }),
+      "src/index.ts",
+    );
+  });
 });
 
 describe("majorityLang", () => {
@@ -171,6 +185,35 @@ describe("detectProject", () => {
     assert.equal(got.lang, "typescript");
     assert.equal(got.entry, "src/index.ts");
     assert.equal(got.lines, 1);
+  });
+
+  test("Python app package faces cli.py, not __init__.py", () => {
+    const dir = join(tmp, "py-cli-app");
+    mkdirSync(join(dir, "app"), { recursive: true });
+    writeFileSync(join(dir, "app/__init__.py"), '"""app package."""\n');
+    writeFileSync(join(dir, "app/cli.py"), "def main():\n    print('hi')\n");
+    const got = detectProject(dir);
+    assert.equal(got.entry, "app/cli.py");
+  });
+
+  test("lone package __init__.py is still the entry", () => {
+    const dir = join(tmp, "py-pkg-only");
+    mkdirSync(join(dir, "pkg"), { recursive: true });
+    writeFileSync(join(dir, "pkg/__init__.py"), '"""pkg."""\n');
+    const got = detectProject(dir);
+    assert.equal(got.entry, "pkg/__init__.py");
+  });
+
+  test("explicit src/index.ts wins over src/server.ts even as a 2-line barrel", () => {
+    const dir = join(tmp, "ts-barrel");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/index.ts"), 'export * from "./server";\nexport * from "./util";\n');
+    writeFileSync(
+      join(dir, "src/server.ts"),
+      "export function listen() {\n  return 8787;\n}\n",
+    );
+    const got = detectProject(dir);
+    assert.equal(got.entry, "src/index.ts");
   });
 });
 
