@@ -61,6 +61,15 @@ describe("createApiServer", () => {
     assert.ok(body.projects.some((p) => p.id === "shortly"));
   });
 
+  test("GET /api/projects/shortly?note=nope is a named note miss", async () => {
+    const res = await get("/api/projects/shortly?note=nope");
+    assert.equal(res.status, 404);
+    const body = (await res.json()) as { error: string; note: string; notes: { id: string }[] };
+    assert.equal(body.error, "not found");
+    assert.equal(body.note, "nope");
+    assert.ok(body.notes.some((n) => n.id === "gloss"));
+  });
+
   test("GET /api/projects/shortly", async () => {
     const res = await get("/api/projects/shortly");
     assert.equal(res.status, 200);
@@ -241,6 +250,34 @@ describe("handle catalog against an explicit root", () => {
       assert.equal(body.rootStatus, "ok");
       assert.equal(body.single, true);
       assert.equal(handle("GET", "/api/projects/myapp", dir, { single: true }).status, 404);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("unknown note names the note and lists the project's notes", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-note-404-"));
+    const dir = join(parent, "demo");
+    try {
+      mkdirSync(join(dir, "gloss"), { recursive: true });
+      writeFileSync(join(dir, "gloss.md"), "---\nname: Demo\n---\n# Default\n\nLead.\n\n## One\n\nHi.\n");
+      writeFileSync(join(dir, "gloss/b.md"), "# Other\n\nLead.\n\n## Two\n\nHi.\n");
+      const miss = handle("GET", "/api/projects/demo", parent, { note: "nope" });
+      assert.equal(miss.status, 404);
+      const body = miss.body as { error: string; note: string; notes: { id: string; title: string }[] };
+      assert.equal(body.error, "not found");
+      assert.equal(body.note, "nope");
+      assert.deepEqual(
+        body.notes.map((n) => n.id),
+        ["gloss", "b"],
+      );
+      assert.equal(body.notes[1]?.title, "Other");
+
+      const ok = handle("GET", "/api/projects/demo", parent, { note: "b" });
+      assert.equal(ok.status, 200);
+      const payload = ok.body as { note: string; gloss: string };
+      assert.equal(payload.note, "b");
+      assert.match(payload.gloss, /# Other/);
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

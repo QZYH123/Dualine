@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { runCheck } from "../scripts/check-gloss.js";
 import { buildLock, checkLock, writeLock } from "../server/lock.js";
+import { listNotes } from "../server/notes.js";
 import { listProjects, loadProject, resolveProjectDir } from "../server/projects.js";
 import { collectRefs } from "../server/validate.js";
 
@@ -386,6 +387,176 @@ ${extra}`,
         listProjects(dir).map((p) => p.id),
         ["child"],
       );
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+});
+
+function writeTwoNoteProject(dir: string): void {
+  mkdirSync(join(dir, "src"), { recursive: true });
+  mkdirSync(join(dir, "gloss"), { recursive: true });
+  writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\nexport const b = 2;\n");
+  writeFileSync(
+    join(dir, "gloss.md"),
+    `---
+name: Two
+tagline: default note
+---
+
+# Default
+
+Lead.
+
+## One
+
+See [a](src/a.ts#L1).
+`,
+  );
+  writeFileSync(
+    join(dir, "gloss/b.md"),
+    `---
+tagline: other
+---
+
+# Other
+
+Lead b.
+
+## Two
+
+Also [a](src/a.ts#L1).
+`,
+  );
+  writeFileSync(join(dir, "gloss/README.md"), "# Ignored\n");
+  writeFileSync(join(dir, "gloss/-bad.md"), "# Bad\n");
+  writeFileSync(join(dir, "gloss/z.md"), "# Zed\n\nLead z.\n\n## Z\n\nHi.\n");
+}
+
+describe("listNotes", () => {
+  test("gloss first, then alphabetical ids; invalid basenames ignored", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-notes-"));
+    const dir = join(parent, "demo");
+    try {
+      writeTwoNoteProject(dir);
+      assert.deepEqual(
+        listNotes(dir).map((n) => n.id),
+        ["gloss", "b", "z"],
+      );
+      assert.deepEqual(
+        listNotes(dir).map((n) => n.rel),
+        ["gloss.md", "gloss/b.md", "gloss/z.md"],
+      );
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("no gloss/ directory is just gloss.md", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-onenote-"));
+    const dir = join(parent, "solo");
+    try {
+      mkdirSync(dir);
+      writeFileSync(join(dir, "gloss.md"), "# Solo\n\nLead.\n");
+      assert.deepEqual(
+        listNotes(dir).map((n) => n.id),
+        ["gloss"],
+      );
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("loadProject notes", () => {
+  test("loads the requested note; files are that note's anchors plus src/", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-load-note-"));
+    const dir = join(parent, "demo");
+    try {
+      writeTwoNoteProject(dir);
+      writeFileSync(join(dir, "docs-only.md"), "only in b\n");
+      writeFileSync(
+        join(dir, "gloss/b.md"),
+        "# Other\n\nLead b.\n\n## Two\n\nSee [docs](docs-only.md#L1).\n",
+      );
+
+      const def = loadProject("demo", parent);
+      assert.ok(def);
+      assert.equal(def.note, "gloss");
+      assert.deepEqual(
+        def.notes.map((n) => n.id),
+        ["gloss", "b", "z"],
+      );
+      assert.equal(def.name, "Two");
+      assert.ok(def.gloss.includes("# Default"));
+      assert.equal("docs-only.md" in def.files, false);
+      assert.ok("src/a.ts" in def.files);
+
+      const other = loadProject("demo", parent, { note: "b" });
+      assert.ok(other);
+      assert.equal(other.note, "b");
+      assert.equal(other.name, "Two");
+      assert.ok(other.gloss.includes("# Other"));
+      assert.ok("docs-only.md" in other.files);
+      assert.deepEqual(
+        other.notes.map((n) => n.title),
+        ["Default", "Other", "Zed"],
+      );
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("unknown note is null; warnings are the requested note's only", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-note-warn-"));
+    const dir = join(parent, "demo");
+    try {
+      writeTwoNoteProject(dir);
+      writeFileSync(
+        join(dir, "gloss/b.md"),
+        "# Other\n\nLead.\n\n## Two\n\nSee [gone](src/gone.ts#L1).\n",
+      );
+      assert.equal(loadProject("demo", parent, { note: "nope" }), null);
+      const def = loadProject("demo", parent);
+      assert.ok(def);
+      assert.deepEqual(def.warnings, []);
+      const other = loadProject("demo", parent, { note: "b" });
+      assert.ok(other);
+      assert.equal(other.warnings.length, 1);
+      assert.match(other.warnings[0]?.message ?? "", /b:c1\.p1\.a1/);
+      assert.match(other.warnings[0]?.message ?? "", /src\/gone\.ts/);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("rev covers gloss/ files even when loading the default note", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-rev-"));
+    const dir = join(parent, "demo");
+    try {
+      writeTwoNoteProject(dir);
+      const first = loadProject("demo", parent);
+      assert.ok(first);
+      utimesSync(join(dir, "gloss/b.md"), 2_000_000_000, 2_000_000_000);
+      const second = loadProject("demo", parent);
+      assert.ok(second);
+      assert.notEqual(second.rev, first.rev);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("single-folder mode still loads a second note", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-single-notes-"));
+    const dir = join(parent, "MyApp");
+    try {
+      writeTwoNoteProject(dir);
+      const listed = listProjects(dir, { single: true });
+      assert.equal(listed[0]?.id, "myapp");
+      assert.equal(listed[0]?.notes, 3);
+      const other = loadProject("myapp", dir, { single: true, note: "b" });
+      assert.ok(other);
+      assert.equal(other.note, "b");
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

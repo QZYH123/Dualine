@@ -15,7 +15,9 @@ import {
   projectStamp,
   projectsRoot,
   resolveProjectDir,
+  unknownNote,
 } from "./projects.js";
+import { DEFAULT_NOTE_ID } from "./notes.js";
 import { pathHasDotDot, resolveStatic, type StaticResolve } from "./static.js";
 import { serveScope } from "./validate.js";
 
@@ -27,6 +29,7 @@ export interface HandleResult {
 
 export interface HandleOptions {
   single?: boolean;
+  note?: string;
 }
 
 export interface ApiServerOptions {
@@ -121,7 +124,12 @@ export function handle(
     if (!isValidProjectId(id)) {
       return { status: 400, body: { error: "invalid id" } };
     }
-    const project = loadProject(id, root, { single });
+    const dir = resolveProjectDir(id, root, { single });
+    if (!dir) return { status: 404, body: { error: "not found" } };
+    const noteId = opts?.note?.trim() || DEFAULT_NOTE_ID;
+    const miss = unknownNote(dir, noteId);
+    if (miss) return { status: 404, body: { error: "not found", ...miss } };
+    const project = loadProject(id, root, { single, note: noteId });
     if (!project) return { status: 404, body: { error: "not found" } };
     return { status: 200, body: project };
   }
@@ -166,8 +174,10 @@ export function createApiServer(opts: ApiServerOptions = {}): Server {
     try {
       const url = new URL(rawUrl, "http://127.0.0.1");
       pathname = url.pathname;
+      const note = url.searchParams.get("note")?.trim() || undefined;
+      const handleOpts = { single, ...(note ? { note } : {}) };
       if (isApiPath(pathname)) {
-        const result = handle(method, pathname, root, { single });
+        const result = handle(method, pathname, root, handleOpts);
         status = result.status;
         sendJson(res, result.status, result.body, result.headers);
       } else if (distDir) {
@@ -177,7 +187,7 @@ export function createApiServer(opts: ApiServerOptions = {}): Server {
           status = sendStatic(res, resolveStatic(method, pathname, distDir));
         }
       } else {
-        const result = handle(method, pathname, root, { single });
+        const result = handle(method, pathname, root, handleOpts);
         status = result.status;
         sendJson(res, result.status, result.body, result.headers);
       }

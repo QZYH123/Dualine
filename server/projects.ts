@@ -1,7 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { splitFrontmatter } from "../src/lib/gloss.js";
+import { DEFAULT_NOTE_ID, type NoteSummary } from "../src/lib/notes.js";
 import { checkLock, hintRelocation } from "./lock.js";
+import {
+  collectAllNoteRefs,
+  listNotes,
+  noteSourcePaths,
+  noteSummaries,
+  prefixNoteRefs,
+} from "./notes.js";
 import {
   checkRefs,
   collectRefs,
@@ -13,6 +21,9 @@ import {
   safeResolve,
   slugifyProjectId,
 } from "./validate.js";
+
+export { listNotes, DEFAULT_NOTE_ID } from "./notes.js";
+export type { NoteFile, NoteSummary } from "./notes.js";
 
 export {
   inspectRoot,
@@ -26,6 +37,8 @@ export {
 export interface ProjectOpts {
   /** This folder is the only project; id is the slugified folder name. */
   single?: boolean;
+  /** Note id (`gloss` when omitted). */
+  note?: string;
 }
 
 export const MAX_FILES = 200;
@@ -36,14 +49,18 @@ export interface ProjectSummary {
   name: string;
   tagline: string;
   lang: string;
+  /** Present only when the project has more than one note. */
+  notes?: number;
 }
 
-export interface ProjectDetail extends ProjectSummary {
+export interface ProjectDetail extends Omit<ProjectSummary, "notes"> {
   gloss: string;
   files: Record<string, string>;
   warnings: { message: string; suggest?: { start: number; end: number }; ambiguous?: number }[];
-  /** Max mtime of gloss.md and the files it faces — for the reader's quiet reload chip. */
+  /** Max mtime of gloss.md, gloss/*.md, and every file any note faces. */
   rev: string;
+  note: string;
+  notes: NoteSummary[];
 }
 
 function hasGloss(dir: string): boolean {
@@ -69,7 +86,7 @@ function childProjects(root: string): ProjectSummary[] {
     try {
       if (!statSync(dir).isDirectory() || !hasGloss(dir)) continue;
       const gloss = readFileSync(join(dir, "gloss.md"), "utf8");
-      out.push({ id: name, ...metaFromGloss(name, gloss) });
+      out.push(summaryOf(name, dir, gloss));
     } catch {
       continue;
     }
@@ -82,7 +99,7 @@ function selfProject(root: string): ProjectSummary | null {
   if (!id || !hasGloss(root)) return null;
   try {
     const gloss = readFileSync(join(root, "gloss.md"), "utf8");
-    return { id, ...metaFromGloss(id, gloss) };
+    return summaryOf(id, root, gloss);
   } catch {
     return null;
   }
@@ -93,7 +110,7 @@ function singleProject(root: string): ProjectSummary | null {
   const id = slugifyProjectId(basename(resolve(root)));
   try {
     const gloss = readFileSync(join(root, "gloss.md"), "utf8");
-    return { id, ...metaFromGloss(id, gloss) };
+    return summaryOf(id, root, gloss);
   } catch {
     return null;
   }
@@ -152,15 +169,10 @@ export function projectStamp(projectDir: string): string {
       /* skip */
     }
   };
-  bump(join(projectDir, "gloss.md"));
-  try {
-    const gloss = readFileSync(join(projectDir, "gloss.md"), "utf8");
-    for (const { ref } of collectRefs(gloss)) {
-      const abs = safeResolve(projectDir, ref.file);
-      if (abs) bump(abs);
-    }
-  } catch {
-    /* gloss unreadable — stamp still reflects the file mtime above */
+  for (const abs of noteSourcePaths(projectDir)) bump(abs);
+  for (const { ref } of collectAllNoteRefs(projectDir)) {
+    const abs = safeResolve(projectDir, ref.file);
+    if (abs) bump(abs);
   }
   const srcRoot = join(projectDir, "src");
   try {
@@ -173,6 +185,15 @@ export function projectStamp(projectDir: string): string {
   return String(Math.round(latest));
 }
 
+export function unknownNote(
+  projectDir: string,
+  noteId: string,
+): { note: string; notes: NoteSummary[] } | null {
+  const notes = noteSummaries(projectDir);
+  if (notes.some((n) => n.id === noteId)) return null;
+  return { note: noteId, notes };
+}
+
 export function loadProject(
   id: string,
   root = projectsRoot(),
@@ -180,16 +201,23 @@ export function loadProject(
 ): ProjectDetail | null {
   const projectDir = resolveProjectDir(id, root, opts);
   if (!projectDir) return null;
-  return loadFromDir(id, projectDir);
+  const noteId = opts?.note?.trim() || DEFAULT_NOTE_ID;
+  return loadFromDir(id, projectDir, noteId);
 }
 
-function loadFromDir(id: string, projectDir: string): ProjectDetail | null {
-  const glossPath = join(projectDir, "gloss.md");
+function loadFromDir(
+  id: string,
+  projectDir: string,
+  noteId: string,
+): ProjectDetail | null {
   if (!hasGloss(projectDir)) return null;
+  const chosen = listNotes(projectDir).find((n) => n.id === noteId);
+  if (!chosen) return null;
 
-  const gloss = readFileSync(glossPath, "utf8");
-  const meta = metaFromGloss(id, gloss);
-  const refs = collectRefs(gloss);
+  const gloss = readFileSync(chosen.path, "utf8");
+  const meta = metaFromGloss(id, readFileSync(join(projectDir, "gloss.md"), "utf8"));
+  const refs = prefixNoteRefs(noteId, collectRefs(gloss));
+  const notes = noteSummaries(projectDir);
   const problems = checkRefs(projectDir, refs);
   const okLocs = new Set(refs.map((r) => r.loc));
   for (const p of problems) okLocs.delete(p.loc);
@@ -230,13 +258,28 @@ function loadFromDir(id: string, projectDir: string): ProjectDetail | null {
     }
   }
 
-  return { id, ...meta, gloss, files, warnings, rev: projectStamp(projectDir) };
+  return {
+    id,
+    ...meta,
+    gloss,
+    files,
+    warnings,
+    rev: projectStamp(projectDir),
+    note: noteId,
+    notes,
+  };
+}
+
+function summaryOf(id: string, dir: string, gloss: string): ProjectSummary {
+  const meta = metaFromGloss(id, gloss);
+  const n = listNotes(dir).length;
+  return n > 1 ? { id, ...meta, notes: n } : { id, ...meta };
 }
 
 function metaFromGloss(
   id: string,
   src: string,
-): Omit<ProjectSummary, "id"> {
+): Omit<ProjectSummary, "id" | "notes"> {
   const { meta } = splitFrontmatter(src);
   return {
     name: meta.name || id,
