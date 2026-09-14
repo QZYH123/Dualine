@@ -13,7 +13,7 @@
       "file": "server/cli.ts",
       "start": 90,
       "end": 106,
-      "sha256": "94726890913a1f77ba37da55c06b93e55a54f99c0d5d287fdd9ed631fe8e07ab"
+      "sha256": "6901f207f8ca4fd8a6bb5de534ab0ca019745707afa36b4c124ccdfb94a9549e"
     },
     {
       "loc": "server/fix.ts#L42-L73",
@@ -132,7 +132,7 @@
       "file": "src/App.tsx",
       "start": 91,
       "end": 110,
-      "sha256": "b69ca77df93048b28fbc73e796cfa1f52486dc5b53d4c32699ff9628b5a3f003"
+      "sha256": "7b2de71c20aa1a70b4f80848c6c122ec8651736b5ab473a5a412cf30d46b7477"
     },
     {
       "loc": "src/lib/gloss.ts#L13-L17",
@@ -205,18 +205,18 @@
       "sha256": "c8d212754dee5a22fd2bd4c81d6d45fb0294a4225dd1932e67523e7b83e0e443"
     },
     {
-      "loc": "src/lib/load.ts#L174-L175",
+      "loc": "src/lib/load.ts#L176-L177",
       "file": "src/lib/load.ts",
-      "start": 174,
-      "end": 175,
+      "start": 176,
+      "end": 177,
       "sha256": "211f19cbfd9bfedcb7da7f217494734722e9885fe2a1701165d533577fb236f3"
     },
     {
-      "loc": "src/lib/load.ts#L177-L202",
+      "loc": "src/lib/load.ts#L179-L205",
       "file": "src/lib/load.ts",
-      "start": 177,
-      "end": 202,
-      "sha256": "f757b1b0937249827e81923c2a92eb2b40fbb51fc85056a0dbc5007d7b08e9e1"
+      "start": 179,
+      "end": 205,
+      "sha256": "c67da56df78b24996ac8128a7484c59f70b4205e84c9adb9b4617b7c452a3dad"
     },
     {
       "loc": "src/main.tsx#L6-L10",
