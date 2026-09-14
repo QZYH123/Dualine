@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
@@ -42,8 +42,8 @@ describe("runCheck", () => {
     );
     mkdirSync(join(self, "src"));
     writeFileSync(join(self, "src/a.ts"), "export const a = 1;\n");
-    assert.equal(runCheck([self]), 1);
-    assert.equal(runCheck([self, "--accept"]), 0);
+    assert.equal(runCheck([self]), 0);
+    assert.ok(readLock(self));
     assert.equal(runCheck([self]), 0);
   });
 
@@ -51,7 +51,7 @@ describe("runCheck", () => {
     const self = join(tmp, "Dualine");
     mkdirSync(self);
     writeFileSync(join(self, "gloss.md"), "# Dualine\n\nLead.\n\n## One\n\nHi.\n");
-    assert.equal(runCheck([self, "--accept"]), 0);
+    assert.equal(runCheck([self]), 0);
   });
 
   test("unservable id is a problem", () => {
@@ -59,6 +59,17 @@ describe("runCheck", () => {
     mkdirSync(join(root, "Bad Name"), { recursive: true });
     writeFileSync(join(root, "Bad Name", "gloss.md"), "# Bad\n\nNope.\n");
     assert.equal(runCheck([root]), 1);
+  });
+
+  test("--dry-run on a fresh project writes nothing", () => {
+    const dir = join(tmp, "fresh-dry");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\n");
+    writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n");
+    const got = capture(() => runCheck([dir, "--dry-run"]));
+    assert.equal(got.code, 0);
+    assert.equal(existsSync(join(dir, "gloss.lock")), false);
+    assert.doesNotMatch(got.out, /已生成/);
   });
 });
 

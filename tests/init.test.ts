@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -223,8 +224,8 @@ describe("runInit e2e", () => {
     );
     assert.equal(readFileSync(skillDest, "utf8"), readFileSync(skillSourcePath(REPO), "utf8"));
 
-    assert.equal(runCheck([dir, "--accept"]), 0);
     assert.equal(runCheck([dir]), 0);
+    assert.ok(existsSync(join(dir, "gloss.lock")));
   });
 
   test("package.json files lists the write-gloss skill", () => {

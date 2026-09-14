@@ -197,6 +197,7 @@ function loadFromDir(id: string, projectDir: string): ProjectDetail | null {
   const seenWarn = new Set<string>();
   const warnings: ProjectDetail["warnings"] = [];
   for (const p of hintRelocation(projectDir, [...problems, ...lockProblems])) {
+    if (p.reason === "lock" || p.reason === "unlocked") continue;
     if (seenWarn.has(p.message)) continue;
     seenWarn.add(p.message);
     warnings.push({

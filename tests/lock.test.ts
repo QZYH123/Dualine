@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, test } from "node:test";
 import {
-  LOCK_MISSING,
   buildLock,
   checkLock,
   hashRef,
@@ -34,6 +33,24 @@ function projectWith(src: string): string {
   return dir;
 }
 
+function capture(fn: () => number): { code: number; out: string } {
+  const chunks: string[] = [];
+  const log = console.log;
+  const err = console.error;
+  console.log = (...a: unknown[]) => {
+    chunks.push(a.map(String).join(" "));
+  };
+  console.error = (...a: unknown[]) => {
+    chunks.push(a.map(String).join(" "));
+  };
+  try {
+    return { code: fn(), out: chunks.join("\n") };
+  } finally {
+    console.log = log;
+    console.error = err;
+  }
+}
+
 describe("spanSlice / spanHash", () => {
   test("hashes the faced lines, not the rest of the file", () => {
     const src = "one\ntwo\nthree\n";
@@ -46,16 +63,17 @@ describe("spanSlice / spanHash", () => {
 });
 
 describe("gloss.lock", () => {
-  test("missing lock is one problem; --accept writes; edit is drift", () => {
+  test("first check writes gloss.lock when refs land; edit is drift", () => {
     const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
     const refs = collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"));
     const ok = new Set(refs.map((r) => r.loc));
 
-    const missing = checkLock(dir, refs, ok);
-    assert.equal(missing.length, 1);
-    assert.equal(missing[0].message, LOCK_MISSING);
+    assert.deepEqual(checkLock(dir, refs, ok), []);
 
-    assert.equal(runCheck([dir, "--accept"]), 0);
+    const first = capture(() => runCheck([dir]));
+    assert.equal(first.code, 0);
+    assert.match(first.out, /已生成/);
+    assert.match(first.out, /0 problems/);
     const lock = readLock(dir);
     assert.ok(lock);
     assert.equal(lock.spans.length, 1);
@@ -74,6 +92,39 @@ describe("gloss.lock", () => {
 
     assert.equal(runCheck([dir, "--accept"]), 0);
     assert.equal(runCheck([dir]), 0);
+  });
+
+  test("broken refs on a fresh project do not write the lock", () => {
+    const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
+    writeFileSync(
+      join(dir, "gloss.md"),
+      "# T\n\nLead.\n\n## One\n\nSee [gone](src/gone.ts#L1).\n",
+    );
+    const got = capture(() => runCheck([dir]));
+    assert.equal(got.code, 1);
+    assert.equal(existsSync(join(dir, "gloss.lock")), false);
+    assert.match(got.out, /file missing/);
+    assert.doesNotMatch(got.out, /已生成/);
+    assert.doesNotMatch(got.out, /gloss\.lock missing/);
+  });
+
+  test("a new loc not in gloss.lock is unlocked, not drift", () => {
+    const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
+    writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));
+    writeFileSync(
+      join(dir, "gloss.md"),
+      "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1-L2).\n\n## Two\n\nAlso [b](src/a.ts#L2).\n",
+    );
+    const refs = collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"));
+    const ok = new Set(refs.map((r) => r.loc));
+    const unlocked = checkLock(dir, refs, ok);
+    assert.equal(unlocked.length, 1);
+    assert.equal(unlocked[0]?.reason, "unlocked");
+    assert.match(unlocked[0]?.message ?? "", /not in gloss\.lock/);
+    const got = capture(() => runCheck([dir]));
+    assert.equal(got.code, 1);
+    assert.match(got.out, /not in gloss\.lock/);
+    assert.match(got.out, /1 problem/);
   });
 
   test("same text at new lines is still a match", () => {

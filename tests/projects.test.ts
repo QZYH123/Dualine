@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildLock, LOCK_MISSING, writeLock } from "../server/lock.js";
+import { runCheck } from "../scripts/check-gloss.js";
+import { buildLock, checkLock, writeLock } from "../server/lock.js";
 import { listProjects, loadProject, resolveProjectDir } from "../server/projects.js";
 import { collectRefs } from "../server/validate.js";
 
@@ -106,7 +107,6 @@ describe("loadProject", () => {
     assert.deepEqual(detail.warnings, [
       { message: "c1.p2.a1 → src/gone.ts#L1: file missing" },
       { message: "c1.p3.a1 → src/a.ts#L99: file has 3 lines" },
-      { message: LOCK_MISSING },
     ]);
   });
 
@@ -159,7 +159,7 @@ See [a](src/a.ts#L1).
       assert.ok(detail);
       assert.equal(detail.name, "Solo");
       assert.ok("src/a.ts" in detail.files);
-      assert.deepEqual(detail.warnings, [{ message: LOCK_MISSING }]);
+      assert.deepEqual(detail.warnings, []);
       assert.match(detail.rev, /^\d+$/);
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -235,6 +235,63 @@ See [a](src/a.ts#L1).
       assert.equal(detail.warnings.length, 1);
       assert.deepEqual(detail.warnings[0]?.suggest, { start: 2, end: 3 });
       assert.match(detail.warnings[0]?.message ?? "", /code changed since gloss.lock/);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("a project with no gloss.lock has no API warnings", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-nolock-"));
+    const dir = join(parent, "fresh");
+    try {
+      mkdirSync(join(dir, "src"), { recursive: true });
+      writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\n");
+      writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n");
+      const detail = loadProject("fresh", parent);
+      assert.ok(detail);
+      assert.deepEqual(detail.warnings, []);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("unlocked anchors stay off the warning strip; CLI still reports them", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-unlocked-"));
+    const dir = join(parent, "demo");
+    try {
+      mkdirSync(join(dir, "src"), { recursive: true });
+      writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\nexport const b = 2;\n");
+      writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1-L2).\n");
+      writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));
+      writeFileSync(
+        join(dir, "gloss.md"),
+        "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1-L2).\n\n## Two\n\nAlso [b](src/a.ts#L2).\n",
+      );
+      const detail = loadProject("demo", parent);
+      assert.ok(detail);
+      assert.deepEqual(detail.warnings, []);
+
+      const refs = collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"));
+      const ok = new Set(refs.map((r) => r.loc));
+      const unlocked = checkLock(dir, refs, ok);
+      assert.equal(unlocked.length, 1);
+      assert.equal(unlocked[0]?.reason, "unlocked");
+
+      const chunks: string[] = [];
+      const log = console.log;
+      console.log = (...a: unknown[]) => {
+        chunks.push(a.map(String).join(" "));
+      };
+      let code: number;
+      try {
+        code = runCheck([parent]);
+      } finally {
+        console.log = log;
+      }
+      assert.equal(code, 1);
+      const out = chunks.join("\n");
+      assert.match(out, /not in gloss\.lock/);
+      assert.match(out, /1 problem/);
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

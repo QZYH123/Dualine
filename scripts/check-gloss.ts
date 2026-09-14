@@ -1,7 +1,8 @@
 /**
  * Verify every gloss anchor and explicit passage ref points at a real file
- * and a line range inside that file, and that the faced text still matches
- * gloss.lock (unless --accept rewrites the lock).
+ * and a line range inside that file. The first check whose refs all land
+ * writes gloss.lock; later checks compare the faced text to that baseline
+ * (--accept rewrites the lock).
  *
  *   npx tsx scripts/check-gloss.ts [projects-dir] [--accept] [--fix] [--dry-run]
  *
@@ -191,15 +192,23 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
 
     refsChecked += located.length;
     const found = checkGloss(projectDir, located);
-    const rangeProblems = found.filter((p) => p.reason !== "drift" && p.reason !== "lock").length;
+    const rangeProblems = found.filter(
+      (p) => p.reason !== "drift" && p.reason !== "lock" && p.reason !== "unlocked",
+    ).length;
+    const noLock = readLock(projectDir) == null;
     const doAccept = accept && !dryRun && rangeProblems === 0;
-    if (doAccept) {
+    const doEstablish = noLock && !dryRun && rangeProblems === 0;
+    if (doAccept || doEstablish) {
       writeLock(projectDir, buildLock(projectDir, located));
     }
+    if (doEstablish) {
+      console.log(`${rel}: gloss.lock 已生成 · 以后 check 会拥有对照的代码正文作基线`);
+    }
 
-    const remaining = doAccept
-      ? found.filter((p) => p.reason !== "drift" && p.reason !== "lock")
-      : found;
+    const remaining =
+      doAccept || doEstablish
+        ? found.filter((p) => p.reason !== "drift" && p.reason !== "lock" && p.reason !== "unlocked")
+        : found;
 
     for (const problem of remaining) {
       console.log(`${rel}: ${formatProblem(problem)}`);

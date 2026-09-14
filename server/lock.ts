@@ -120,7 +120,9 @@ function driftProblem(loc: string, ref: CodeRef, suffix: string): RefProblem {
 
 /**
  * Refs that already failed checkRefs (missing file / bad range) are skipped —
- * those problems speak first. A missing lock is one project-level problem.
+ * those problems speak first. No lock yet is not a problem; the first
+ * successful check writes the baseline. A loc the lock has never seen is
+ * `unlocked` (CLI bookkeeping), not drift.
  */
 export function checkLock(
   projectDir: string,
@@ -128,17 +130,7 @@ export function checkLock(
   okLocs: Set<string>,
 ): RefProblem[] {
   const lock = readLock(projectDir);
-  if (!lock) {
-    const first = refs[0];
-    return [
-      {
-        loc: LOCK_FILE,
-        ref: first?.ref ?? { file: LOCK_FILE, start: 1, end: 1 },
-        reason: "lock",
-        message: LOCK_MISSING,
-      },
-    ];
-  }
+  if (!lock) return [];
 
   const byLoc = new Map(lock.spans.map((s) => [s.loc, s]));
   const out: RefProblem[] = [];
@@ -148,7 +140,12 @@ export function checkLock(
     const sha = hashRef(projectDir, ref);
     if (!sha) continue;
     if (!remembered) {
-      out.push(driftProblem(loc, ref, `not in ${LOCK_FILE} — run check:gloss --accept`));
+      out.push({
+        loc,
+        ref,
+        reason: "unlocked",
+        message: `${loc} → ${refLabel(ref)}: not in ${LOCK_FILE} — run check:gloss --accept`,
+      });
       continue;
     }
     if (remembered.sha256 !== sha) {

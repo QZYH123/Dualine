@@ -53,7 +53,7 @@ export interface LocatedRef {
   ref: CodeRef;
 }
 
-export type RefReason = "outside" | "missing" | "range" | "drift" | "lock";
+export type RefReason = "outside" | "missing" | "range" | "drift" | "lock" | "unlocked";
 
 export interface RefProblem {
   loc: string;
