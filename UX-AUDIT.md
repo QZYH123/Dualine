@@ -670,7 +670,7 @@ Fresh-clone audit on `feature/round11-tool` @ `7db6df6`, README as the only guid
 | R11-6 | medium | **fixed** `5ca5067` | Night `--ink-4` / comments 2.3–2.4:1 (rail, line nums, 999 hint) | dark `--ink-4` `#747066` (~3.5:1); `--code-comment` `#706b61` (~3.2:1) |
 | R11-7 | medium | **fixed** `76f27d0` | Frozen export `?note=` miss hinted `GLOSS_PROJECTS_DIR/…` | frozen hint is `gloss/<id>.md` |
 | R11-8 | medium | **fixed** `4a48e04` | Faced-file fixes left this repo's `gloss.lock` stale (`npm run check` failed) | `--fix` moved the frozen-read span; API-load span retargeted to L179–L205; `--accept` for App / cli text drift |
-| R11-init | low | **for owner** | `init` on a Python `app/` package faces `app/__init__.py`, not `cli.py` | prefer `app/cli.py` / `__main__.py` over `__init__.py` when both exist |
+| R11-init | low | **fixed** `3504b48` | `init` on a Python `app/` package faces `app/__init__.py`, not `cli.py` | prefer `cli.py` / `__main__.py` / `main|app|server` over `__init__.py` and thin barrels; explicit `src/index.*` still wins |
 | R11-link | info | note | this agent's `npm link` prefix was not on `PATH` | environment; `node bin/dualine.js` works; not a Dualine bug |
 | R5-3 | low | deferred | Esc taught twice (masthead + chip) | skip; chip stays primary |
 | R5-4 / R2-1 / R5-1c | low | deferred | No in-chrome pin/Esc tip before first pin | skip; essay lead is enough |
