@@ -10,6 +10,26 @@ A facing-page reader: the essay on the left, the real code it faces on the right
 
 ## 试一下
 
+### 一行打开
+
+包还是 `private`，不在 npm 上，所以现在还不是 `npx github:QZYH123/Dualine`。在 Dualine 仓库里装一次：
+
+```sh
+git clone https://github.com/QZYH123/Dualine.git
+cd Dualine
+npm install && npm run build && npm link
+```
+
+然后到任何有 `gloss.md` 的项目：
+
+```sh
+dualine .
+```
+
+浏览器会打开。`dualine check` 核对锚点，`dualine export` 冻成静态页。`dualine init` 还没写。
+
+改 Dualine 自己仍用两个端口的开发栈：
+
 ```sh
 git clone https://github.com/QZYH123/Dualine.git
 cd Dualine
@@ -80,11 +100,13 @@ npm run export:gloss -- ~/glosses/my-app   # → export/my-app/
 
 ## 运行说明
 
-`npm run dev:all` 会同时起网页（:5173）和 API（127.0.0.1:8787）。一次 `Ctrl-C` 两边都停。端口被占用时换一个：`PORT=8790 npm run dev:all`。只跑 `npm run dev` 时，API 不在就回落到打包的 shortly 示例。
+`dualine .` 是一个端口：静态页和 API 在一起。`npm run dev:all` 仍会同时起网页（:5173）和 API（127.0.0.1:8787），用来改 Dualine 自己。一次 `Ctrl-C` 两边都停。端口被占用时换一个：`PORT=8790 npm run dev:all`。只跑 `npm run dev` 时，API 不在就回落到打包的 shortly 示例。`dualine` 若 8787 被占会接着试后面的端口；`PORT` 仍可指定。
 
 | 环境变量 | 默认 | |
 |---|---|---|
 | `GLOSS_PROJECTS_DIR` | 本仓库 `examples/` | 项目目录；会展开 `~/`、`$HOME/` |
+| `GLOSS_PROJECT_DIR` | （不设） | 单项目：这个文件夹就是唯一项目；文件夹名会收成 id |
+| `GLOSS_SERVE_DIST` | （不设） | API 同时托管该目录的静态文件（CLI 指向仓库里的 `dist/`） |
 | `PORT` | `8787` | API 端口 |
 | `HOST` | `127.0.0.1` | API 只绑本机。要对外必须显式 `HOST=0.0.0.0` |
 | `GLOSS_API` | `http://127.0.0.1:$PORT` | 网页代理 API 的地址 |
