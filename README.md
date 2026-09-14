@@ -26,7 +26,7 @@ npm install && npm run build && npm link
 dualine .
 ```
 
-浏览器会打开。`dualine check` 核对锚点，`dualine check --fix` 按锁改行号，`dualine export` 冻成静态页。`dualine init` 还没写。
+浏览器会打开。`dualine check` 核对锚点，`dualine check --fix` 按锁改行号，`dualine export` 冻成静态页。没有 `gloss.md` 时，先 `dualine init`。
 
 改 Dualine 自己仍用两个端口的开发栈：
 
@@ -65,7 +65,7 @@ GLOSS_PROJECTS_DIR=~/glosses/my-app npm run dev:all
 
 Markdown 加一种锚点：`[这句话](src/server.ts#L18-L59)` 对着真实行号。范本是 `examples/shortly/gloss.md`。
 
-把 `.cursor/skills/write-gloss/SKILL.md` 拷进 agent 的技能里，让它写 `gloss.md`，再指向那个项目打开 Dualine。
+在项目文件夹里跑 `dualine init`。它写一份带一枚真锚点的起步 `gloss.md`，并把 write-gloss 技能装进 `.cursor/skills/`。把打印出的那句话交给 agent 起草；写完再 `dualine .`。
 
 ```md
 ---
