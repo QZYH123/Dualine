@@ -51,3 +51,13 @@ Grammar chosen by file extension, loaded on demand (Shiki dynamic import). Unkno
 - **D2 addendum — the lock is a baseline, not a gate.** A fresh project has nothing to drift from, so the first clean `check` writes `gloss.lock` instead of failing on its absence. The reader's warn strip only speaks about anchors that do not land or whose code changed; lock bookkeeping (`not in lock`) stays in the CLI. Reason: a writer who adds an anchor and opens the reader must not be greeted by a warning about a file they have never heard of.
 - **D2 addendum — lock keeps hashes.** Relocation recovers the faced text by finding a same-length window with the same hash; exact moves only. No schema change, no literal code stored in the lock.
 - D5 (multiple notes, `gloss/<id>.md`, `?note=`) promoted to this round: friction is gone, so the next ceiling is "one note per project" for real repos. IA: notes appear in the rail above 目录 and as `<optgroup>`s in the mid-width select; nothing new when a project has one note.
+- D5 and D6 landed. Night paper (*Fable*): same tokens redefined under `prefers-color-scheme: dark`; no switch. Audit later lifted the night whispers to ≥3:1.
+- **Lock keyed by target, not position.** Adding two chapters to this repo's own gloss made 35 anchors look drifted, because `gloss.lock` keys were `c3.p2.a1`. A lock that breaks when you edit prose is unusable for a document people keep writing. Keys are now `path#Lstart-Lend` (note-prefixed); v1 files are read transparently and rewritten on the next accept. First run with the new keys caught one *real* drift the old keys had hidden.
+- Round 11 audit (backend, fresh eyes on the README path, three /tmp projects, dark contrast): 1 High + 7 Medium found and fixed — all leftover multi-project copy leaking into single-folder mode, a `PORT`-busy crash, night contrast, export hint paths. CI `check.yml` added. Version 0.2.0. Not pushed, not tagged, not on npm — publishing is the owner's call (flip `private`, `npm publish` → `npx dualine`).
+
+## What would make it indispensable next (not started)
+
+- **`npx dualine`.** Everything else is in place; only `private: true` and an npm account stand between the README and a one-liner.
+- **A maintenance prompt for agents.** `dualine check` output is already precise; a `--json` flag would let an agent rewrite stale passages (the `code changed since` case) without parsing prose.
+- **Reading position across notes** and a "last read" mark in the rail — small, but this is what makes a reader feel like yours.
+- **Windows smoke.** The CLI opens the browser via `start`; untested on a real Windows box.
