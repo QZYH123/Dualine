@@ -65,21 +65,22 @@ describe("NOTICE_NO_DIR_TIP", () => {
 });
 
 describe("noticeCopy empty", () => {
-  test("names the real folder, not a fake <id> path, and spells the child-folder rule", () => {
+  test("points at dualine init, not a fake <id> path", () => {
     const copy = noticeCopy({
       kind: "empty",
       catalog: { root: "/tmp/glosses", rootStatus: "ok", projects: [] },
     });
     assert.equal(copy.title, "这个目录下没有项目");
-    assert.equal(copy.hint, "/tmp/glosses");
+    assert.equal(copy.hint, "dualine init");
     assert.equal(copy.tip, NOTICE_EMPTY_TIP);
-    assert.match(NOTICE_EMPTY_TIP, /小写字母、数字/);
+    assert.match(NOTICE_EMPTY_TIP, /write-gloss/);
+    assert.match(NOTICE_EMPTY_TIP, /gloss\.md/);
     assert.doesNotMatch(copy.hint, /<id>/);
   });
 
-  test("falls back to the env name when the catalog has no root", () => {
+  test("still points at init when the catalog has no root", () => {
     const copy = noticeCopy({ kind: "empty", catalog: { projects: [] } });
-    assert.equal(copy.hint, "GLOSS_PROJECTS_DIR");
+    assert.equal(copy.hint, "dualine init");
     assert.equal(copy.tip, NOTICE_EMPTY_TIP);
   });
 });

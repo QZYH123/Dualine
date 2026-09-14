@@ -82,5 +82,14 @@ describe("noticeCopy en", () => {
     assert.equal(copy.hint, "npm run dev:all");
     assert.equal(copy.tip, COPY.en.unreachableTip);
     assert.equal(warningStripText(["a", "b"], "en"), COPY.en.warnMany(2));
+
+    const empty = noticeCopy(
+      { kind: "empty", catalog: { root: "/tmp/x", rootStatus: "ok", projects: [] } },
+      "en",
+    );
+    assert.equal(empty.title, COPY.en.empty);
+    assert.equal(empty.hint, "dualine init");
+    assert.equal(empty.tip, COPY.en.emptyTip);
+    assert.match(COPY.en.emptyTip, /write-gloss/);
   });
 });

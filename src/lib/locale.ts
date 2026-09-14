@@ -155,7 +155,7 @@ export const COPY: Record<Locale, Copy> = {
     notDirectory: "项目路径不是一个目录",
     missingDir: "找不到项目目录",
     emptyTip:
-      "每个项目一个子文件夹（小写字母、数字、- 或 _），内含 gloss.md；也可以直接指到那个项目文件夹",
+      "在项目文件夹里跑它，写一份起步的 gloss.md，再让 agent 用 write-gloss 技能起草。",
     noDirTip: "把 GLOSS_PROJECTS_DIR 设成文件夹的绝对路径",
     windowsTip: "这是 Windows 路径；请改成当前系统上的绝对路径",
     unreachableTip: "API 起来后再刷新这一页",
@@ -196,7 +196,7 @@ export const COPY: Record<Locale, Copy> = {
     notDirectory: "That path is not a folder",
     missingDir: "Cannot find the projects folder",
     emptyTip:
-      "One child folder per project (lowercase letters, digits, - or _), with gloss.md — or point at that project folder itself",
+      "Run it in the project folder: it writes a starter gloss.md and installs the write-gloss skill for your agent.",
     noDirTip: "Set GLOSS_PROJECTS_DIR to the folder's absolute path",
     windowsTip: "This is a Windows path; use an absolute path on this system",
     unreachableTip: "Refresh this page once the API is up",

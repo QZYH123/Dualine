@@ -215,4 +215,34 @@ describe("handle catalog against an explicit root", () => {
       rmSync(parent, { recursive: true, force: true });
     }
   });
+
+  test("single-folder mode: deleting gloss.md lists empty, not a stale project", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-gone-"));
+    const dir = join(parent, "MyApp");
+    try {
+      mkdirSync(dir);
+      writeFileSync(join(dir, "gloss.md"), "# MyApp\n\nLead.\n\n## One\n\nHi.\n");
+      const listed = handle("GET", "/api/projects", dir, { single: true });
+      const before = listed.body as { projects: { id: string }[] };
+      assert.deepEqual(
+        before.projects.map((p) => p.id),
+        ["myapp"],
+      );
+
+      rmSync(join(dir, "gloss.md"));
+      const after = handle("GET", "/api/projects", dir, { single: true });
+      assert.equal(after.status, 200);
+      const body = after.body as {
+        projects: unknown[];
+        rootStatus: string;
+        single: boolean;
+      };
+      assert.deepEqual(body.projects, []);
+      assert.equal(body.rootStatus, "ok");
+      assert.equal(body.single, true);
+      assert.equal(handle("GET", "/api/projects/myapp", dir, { single: true }).status, 404);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
 });

@@ -65,6 +65,18 @@ describe("afterList", () => {
     if (empty.kind === "empty") assert.equal(empty.catalog.root, "/tmp/glosses");
   });
 
+  test("single-folder empty catalog (gloss gone) is empty, not a stale id", () => {
+    const empty = afterList(null, {
+      status: 200,
+      body: { projects: [], root: "/tmp/MyApp", rootStatus: "ok", single: true },
+    });
+    assert.equal(empty.kind, "empty");
+    if (empty.kind === "empty") {
+      assert.equal(empty.catalog.single, true);
+      assert.equal(empty.catalog.projects.length, 0);
+    }
+  });
+
   test("no request opens the first listed project", () => {
     const next = afterList(null, { status: 200, body: { ...okCatalog, projects: [shortly] } });
     assert.deepEqual(next, { kind: "continue", id: "shortly", catalog: { ...okCatalog, projects: [shortly] } });
