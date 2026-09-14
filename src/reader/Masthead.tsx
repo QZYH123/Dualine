@@ -4,10 +4,14 @@ import {
   COPY,
   chapterNum,
   homeHref,
+  jumpValue,
   langHref,
+  noteHref,
+  parseJumpValue,
   type Copy,
   type Locale,
 } from "../lib/locale";
+import { DEFAULT_NOTE_ID, type NoteSummary } from "../lib/notes";
 
 export function Wordmark({ as = "a", href = "/" }: { as?: "a" | "p"; href?: string }) {
   const inner = (
@@ -49,6 +53,9 @@ interface MastheadProps {
   frozen?: boolean;
   locale: Locale;
   noteLocale: Locale;
+  note?: string;
+  notes?: NoteSummary[];
+  projectId?: string;
   copy: Copy;
   onReload?: () => void;
   onSelectChapter: (chapterId: string) => void;
@@ -65,10 +72,33 @@ export const Masthead = memo(function Masthead({
   frozen = false,
   locale,
   noteLocale,
+  note = DEFAULT_NOTE_ID,
+  notes = [],
+  projectId,
   copy,
   onReload,
   onSelectChapter,
 }: MastheadProps) {
+  const grouped = notes.length > 1;
+
+  const onJump = (value: string) => {
+    if (!grouped) {
+      onSelectChapter(value);
+      return;
+    }
+    const next = parseJumpValue(value, note);
+    if (next.noteId !== note) {
+      window.location.assign(
+        noteHref(locale, frozen ? null : projectId, next.noteId, {
+          chapterId: next.chapterId,
+          frozen,
+        }),
+      );
+      return;
+    }
+    onSelectChapter(next.chapterId);
+  };
+
   return (
     <header className="masthead">
       <div className="masthead__brand">
@@ -109,13 +139,23 @@ export const Masthead = memo(function Masthead({
             <span className="visually-hidden">{copy.chapters}</span>
             <select
               value={chapter?.id ?? chapters[0].id}
-              onChange={(e) => onSelectChapter(e.target.value)}
+              onChange={(e) => onJump(e.target.value)}
             >
-              {chapters.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {chapterNum(c.index, noteLocale)} {c.title}
-                </option>
-              ))}
+              {grouped
+                ? notes.map((n) => (
+                    <optgroup key={n.id} label={n.title}>
+                      {n.chapters.map((c) => (
+                        <option key={`${n.id}:${c.id}`} value={jumpValue(n.id, c.id, note)}>
+                          {chapterNum(c.index, noteLocale)} {c.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))
+                : chapters.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {chapterNum(c.index, noteLocale)} {c.title}
+                    </option>
+                  ))}
             </select>
           </label>
         )}

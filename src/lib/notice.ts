@@ -1,5 +1,6 @@
-import type { Catalog, ProjectWarning } from "./load-decision.js";
+import type { Catalog, NoteSummary, ProjectWarning } from "./load-decision.js";
 import { COPY, type Locale } from "./locale.js";
+import { DEFAULT_NOTE_ID } from "./notes.js";
 import { looksLikeWindowsPath } from "./paths.js";
 
 export type { ProjectWarning };
@@ -8,7 +9,7 @@ export type NoticeKind = "not-found" | "unreachable" | "empty" | "no-dir";
 
 /** Screens App renders when there is no project to face. */
 export type NoticeScreen =
-  | { kind: "not-found"; id: string; catalog: Catalog }
+  | { kind: "not-found"; id: string; catalog: Catalog; note?: string; notes?: NoteSummary[]; frozen?: boolean }
   | { kind: "empty"; catalog: Catalog }
   | { kind: "no-dir"; catalog: Catalog }
   | { kind: "unreachable"; id: string };
@@ -67,6 +68,11 @@ export function projectPath(catalog: Catalog, id: string): string {
   return catalog.root ? `${catalog.root}/${id}/gloss.md` : `GLOSS_PROJECTS_DIR/${id}/gloss.md`;
 }
 
+export function notePath(catalog: Catalog, projectId: string, noteId: string): string {
+  const base = catalog.root ? `${catalog.root}/${projectId}` : `GLOSS_PROJECTS_DIR/${projectId}`;
+  return !noteId || noteId === DEFAULT_NOTE_ID ? `${base}/gloss.md` : `${base}/gloss/${noteId}.md`;
+}
+
 /** Title / hint / tip for a load-failure notice — App only renders. */
 export function noticeCopy(
   result: NoticeScreen,
@@ -79,6 +85,13 @@ export function noticeCopy(
   const copy = COPY[locale];
   switch (result.kind) {
     case "not-found":
+      if (result.note) {
+        return {
+          title: copy.notFoundNote(result.note),
+          hint: notePath(result.catalog, result.id, result.note),
+          tip: (result.notes?.length ?? 0) > 0 ? copy.alsoHere : copy.emptyTip,
+        };
+      }
       return {
         title: copy.notFound(result.id),
         hint: projectPath(result.catalog, result.id),

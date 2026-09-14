@@ -78,12 +78,51 @@ export function homeHref(
   return frozen ? `?${q}` : `/?${q}`;
 }
 
+/** Keep the current search (including `?note=`) when only the chapter hash changes. */
+export function chapterHref(
+  chapterId: string,
+  loc: { pathname: string; search: string },
+): string {
+  return `${loc.pathname}${loc.search}#${chapterId}`;
+}
+
+export function noteHref(
+  locale: Locale,
+  projectId: string | null | undefined,
+  noteId: string,
+  opts?: { chapterId?: string; frozen?: boolean },
+): string {
+  const p = new URLSearchParams();
+  p.set("lang", locale);
+  if (!opts?.frozen && projectId) p.set("project", projectId);
+  if (noteId && noteId !== "gloss") p.set("note", noteId);
+  const q = p.toString();
+  const path = opts?.frozen ? "" : "/";
+  const hash = opts?.chapterId ? `#${opts.chapterId}` : "";
+  return `${path}?${q}${hash}`;
+}
+
+export function jumpValue(noteId: string, chapterId: string, currentNote: string): string {
+  return noteId === currentNote ? chapterId : `${noteId}:${chapterId}`;
+}
+
+export function parseJumpValue(
+  value: string,
+  currentNote: string,
+): { noteId: string; chapterId: string } {
+  const i = value.lastIndexOf(":");
+  if (i <= 0) return { noteId: currentNote, chapterId: value };
+  return { noteId: value.slice(0, i), chapterId: value.slice(i + 1) };
+}
+
 export interface Copy {
   loading: string;
   documentTitle: (name: string) => string;
+  documentNoteTitle: (noteTitle: string, name: string) => string;
   defaultTitle: string;
   eyebrow: string;
   rail: string;
+  notes: string;
   chapters: string;
   sample: string;
   stale: string;
@@ -108,6 +147,7 @@ export interface Copy {
   warnFixCmd: string;
   catalogDefault: string;
   notFound: (id: string) => string;
+  notFoundNote: (id: string) => string;
   unreachable: string;
   empty: string;
   notDirectory: string;
@@ -123,9 +163,11 @@ export const COPY: Record<Locale, Copy> = {
   zh: {
     loading: "对照",
     documentTitle: (name) => `${name} · Dualine`,
+    documentNoteTitle: (noteTitle, name) => `${noteTitle} · ${name} · Dualine`,
     defaultTitle: "Dualine · 对照阅读",
     eyebrow: "Dualine · 对照笔记",
     rail: "目录",
+    notes: "笔记",
     chapters: "章节",
     sample: "示例",
     stale: "已更新",
@@ -150,6 +192,7 @@ export const COPY: Record<Locale, Copy> = {
     warnFixCmd: "dualine check --fix",
     catalogDefault: "目录第一项 · 用 ?project=<id> 指定",
     notFound: (id) => `找不到项目 “${id}”`,
+    notFoundNote: (id) => `找不到笔记 “${id}”`,
     unreachable: "API 未运行，读不到这个项目",
     empty: "这个目录下没有项目",
     notDirectory: "项目路径不是一个目录",
@@ -164,9 +207,11 @@ export const COPY: Record<Locale, Copy> = {
   en: {
     loading: "Dualine",
     documentTitle: (name) => `${name} · Dualine`,
+    documentNoteTitle: (noteTitle, name) => `${noteTitle} · ${name} · Dualine`,
     defaultTitle: "Dualine · paired reading",
     eyebrow: "Dualine · a paired note",
     rail: "Contents",
+    notes: "Notes",
     chapters: "Chapters",
     sample: "sample",
     stale: "Updated",
@@ -191,6 +236,7 @@ export const COPY: Record<Locale, Copy> = {
     warnFixCmd: "dualine check --fix",
     catalogDefault: "First in the catalog · use ?project=<id>",
     notFound: (id) => `No project “${id}”`,
+    notFoundNote: (id) => `No note “${id}”`,
     unreachable: "API is not running; this project cannot be read",
     empty: "No projects in this folder",
     notDirectory: "That path is not a folder",

@@ -3,10 +3,12 @@ import type { HighlighterCore } from "shiki/core";
 import { getHighlighter } from "./lib/highlight";
 import {
   loadProject,
+  requestedNote,
   requestedProjectId,
   type LoadResult,
 } from "./lib/load";
-import { COPY, chromeLocale, glossLocale, homeHref, htmlLang, type Locale } from "./lib/locale";
+import { DEFAULT_NOTE_ID } from "./lib/notes";
+import { COPY, chromeLocale, glossLocale, homeHref, htmlLang, noteHref, type Locale } from "./lib/locale";
 import { noticeCopy, noticeShowsBack } from "./lib/notice";
 import { Reader } from "./reader/Reader";
 import { LangSwitch, Wordmark } from "./reader/Masthead";
@@ -24,7 +26,7 @@ export default function App() {
   useEffect(() => {
     let alive = true;
     setStale(false);
-    loadProject(requestedProjectId()).then((result) => {
+    loadProject(requestedProjectId(), requestedNote()).then((result) => {
       if (!alive) return;
       setLoaded(result);
     });
@@ -73,8 +75,13 @@ export default function App() {
   }, [locale]);
 
   useEffect(() => {
-    if (loaded?.kind === "project") document.title = copy.documentTitle(loaded.project.name);
-    else document.title = copy.defaultTitle;
+    if (loaded?.kind === "project") {
+      const noteId = loaded.note ?? DEFAULT_NOTE_ID;
+      document.title =
+        noteId !== DEFAULT_NOTE_ID
+          ? copy.documentNoteTitle(loaded.project.doc.title, loaded.project.name)
+          : copy.documentTitle(loaded.project.name);
+    } else document.title = copy.defaultTitle;
   }, [loaded, copy]);
 
   if (!highlighter || !loaded) {
@@ -93,6 +100,8 @@ export default function App() {
         stale={stale}
         locale={locale}
         noteLocale={noteLocale}
+        note={loaded.note}
+        notes={loaded.notes}
         onReload={reload}
       />
     );
@@ -129,7 +138,19 @@ function Notice({
         <p className="notice__title">{title}</p>
         <p className="notice__hint">{hint}</p>
         {tip && <p className="notice__tip">{tip}</p>}
-        {projects.length > 0 && result.kind === "not-found" && (
+        {result.kind === "not-found" && result.notes && result.notes.length > 0 && (
+          <ul className="notice__projects">
+            {result.notes.map((n) => (
+              <li key={n.id}>
+                <a href={noteHref(locale, result.frozen ? null : result.id, n.id, { frozen: result.frozen })}>
+                  {n.title}
+                </a>
+                {n.tagline ? <span>{n.tagline}</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+        {projects.length > 0 && result.kind === "not-found" && !result.notes && (
           <ul className="notice__projects">
             {projects.map((p) => (
               <li key={p.id}>

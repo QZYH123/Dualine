@@ -7,6 +7,11 @@
  * A real `?project=` never falls back to shortly in silence.
  */
 
+import type { NoteSummary } from "./notes.js";
+
+export { DEFAULT_NOTE_ID, requestedNoteId } from "./notes.js";
+export type { NoteChapter, NoteSummary } from "./notes.js";
+
 export const SAMPLE_ID = "shortly";
 
 export type RootStatus = "ok" | "missing" | "not-directory";
@@ -35,6 +40,9 @@ export interface ProjectPayload {
   files: Record<string, string>;
   warnings?: Array<string | ProjectWarning>;
   rev?: string;
+  note?: string;
+  notes?: NoteSummary[];
+  byNote?: Record<string, { gloss: string; files: Record<string, string>; warnings?: Array<string | ProjectWarning> }>;
 }
 export type ProjectWarning = { message: string; suggest?: { start: number; end: number }; ambiguous?: number };
 export type FetchResult =
@@ -52,7 +60,7 @@ export type AfterDetail =
   | { kind: "sample" }
   | { kind: "unreachable"; id: string }
   | { kind: "project"; payload: ProjectPayload }
-  | { kind: "not-found"; id: string; catalog: Catalog };
+  | { kind: "not-found"; id: string; catalog: Catalog; note?: string; notes?: NoteSummary[] };
 
 export function requestedProjectId(search: string): string | null {
   const id = new URLSearchParams(search).get("project")?.trim() ?? "";
@@ -143,7 +151,46 @@ export function afterDetail(
       payload: { ...payload, id: payload.id || id },
     };
   }
+  const miss = noteMissFromBody(detail.body);
+  if (miss) return { kind: "not-found", id, catalog, note: miss.note, notes: miss.notes };
   return { kind: "not-found", id, catalog };
+}
+
+export function parseNoteSummaries(raw: unknown): NoteSummary[] {
+  if (!Array.isArray(raw)) return [];
+  const out: NoteSummary[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as { id?: unknown; title?: unknown; tagline?: unknown; chapters?: unknown };
+    if (typeof rec.id !== "string" || !rec.id) continue;
+    const chapters: NoteSummary["chapters"] = [];
+    if (Array.isArray(rec.chapters)) {
+      for (const c of rec.chapters) {
+        if (!c || typeof c !== "object") continue;
+        const ch = c as { id?: unknown; title?: unknown; index?: unknown };
+        if (typeof ch.id !== "string" || typeof ch.title !== "string" || typeof ch.index !== "number") {
+          continue;
+        }
+        chapters.push({ id: ch.id, title: ch.title, index: ch.index });
+      }
+    }
+    const n: NoteSummary = {
+      id: rec.id,
+      title: typeof rec.title === "string" && rec.title ? rec.title : rec.id,
+      chapters,
+    };
+    if (typeof rec.tagline === "string" && rec.tagline) n.tagline = rec.tagline;
+    out.push(n);
+  }
+  return out;
+}
+
+function noteMissFromBody(body: unknown): { note: string; notes: NoteSummary[] } | null {
+  if (!body || typeof body !== "object") return null;
+  const rec = body as { note?: unknown; notes?: unknown };
+  if (typeof rec.note !== "string" || !rec.note) return null;
+  if (!Array.isArray(rec.notes)) return null;
+  return { note: rec.note, notes: parseNoteSummaries(rec.notes) };
 }
 
 export function parseProjectWarnings(raw: unknown[]): ProjectWarning[] {

@@ -5,6 +5,7 @@ import {
   afterList,
   catalogFromListBody,
   isUsablePayload,
+  requestedNoteId,
   requestedProjectId,
   SAMPLE_ID,
 } from "../src/lib/load-decision.js";
@@ -22,6 +23,15 @@ describe("requestedProjectId", () => {
     assert.equal(requestedProjectId("?project=  "), null);
     assert.equal(requestedProjectId(""), null);
     assert.equal(requestedProjectId("?other=1"), null);
+  });
+});
+
+describe("requestedNoteId", () => {
+  test("reads ?note= and treats blank as none", () => {
+    assert.equal(requestedNoteId("?project=p&note=b"), "b");
+    assert.equal(requestedNoteId("?note=gloss"), "gloss");
+    assert.equal(requestedNoteId("?note=  "), null);
+    assert.equal(requestedNoteId("?project=p"), null);
   });
 });
 
@@ -132,6 +142,22 @@ describe("afterDetail", () => {
       body: { error: "not found" },
     });
     assert.deepEqual(got, { kind: "not-found", id: "my-app", catalog: okCatalog });
+  });
+
+  test("404 with a note list is a missing-note not-found", () => {
+    const notes = [{ id: "gloss", title: "Default", chapters: [] }, { id: "b", title: "Other", chapters: [] }];
+    const got = afterDetail("demo", "demo", okCatalog, {
+      status: 404,
+      body: { error: "not found", note: "nope", notes },
+    });
+    assert.equal(got.kind, "not-found");
+    if (got.kind === "not-found") {
+      assert.equal(got.note, "nope");
+      assert.deepEqual(
+        got.notes?.map((n) => n.id),
+        ["gloss", "b"],
+      );
+    }
   });
 
   test("200 with a useless body is not-found, not the sample", () => {

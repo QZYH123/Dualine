@@ -18,20 +18,33 @@ import { loadShortlyFixture } from "../fixtures/shortly";
 import {
   afterDetail,
   afterList,
-  isUsablePayload, parseProjectWarnings,
+  isUsablePayload, parseNoteSummaries, parseProjectWarnings,
   requestedProjectId as projectIdFromSearch,
   SAMPLE_ID,
   type Catalog,
   type FetchResult,
   type ProjectPayload, type ProjectWarning,
 } from "./load-decision";
+import {
+  DEFAULT_NOTE_ID,
+  notesFromDoc,
+  requestedNoteId as noteIdFromSearch,
+  summaryFromGloss,
+  type NoteSummary,
+} from "./notes";
 
 export { SAMPLE_ID };
 export type { Catalog } from "./load-decision";
+export { requestedNoteId } from "./notes";
 
 /** `/?project=<id>` — null means "whatever is there". */
 export function requestedProjectId(search: string = window.location.search): string | null {
   return projectIdFromSearch(search);
+}
+
+/** `/?note=<id>` — null means the default note (`gloss`). */
+export function requestedNote(search: string = window.location.search): string | null {
+  return noteIdFromSearch(search);
 }
 
 export type LoadResult =
@@ -41,8 +54,10 @@ export type LoadResult =
       source: "api" | "sample" | "export";
       warnings: ProjectWarning[];
       rev?: string;
+      note: string;
+      notes: NoteSummary[];
     }
-  | { kind: "not-found"; id: string; catalog: Catalog }
+  | { kind: "not-found"; id: string; catalog: Catalog; note?: string; notes?: NoteSummary[]; frozen?: boolean }
   | { kind: "empty"; catalog: Catalog }
   | { kind: "no-dir"; catalog: Catalog }
   | { kind: "unreachable"; id: string };
@@ -73,41 +88,115 @@ async function getJson(url: string): Promise<FetchResult> {
   return { status: res.status, body };
 }
 
-function readExportPayload(): LoadResult | null {
-  const raw = (window as Window & { __GLOSS_EXPORT__?: unknown }).__GLOSS_EXPORT__;
-  if (!isUsablePayload(raw)) return null;
+function applyProjectMeta(project: Project, body: ProjectPayload): Project {
   return {
-    kind: "project",
-    project: buildProject(typeof raw.id === "string" && raw.id ? raw.id : "export", raw.gloss, raw.files),
-    source: "export",
-    warnings: payloadWarnings(raw),
+    ...project,
+    name: typeof body.name === "string" && body.name ? body.name : project.name,
+    tagline: typeof body.tagline === "string" ? body.tagline : project.tagline,
+    lang: typeof body.lang === "string" && body.lang ? body.lang : project.lang,
   };
 }
 
-export async function loadProject(requested: string | null): Promise<LoadResult> {
-  const frozen = readExportPayload();
+function notesForProject(project: Project, payload?: ProjectPayload): NoteSummary[] {
+  if (payload?.notes && payload.notes.length > 0) return payload.notes;
+  return notesFromDoc(
+    project.doc.title || project.name,
+    project.doc.chapters.map((c) => ({ id: c.id, title: c.title, index: c.index })),
+    project.tagline || undefined,
+  );
+}
+
+function exportNoteList(raw: ProjectPayload): NoteSummary[] {
+  if (raw.byNote && typeof raw.byNote === "object") {
+    const ids = [
+      DEFAULT_NOTE_ID,
+      ...Object.keys(raw.byNote)
+        .filter((k) => k !== DEFAULT_NOTE_ID)
+        .sort(),
+    ];
+    return ids.map((id) => {
+      const src = id === DEFAULT_NOTE_ID ? (raw.byNote?.[id]?.gloss ?? raw.gloss) : raw.byNote?.[id]?.gloss;
+      return src ? summaryFromGloss(id, src) : { id, title: id, chapters: [] };
+    });
+  }
+  return [summaryFromGloss(DEFAULT_NOTE_ID, raw.gloss)];
+}
+
+function readExportPayload(note: string | null): LoadResult | null {
+  const raw = (window as Window & { __GLOSS_EXPORT__?: unknown }).__GLOSS_EXPORT__;
+  if (!isUsablePayload(raw)) return null;
+  const want = note || DEFAULT_NOTE_ID;
+  const notes = exportNoteList(raw);
+  const id = typeof raw.id === "string" && raw.id ? raw.id : "export";
+  if (!notes.some((n) => n.id === want)) {
+    return { kind: "not-found", id, catalog: { projects: [] }, note: want, notes, frozen: true };
+  }
+  if (want !== DEFAULT_NOTE_ID) {
+    const chunk = raw.byNote?.[want];
+    if (!chunk || typeof chunk.gloss !== "string" || !chunk.files || typeof chunk.files !== "object") {
+      return { kind: "not-found", id, catalog: { projects: [] }, note: want, notes, frozen: true };
+    }
+    return {
+      kind: "project",
+      project: applyProjectMeta(buildProject(id, chunk.gloss, chunk.files), raw),
+      source: "export",
+      warnings: payloadWarnings({ ...raw, gloss: chunk.gloss, files: chunk.files, warnings: chunk.warnings }),
+      note: want,
+      notes,
+    };
+  }
+  return {
+    kind: "project",
+    project: applyProjectMeta(buildProject(id, raw.gloss, raw.files), raw),
+    source: "export",
+    warnings: payloadWarnings(raw),
+    note: DEFAULT_NOTE_ID,
+    notes,
+  };
+}
+
+function sampleResult(): Extract<LoadResult, { kind: "project" }> {
+  const project = loadShortlyFixture();
+  return {
+    kind: "project",
+    project,
+    source: "sample",
+    warnings: [],
+    note: DEFAULT_NOTE_ID,
+    notes: notesForProject(project),
+  };
+}
+
+export async function loadProject(
+  requested: string | null,
+  note: string | null = null,
+): Promise<LoadResult> {
+  const frozen = readExportPayload(note);
   if (frozen) return frozen;
 
   const list = await getJson("/api/projects");
   const listed = afterList(requested, list);
-  if (listed.kind === "sample") {
-    return { kind: "project", project: loadShortlyFixture(), source: "sample", warnings: [] };
-  }
+  if (listed.kind === "sample") return sampleResult();
   if (listed.kind !== "continue") return listed;
 
-  const detail = await getJson(`/api/projects/${encodeURIComponent(listed.id)}`);
+  const qs = note ? `?note=${encodeURIComponent(note)}` : "";
+  const detail = await getJson(`/api/projects/${encodeURIComponent(listed.id)}${qs}`);
   const decided = afterDetail(requested, listed.id, listed.catalog, detail);
-  if (decided.kind === "sample") {
-    return { kind: "project", project: loadShortlyFixture(), source: "sample", warnings: [] };
-  }
+  if (decided.kind === "sample") return sampleResult();
   if (decided.kind === "project") {
     const body: ProjectPayload = decided.payload;
+    const project = applyProjectMeta(buildProject(body.id, body.gloss, body.files), body);
     return {
       kind: "project",
-      project: buildProject(body.id, body.gloss, body.files),
+      project,
       source: "api",
       warnings: payloadWarnings(body),
       rev: typeof body.rev === "string" ? body.rev : undefined,
+      note: typeof body.note === "string" && body.note ? body.note : note || DEFAULT_NOTE_ID,
+      notes: notesForProject(project, {
+        ...body,
+        notes: parseNoteSummaries(body.notes),
+      }),
     };
   }
   return decided;

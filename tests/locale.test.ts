@@ -6,7 +6,11 @@ import {
   chapterNum,
   chromeLocale,
   glossLocale,
+  chapterHref,
   homeHref,
+  jumpValue,
+  noteHref,
+  parseJumpValue,
   parseLocale,
 } from "../src/lib/locale.js";
 import { noticeCopy, warningStripText } from "../src/lib/notice.js";
@@ -57,6 +61,41 @@ describe("homeHref", () => {
     assert.equal(homeHref("en"), "/?lang=en");
     assert.equal(homeHref("zh", "shortly"), "/?lang=zh&project=shortly");
     assert.equal(homeHref("en", "shortly", true), "?lang=en");
+  });
+});
+
+describe("chapterHref / noteHref", () => {
+  test("chapter change keeps ?note=", () => {
+    assert.equal(
+      chapterHref("c3", { pathname: "/", search: "?project=p&note=b" }),
+      "/?project=p&note=b#c3",
+    );
+    assert.equal(chapterHref("c3", { pathname: "/", search: "?project=p" }), "/?project=p#c3");
+  });
+
+  test("noteHref omits the default note and can carry a chapter", () => {
+    assert.equal(noteHref("zh", "p", "b"), "/?lang=zh&project=p&note=b");
+    assert.equal(noteHref("zh", "p", "gloss"), "/?lang=zh&project=p");
+    assert.equal(noteHref("en", "p", "b", { chapterId: "c2" }), "/?lang=en&project=p&note=b#c2");
+    assert.equal(noteHref("en", null, "b", { frozen: true }), "?lang=en&note=b");
+  });
+
+  test("jump values encode a foreign note", () => {
+    assert.equal(jumpValue("gloss", "c1", "gloss"), "c1");
+    assert.equal(jumpValue("b", "c2", "gloss"), "b:c2");
+    assert.deepEqual(parseJumpValue("c1", "gloss"), { noteId: "gloss", chapterId: "c1" });
+    assert.deepEqual(parseJumpValue("b:c2", "gloss"), { noteId: "b", chapterId: "c2" });
+  });
+});
+
+describe("notes copy", () => {
+  test("rail label, document title, and missing-note notice", () => {
+    assert.equal(COPY.zh.notes, "笔记");
+    assert.equal(COPY.en.notes, "Notes");
+    assert.equal(COPY.zh.documentNoteTitle("Other", "Two"), "Other · Two · Dualine");
+    assert.equal(COPY.en.documentNoteTitle("Other", "Two"), "Other · Two · Dualine");
+    assert.equal(COPY.zh.notFoundNote("b"), "找不到笔记 “b”");
+    assert.equal(COPY.en.notFoundNote("b"), "No note “b”");
   });
 });
 

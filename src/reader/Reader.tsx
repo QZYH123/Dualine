@@ -9,7 +9,8 @@ import {
   type Project,
 } from "../lib/gloss";
 import { warningStripExpandable, warningStripText, type ProjectWarning } from "../lib/notice";
-import { COPY, htmlLang, type Copy, type Locale } from "../lib/locale";
+import { chapterHref, COPY, htmlLang, type Copy, type Locale } from "../lib/locale";
+import { DEFAULT_NOTE_ID, type NoteSummary } from "../lib/notes";
 import { LangSwitch, Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
@@ -26,6 +27,8 @@ interface ReaderProps {
   stale?: boolean;
   locale: Locale;
   noteLocale: Locale;
+  note?: string;
+  notes?: NoteSummary[];
   onReload?: () => void;
 }
 
@@ -35,7 +38,7 @@ function readToken(name: string, fallback: number): number {
 }
 
 function chapterUrl(chapterId: string): string {
-  return `${window.location.pathname}${window.location.search}#${chapterId}`;
+  return chapterHref(chapterId, window.location);
 }
 
 export function Reader({
@@ -47,6 +50,8 @@ export function Reader({
   stale = false,
   locale,
   noteLocale,
+  note = DEFAULT_NOTE_ID,
+  notes,
   onReload,
 }: ReaderProps) {
   const { doc, files } = project;
@@ -276,6 +281,9 @@ export function Reader({
           frozen={source === "export"}
           locale={locale}
           noteLocale={noteLocale}
+          note={note}
+          notes={notes ?? []}
+          projectId={project.id}
           copy={copy}
           onReload={onReload}
           onSelectChapter={onSelectChapter}
@@ -292,7 +300,12 @@ export function Reader({
           <Rail
             chapters={doc.chapters}
             currentChapterId={currentChapterId}
+            locale={locale}
             noteLocale={noteLocale}
+            note={note}
+            notes={notes ?? []}
+            projectId={project.id}
+            frozen={source === "export"}
             copy={copy}
             onSelect={onSelectChapter}
           />

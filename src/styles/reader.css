@@ -433,6 +433,20 @@ button {
   transform: translateX(0);
 }
 
+.rail a.rail__item {
+  text-decoration: none;
+}
+
+.rail__notes .rail__item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rail__rule {
+  border: 0;
+  margin: 20px 0;
+  border-top: 1px solid var(--rule);
+}
+
 /* ───────────────────────── prose ───────────────────────── */
 
 .prose {
