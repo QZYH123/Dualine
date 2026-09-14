@@ -669,6 +669,7 @@ Fresh-clone audit on `feature/round11-tool` @ `7db6df6`, README as the only guid
 | R11-5 | medium | **fixed** `1d9b106` | `PORT=<busy>` errored; README said 接着往后试 | `chooseListenPort` starts at `PORT` (or 8787) and skips a bound port |
 | R11-6 | medium | **fixed** `5ca5067` | Night `--ink-4` / comments 2.3–2.4:1 (rail, line nums, 999 hint) | dark `--ink-4` `#747066` (~3.5:1); `--code-comment` `#706b61` (~3.2:1) |
 | R11-7 | medium | **fixed** `76f27d0` | Frozen export `?note=` miss hinted `GLOSS_PROJECTS_DIR/…` | frozen hint is `gloss/<id>.md` |
+| R11-8 | medium | **fixed** `4a48e04` | Faced-file fixes left this repo's `gloss.lock` stale (`npm run check` failed) | `--fix` moved the frozen-read span; API-load span retargeted to L179–L205; `--accept` for App / cli text drift |
 | R11-init | low | **for owner** | `init` on a Python `app/` package faces `app/__init__.py`, not `cli.py` | prefer `app/cli.py` / `__main__.py` over `__init__.py` when both exist |
 | R11-link | info | note | this agent's `npm link` prefix was not on `PATH` | environment; `node bin/dualine.js` works; not a Dualine bug |
 | R5-3 | low | deferred | Esc taught twice (masthead + chip) | skip; chip stays primary |
@@ -687,6 +688,7 @@ Fresh-clone audit on `feature/round11-tool` @ `7db6df6`, README as the only guid
 - **R11-5:** `PORT=9340` busy → `http://127.0.0.1:9341`.
 - **R11-6:** dark rail label / 999 hint 3.52:1; prose 13.45:1; no whisper fail.
 - **R11-7:** unit: frozen miss hint `gloss/nope.md`.
+- **R11-8:** `npm run check:gloss -- .` → 41 refs, 0 problems.
 - Pages `export/dualine/index.html` static: title `dualine 是怎么对照的`, pin works, dark paper, 999 gate.
 - Still deferred: R5-3 dual Esc, first-open pin tip, bridge, light rail whisper, pin-chip occlusion, L3. Init entry heuristic left for owner.
 - Local-only. No push, no tag. Not claiming publish-done.
