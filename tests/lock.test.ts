@@ -127,6 +127,22 @@ describe("gloss.lock", () => {
     assert.match(got.out, /1 problem/);
   });
 
+  test("two notes with the same loc keep distinct lock keys", () => {
+    const parent = mkdtempSync(join(tmp, "two-"));
+    const dir = join(parent, "demo");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    mkdirSync(join(dir, "gloss"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\nexport const b = 2;\n");
+    writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n");
+    writeFileSync(join(dir, "gloss/b.md"), "# B\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n");
+    const first = capture(() => runCheck([dir]));
+    assert.equal(first.code, 0);
+    const lock = readLock(dir);
+    assert.ok(lock);
+    const locs = lock.spans.map((s) => s.loc).sort();
+    assert.deepEqual(locs, ["b:c1.p1.a1", "c1.p1.a1"]);
+  });
+
   test("same text at new lines is still a match", () => {
     const dir = projectWith("export const a = 1;\nexport const b = 2;\n");
     writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));

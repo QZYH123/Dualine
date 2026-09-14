@@ -147,6 +147,29 @@ describe("runCheck --fix", () => {
     assert.equal(readFileSync(join(dest, "gloss.md"), "utf8"), glossBefore);
   });
 
+  test("check and --fix cover two notes and name the note file", () => {
+    const dir = join(tmp, "two-fix");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    mkdirSync(join(dir, "gloss"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "keep\nmove-me\n");
+    writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L2).\n");
+    writeFileSync(join(dir, "gloss/b.md"), "# B\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L2).\n");
+    assert.equal(runCheck([dir, "--accept"]), 0);
+    writeFileSync(join(dir, "src/a.ts"), "pad\nkeep\nmove-me\n");
+    const got = capture(() => runCheck([dir, "--fix"]));
+    assert.equal(got.code, 0);
+    assert.match(got.out, /gloss\.md: src\/a\.ts#L2 → L3/);
+    assert.match(got.out, /gloss\/b\.md: src\/a\.ts#L2 → L3/);
+    assert.match(readFileSync(join(dir, "gloss.md"), "utf8"), /src\/a\.ts#L3/);
+    assert.match(readFileSync(join(dir, "gloss/b.md"), "utf8"), /src\/a\.ts#L3/);
+    const lock = readLock(dir);
+    assert.ok(lock);
+    const a = lock.spans.find((s) => s.loc === "c1.p1.a1");
+    const b = lock.spans.find((s) => s.loc === "b:c1.p1.a1");
+    assert.equal(a?.start, 3);
+    assert.equal(b?.start, 3);
+  });
+
   test("broken and ambiguous anchors stay problems after --fix", () => {
     const dir = join(tmp, "fix-remain");
     mkdirSync(join(dir, "src"), { recursive: true });
