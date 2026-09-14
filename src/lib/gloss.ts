@@ -8,6 +8,8 @@
  * has neither — whatever the previous passage faced.
  */
 
+import { resolveFileLanguage } from "./language.js";
+
 export interface CodeRef {
   file: string;
   start: number; // 1-based, inclusive
@@ -333,5 +335,3 @@ export function buildProject(
     files: projectFiles,
   };
 }
-
-import { resolveFileLanguage } from "./language.js";

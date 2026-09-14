@@ -46,29 +46,29 @@
     {
       "loc": "c3.p6.a1",
       "file": "src/lib/gloss.ts",
-      "start": 11,
-      "end": 15,
+      "start": 13,
+      "end": 17,
       "sha256": "20c0b57f27b20ba962fe9468e5db5391bb29b8c52aedcb415b2de5690ac3d90f"
     },
     {
       "loc": "c3.p7.a1",
       "file": "src/lib/gloss.ts",
-      "start": 227,
-      "end": 245,
+      "start": 229,
+      "end": 247,
       "sha256": "5eac1d876b9ee5fa4e06574ecb9ec3e2f5718b1ed631184b24e77a67af170281"
     },
     {
       "loc": "c3.p7.a2",
       "file": "src/lib/gloss.ts",
-      "start": 69,
-      "end": 75,
+      "start": 71,
+      "end": 77,
       "sha256": "485b6b863de4a30b0eb2dc240fcec6f072f6cbb8aebc5cf7f0a42f6cb0b64b99"
     },
     {
       "loc": "c3.p9.a1",
       "file": "src/lib/gloss.ts",
-      "start": 271,
-      "end": 279,
+      "start": 273,
+      "end": 281,
       "sha256": "cbdcc85575bc79924b3e2b164e24d935bca4898f8c2c8ccf8fb46a96002321fd"
     },
     {
@@ -165,8 +165,8 @@
     {
       "loc": "c7.p20.a1",
       "file": "src/lib/gloss.ts",
-      "start": 292,
-      "end": 310,
+      "start": 294,
+      "end": 312,
       "sha256": "f82113ae3a1f9a83056c63cf30df7a19fa571e815dbdc14d5965d710f455ad37"
     },
     {
