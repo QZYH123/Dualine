@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { runCheck } from "../scripts/check-gloss.js";
+import { readLock } from "../server/lock.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tmp = mkdtempSync(join(tmpdir(), "gloss-check-"));
@@ -58,5 +59,102 @@ describe("runCheck", () => {
     mkdirSync(join(root, "Bad Name"), { recursive: true });
     writeFileSync(join(root, "Bad Name", "gloss.md"), "# Bad\n\nNope.\n");
     assert.equal(runCheck([root]), 1);
+  });
+});
+
+function capture(fn: () => number): { code: number; out: string } {
+  const chunks: string[] = [];
+  const log = console.log;
+  const err = console.error;
+  console.log = (...a: unknown[]) => {
+    chunks.push(a.map(String).join(" "));
+  };
+  console.error = (...a: unknown[]) => {
+    chunks.push(a.map(String).join(" "));
+  };
+  try {
+    return { code: fn(), out: chunks.join("\n") };
+  } finally {
+    console.log = log;
+    console.error = err;
+  }
+}
+
+function maskRefs(src: string): string {
+  return src.replace(/#L\d+(?:-L?\d+)?/g, "#L#");
+}
+
+describe("runCheck --fix", () => {
+  test("copies shortly, shifts a faced file, rewrites only the numbers", () => {
+    const dest = join(tmp, "shortly-fix");
+    cpSync(join(REPO, "examples/shortly"), dest, { recursive: true });
+    const serverPath = join(dest, "src/server.ts");
+    const origServer = readFileSync(serverPath, "utf8");
+    writeFileSync(serverPath, "// pad\n// pad\n" + origServer);
+
+    const glossBefore = readFileSync(join(dest, "gloss.md"), "utf8");
+    const lockBefore = readLock(dest);
+    assert.ok(lockBefore);
+    const span18 = lockBefore.spans.find((s) => s.start === 18 && s.end === 59);
+    assert.ok(span18);
+
+    const first = capture(() => runCheck([dest, "--fix"]));
+    assert.match(first.out, /src\/server\.ts#L18-L59 → L20-L61/);
+    assert.match(first.out, /anchors relocated/);
+    assert.equal(first.code, 0);
+
+    const glossAfter = readFileSync(join(dest, "gloss.md"), "utf8");
+    assert.notEqual(glossAfter, glossBefore);
+    assert.equal(maskRefs(glossAfter), maskRefs(glossBefore));
+    assert.match(glossAfter, /src\/server\.ts#L20-L61/);
+    assert.doesNotMatch(glossAfter, /src\/server\.ts#L18-L59/);
+    assert.match(glossAfter, /src\/index\.ts#L4-L6/);
+
+    const lockAfter = readLock(dest);
+    assert.ok(lockAfter);
+    const moved = lockAfter.spans.find((s) => s.loc === span18.loc);
+    assert.ok(moved);
+    assert.equal(moved.start, 20);
+    assert.equal(moved.end, 61);
+    assert.equal(moved.sha256, span18.sha256);
+
+    const second = capture(() => runCheck([dest]));
+    assert.equal(second.code, 0);
+    assert.match(second.out, /0 problems/);
+  });
+
+  test("--dry-run prints the move and writes nothing", () => {
+    const dest = join(tmp, "shortly-dry");
+    cpSync(join(REPO, "examples/shortly"), dest, { recursive: true });
+    const serverPath = join(dest, "src/server.ts");
+    writeFileSync(serverPath, "// pad\n" + readFileSync(serverPath, "utf8"));
+    const glossBefore = readFileSync(join(dest, "gloss.md"), "utf8");
+    const got = capture(() => runCheck([dest, "--fix", "--dry-run"]));
+    assert.equal(got.code, 1);
+    assert.match(got.out, /would be relocated/);
+    assert.match(got.out, /src\/server\.ts#L18-L59 → L19-L60/);
+    assert.equal(readFileSync(join(dest, "gloss.md"), "utf8"), glossBefore);
+  });
+
+  test("broken and ambiguous anchors stay problems after --fix", () => {
+    const dir = join(tmp, "fix-remain");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "keep\nmove-me\n");
+    writeFileSync(join(dir, "src/b.ts"), "xx\n");
+    writeFileSync(
+      join(dir, "gloss.md"),
+      "# T\n\nLead.\n\n## One\n\nSee [ok](src/a.ts#L2) and [gone](src/a.ts#L1) and [dup](src/b.ts#L1).\n",
+    );
+    assert.equal(runCheck([dir, "--accept"]), 0);
+    writeFileSync(join(dir, "src/a.ts"), "pad\nextra\nmove-me\n");
+    writeFileSync(join(dir, "src/b.ts"), "pad\nxx\nxx\n");
+    const got = capture(() => runCheck([dir, "--fix"]));
+    assert.equal(got.code, 1);
+    const gloss = readFileSync(join(dir, "gloss.md"), "utf8");
+    assert.match(gloss, /\[ok\]\(src\/a\.ts#L3\)/);
+    assert.match(gloss, /\[gone\]\(src\/a\.ts#L1\)/);
+    assert.match(gloss, /\[dup\]\(src\/b\.ts#L1\)/);
+    assert.match(got.out, /src\/a\.ts#L2 → L3/);
+    assert.match(got.out, /text found 2 times/);
   });
 });

@@ -7,7 +7,9 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { CodeRef } from "../src/lib/gloss.js";
+import { relocate } from "./relocate.js";
 import {
+  checkRefs,
   fileLines,
   readTextFile,
   refLabel,
@@ -154,4 +156,83 @@ export function checkLock(
     }
   }
   return out;
+}
+
+/**
+ * Reconstruct the locked block from a v1 hash-only span: a same-length
+ * window whose sha256 matches. Several windows with that hash share the
+ * same text; relocate() then says unique vs ambiguous.
+ */
+export function recoverLockedText(
+  lines: readonly string[],
+  span: LockSpan,
+): string | null {
+  const width = span.end - span.start + 1;
+  if (width < 1) return null;
+  for (let i = 0; i <= lines.length - width; i++) {
+    const block = lines.slice(i, i + width).join("\n");
+    if (spanHash(block) === span.sha256) return block;
+  }
+  return null;
+}
+
+export function relocateLockSpans(
+  lock: GlossLock,
+  updates: ReadonlyArray<{ loc: string; start: number; end: number }>,
+): GlossLock {
+  const byLoc = new Map(updates.map((u) => [u.loc, u]));
+  return {
+    version: 1,
+    spans: lock.spans.map((s) => {
+      const u = byLoc.get(s.loc);
+      return u ? { ...s, start: u.start, end: u.end } : s;
+    }),
+  };
+}
+
+/**
+ * Attach `suggest` / `ambiguous` to range and drift problems when the
+ * locked block is found in the current file.
+ */
+export function hintRelocation(
+  projectDir: string,
+  problems: RefProblem[],
+): RefProblem[] {
+  const lock = readLock(projectDir);
+  if (!lock) return problems;
+  const byLoc = new Map(lock.spans.map((s) => [s.loc, s]));
+  const cache = new Map<string, string[] | null>();
+
+  const linesOf = (file: string): string[] | null => {
+    const abs = safeResolve(projectDir, file);
+    if (!abs) return null;
+    if (cache.has(abs)) return cache.get(abs) ?? null;
+    const src = readTextFile(abs);
+    const lines = src === null ? null : fileLines(src);
+    cache.set(abs, lines);
+    return lines;
+  };
+
+  return problems.map((p) => {
+    if (p.reason !== "range" && p.reason !== "drift") return p;
+    const span = byLoc.get(p.loc);
+    if (!span) return p;
+    const lines = linesOf(p.ref.file);
+    if (!lines) return p;
+    const locked = recoverLockedText(lines, span);
+    if (locked == null) return p;
+    const found = relocate(lines, locked);
+    if (found == null) return p;
+    if ("ambiguous" in found) return { ...p, ambiguous: found.ambiguous };
+    if (found.start === p.ref.start && found.end === p.ref.end) return p;
+    return { ...p, suggest: found };
+  });
+}
+
+/** Range + lock + relocation hints. CLI and API both call this. */
+export function checkGloss(projectDir: string, refs: LocatedRef[]): RefProblem[] {
+  const found = checkRefs(projectDir, refs);
+  const okLocs = new Set(refs.map((r) => r.loc));
+  for (const p of found) okLocs.delete(p.loc);
+  return hintRelocation(projectDir, [...found, ...checkLock(projectDir, refs, okLocs)]);
 }

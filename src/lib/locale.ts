@@ -102,6 +102,10 @@ export interface Copy {
   alsoHere: string;
   warnMany: (n: number) => string;
   warnExpand: string;
+  warnMoved: (start: number, end: number) => string;
+  warnAmbiguous: (n: number) => string;
+  warnFixAll: string;
+  warnFixCmd: string;
   catalogDefault: string;
   notFound: (id: string) => string;
   unreachable: string;
@@ -140,6 +144,10 @@ export const COPY: Record<Locale, Copy> = {
     alsoHere: "这个目录里还有",
     warnMany: (n) => `${n} 处锚点无法落到代码`,
     warnExpand: "查看无法落地的锚点",
+    warnMoved: (start, end) => `已挪到 L${start}–L${end}`,
+    warnAmbiguous: (n) => `原文出现 ${n} 处，需手改`,
+    warnFixAll: "· dualine check --fix 可全部挪好",
+    warnFixCmd: "dualine check --fix",
     catalogDefault: "目录第一项 · 用 ?project=<id> 指定",
     notFound: (id) => `找不到项目 “${id}”`,
     unreachable: "API 未运行，读不到这个项目",
@@ -177,6 +185,10 @@ export const COPY: Record<Locale, Copy> = {
     alsoHere: "Also in this folder",
     warnMany: (n) => `${n} anchors miss the code`,
     warnExpand: "Show anchors that miss",
+    warnMoved: (start, end) => `moved to L${start}–L${end}`,
+    warnAmbiguous: (n) => `text found ${n} times, fix by hand`,
+    warnFixAll: "· dualine check --fix moves them all",
+    warnFixCmd: "dualine check --fix",
     catalogDefault: "First in the catalog · use ?project=<id>",
     notFound: (id) => `No project “${id}”`,
     unreachable: "API is not running; this project cannot be read",

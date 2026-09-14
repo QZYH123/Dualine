@@ -18,12 +18,12 @@ import { loadShortlyFixture } from "../fixtures/shortly";
 import {
   afterDetail,
   afterList,
-  isUsablePayload,
+  isUsablePayload, parseProjectWarnings,
   requestedProjectId as projectIdFromSearch,
   SAMPLE_ID,
   type Catalog,
   type FetchResult,
-  type ProjectPayload,
+  type ProjectPayload, type ProjectWarning,
 } from "./load-decision";
 
 export { SAMPLE_ID };
@@ -39,7 +39,7 @@ export type LoadResult =
       kind: "project";
       project: Project;
       source: "api" | "sample" | "export";
-      warnings: string[];
+      warnings: ProjectWarning[];
       rev?: string;
     }
   | { kind: "not-found"; id: string; catalog: Catalog }
@@ -47,10 +47,10 @@ export type LoadResult =
   | { kind: "no-dir"; catalog: Catalog }
   | { kind: "unreachable"; id: string };
 
-function payloadWarnings(body: ProjectPayload): string[] {
+function payloadWarnings(body: ProjectPayload): ProjectWarning[] {
   const raw = body.warnings;
   if (!Array.isArray(raw)) return [];
-  return raw.filter((w): w is string => typeof w === "string");
+  return parseProjectWarnings(raw);
 }
 
 async function getJson(url: string): Promise<FetchResult> {

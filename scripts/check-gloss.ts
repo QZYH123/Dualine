@@ -3,15 +3,25 @@
  * and a line range inside that file, and that the faced text still matches
  * gloss.lock (unless --accept rewrites the lock).
  *
- *   npx tsx scripts/check-gloss.ts [projects-dir] [--accept]
+ *   npx tsx scripts/check-gloss.ts [projects-dir] [--accept] [--fix] [--dry-run]
+ *
+ * --fix rewrites unique relocations in gloss.md, then updates those lock
+ * entries. --fix --accept fixes first, then accepts whatever is still a
+ * valid range. --fix --dry-run prints the moves and writes nothing.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packageRoot } from "../server/root.js";
-import { buildLock, checkLock, writeLock } from "../server/lock.js";
+import { relocatedLine, rewriteGlossRefs } from "../server/fix.js";
 import {
-  checkRefs,
+  buildLock,
+  checkGloss,
+  readLock,
+  relocateLockSpans,
+  writeLock,
+} from "../server/lock.js";
+import {
   collectRefs,
   folderProjectId,
   inspectRoot,
@@ -19,6 +29,7 @@ import {
   projectsRoot,
   refLabel,
   resolveProjectsDir,
+  type RefProblem,
 } from "../server/validate.js";
 
 const REPO_ROOT = packageRoot();
@@ -79,8 +90,60 @@ function glossEntries(root: string): { id: string; glossPath: string }[] {
   return out;
 }
 
+function formatProblem(p: RefProblem): string {
+  if (p.suggest) {
+    const dest =
+      p.suggest.start === p.suggest.end
+        ? `L${p.suggest.start}`
+        : `L${p.suggest.start}-L${p.suggest.end}`;
+    return `${p.message} (moved to ${dest})`;
+  }
+  if (p.ambiguous != null) return `${p.message} (text found ${p.ambiguous} times)`;
+  return p.message;
+}
+
+function applyFix(
+  projectDir: string,
+  glossPath: string,
+  src: string,
+  problems: RefProblem[],
+  dryRun: boolean,
+): { src: string; moved: number } {
+  const moves = problems.filter(
+    (p): p is RefProblem & { suggest: { start: number; end: number } } =>
+      p.suggest != null,
+  );
+  if (moves.length === 0) return { src, moved: 0 };
+  for (const p of moves) console.log(relocatedLine(p.ref, p.suggest));
+  if (dryRun) {
+    const n = moves.length;
+    console.log(`${n} ${n === 1 ? "anchor" : "anchors"} would be relocated`);
+    return { src, moved: n };
+  }
+  const next = rewriteGlossRefs(
+    src,
+    moves.map((p) => ({ from: p.ref, to: p.suggest })),
+  );
+  if (next !== src) writeFileSync(glossPath, next);
+  const lock = readLock(projectDir);
+  if (lock) {
+    writeLock(
+      projectDir,
+      relocateLockSpans(
+        lock,
+        moves.map((p) => ({ loc: p.loc, start: p.suggest.start, end: p.suggest.end })),
+      ),
+    );
+  }
+  const n = moves.length;
+  console.log(`${n} ${n === 1 ? "anchor" : "anchors"} relocated`);
+  return { src: next, moved: n };
+}
+
 export function runCheck(argv: string[] = process.argv.slice(2)): number {
   const accept = argv.includes("--accept");
+  const fix = argv.includes("--fix");
+  const dryRun = argv.includes("--dry-run");
   const { root, status } = inspectRoot(resolveRoot(argv));
   if (status === "missing") {
     console.error(`check:gloss: projects dir not found: ${root}`);
@@ -115,23 +178,31 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
       problems += 1;
     }
 
-    const src = readFileSync(glossPath, "utf8");
-    const located = collectRefs(src);
-    refsChecked += located.length;
+    let src = readFileSync(glossPath, "utf8");
+    let located = collectRefs(src);
     const projectDir = dirname(glossPath);
-    const found = checkRefs(projectDir, located);
-    const okLocs = new Set(located.map((r) => r.loc));
-    for (const problem of found) okLocs.delete(problem.loc);
 
-    const rangeProblems = found.length;
-    if (accept && rangeProblems === 0) {
+    if (fix) {
+      const preview = checkGloss(projectDir, located);
+      const applied = applyFix(projectDir, glossPath, src, preview, dryRun);
+      src = applied.src;
+      if (!dryRun && applied.moved > 0) located = collectRefs(src);
+    }
+
+    refsChecked += located.length;
+    const found = checkGloss(projectDir, located);
+    const rangeProblems = found.filter((p) => p.reason !== "drift" && p.reason !== "lock").length;
+    const doAccept = accept && !dryRun && rangeProblems === 0;
+    if (doAccept) {
       writeLock(projectDir, buildLock(projectDir, located));
     }
 
-    const lockProblems = accept && rangeProblems === 0 ? [] : checkLock(projectDir, located, okLocs);
+    const remaining = doAccept
+      ? found.filter((p) => p.reason !== "drift" && p.reason !== "lock")
+      : found;
 
-    for (const problem of [...found, ...lockProblems]) {
-      console.log(`${rel}: ${problem.message}`);
+    for (const problem of remaining) {
+      console.log(`${rel}: ${formatProblem(problem)}`);
       problems += 1;
     }
 

@@ -21,6 +21,8 @@ dualine init [dir]        起草 gloss.md（尚未实现）
   --no-open               不要打开浏览器
   --out <dir>             export 输出目录
   --accept                check 通过后重写锁
+  --fix                   按锁里的原文改写行号
+  --dry-run               只打印 --fix 将要改的，不写盘
   --help, --version
 `;
 
@@ -143,7 +145,12 @@ export async function runCli(argv: string[]): Promise<number> {
       console.log("not yet");
       return 1;
     case "check":
-      return runCheck([args.dir, ...(args.accept ? ["--accept"] : [])]);
+      return runCheck([
+        args.dir,
+        ...(args.accept ? ["--accept"] : []),
+        ...(args.fix ? ["--fix"] : []),
+        ...(args.dryRun ? ["--dry-run"] : []),
+      ]);
     case "export":
       try {
         const dest = await exportProject(args.dir, args.out);

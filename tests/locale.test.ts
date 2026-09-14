@@ -60,6 +60,18 @@ describe("homeHref", () => {
   });
 });
 
+describe("warn strip relocation copy", () => {
+  test("moved / ambiguous / fix-all use an en dash and the CLI command", () => {
+    assert.equal(COPY.zh.warnMoved(23, 64), "已挪到 L23–L64");
+    assert.equal(COPY.en.warnMoved(23, 64), "moved to L23–L64");
+    assert.equal(COPY.zh.warnAmbiguous(3), "原文出现 3 处，需手改");
+    assert.equal(COPY.en.warnAmbiguous(3), "text found 3 times, fix by hand");
+    assert.equal(COPY.zh.warnFixAll, "· dualine check --fix 可全部挪好");
+    assert.equal(COPY.en.warnFixAll, "· dualine check --fix moves them all");
+    assert.equal(COPY.zh.warnFixCmd, "dualine check --fix");
+  });
+});
+
 describe("noticeCopy en", () => {
   test("English titles and tips", () => {
     const copy = noticeCopy(

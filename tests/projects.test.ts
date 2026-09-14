@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { LOCK_MISSING } from "../server/lock.js";
+import { buildLock, LOCK_MISSING, writeLock } from "../server/lock.js";
 import { listProjects, loadProject, resolveProjectDir } from "../server/projects.js";
+import { collectRefs } from "../server/validate.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const EXAMPLES = resolve(REPO, "examples");
@@ -103,9 +104,9 @@ describe("loadProject", () => {
     const detail = loadProject("valid", root);
     assert.ok(detail);
     assert.deepEqual(detail.warnings, [
-      "c1.p2.a1 → src/gone.ts#L1: file missing",
-      "c1.p3.a1 → src/a.ts#L99: file has 3 lines",
-      LOCK_MISSING,
+      { message: "c1.p2.a1 → src/gone.ts#L1: file missing" },
+      { message: "c1.p3.a1 → src/a.ts#L99: file has 3 lines" },
+      { message: LOCK_MISSING },
     ]);
   });
 
@@ -158,7 +159,7 @@ See [a](src/a.ts#L1).
       assert.ok(detail);
       assert.equal(detail.name, "Solo");
       assert.ok("src/a.ts" in detail.files);
-      assert.deepEqual(detail.warnings, [LOCK_MISSING]);
+      assert.deepEqual(detail.warnings, [{ message: LOCK_MISSING }]);
       assert.match(detail.rev, /^\d+$/);
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -219,6 +220,25 @@ See [a](src/a.ts#L1).
       else process.env.GLOSS_PROJECTS_DIR = prev;
     }
   });
+
+  test("warnings carry suggest when locked text moved", () => {
+    const parent = mkdtempSync(join(tmpdir(), "gloss-moved-"));
+    const dir = join(parent, "demo");
+    try {
+      mkdirSync(join(dir, "src"), { recursive: true });
+      writeFileSync(join(dir, "src/a.ts"), "one\ntwo\n");
+      writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1-L2).\n");
+      writeLock(dir, buildLock(dir, collectRefs(readFileSync(join(dir, "gloss.md"), "utf8"))));
+      writeFileSync(join(dir, "src/a.ts"), "pad\none\ntwo\n");
+      const detail = loadProject("demo", parent);
+      assert.ok(detail);
+      assert.equal(detail.warnings.length, 1);
+      assert.deepEqual(detail.warnings[0]?.suggest, { start: 2, end: 3 });
+      assert.match(detail.warnings[0]?.message ?? "", /code changed since gloss.lock/);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("single-folder mode", () => {
@@ -258,7 +278,7 @@ ${extra}`,
       assert.equal(detail.id, "myapp");
       assert.ok("src/a.ts" in detail.files);
       assert.match(detail.rev, /^\d+$/);
-      assert.ok(detail.warnings.some((w) => w.includes("src/gone.ts")));
+      assert.ok(detail.warnings.some((w) => w.message.includes("src/gone.ts")));
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

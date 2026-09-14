@@ -59,7 +59,7 @@ export interface RefProblem {
   loc: string;
   ref: CodeRef;
   reason: RefReason;
-  message: string;
+  message: string; suggest?: { start: number; end: number }; ambiguous?: number;
 }
 
 export function isValidProjectId(id: string): boolean {

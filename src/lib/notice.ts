@@ -1,6 +1,8 @@
-import type { Catalog } from "./load-decision.js";
+import type { Catalog, ProjectWarning } from "./load-decision.js";
 import { COPY, type Locale } from "./locale.js";
 import { looksLikeWindowsPath } from "./paths.js";
+
+export type { ProjectWarning };
 
 export type NoticeKind = "not-found" | "unreachable" | "empty" | "no-dir";
 
@@ -39,17 +41,25 @@ export function noDirTip(root?: string, locale: Locale = "zh"): string {
  */
 export const CATALOG_DEFAULT_HINT = COPY.zh.catalogDefault;
 
+export type StripWarning = string | ProjectWarning;
+
+function asWarning(w: StripWarning): ProjectWarning {
+  return typeof w === "string" ? { message: w } : w;
+}
+
 /** One-line strip under the masthead. Null when there is nothing to say. */
 export function warningStripText(
-  warnings: string[],
+  warnings: readonly StripWarning[],
   locale: Locale = "zh",
 ): string | null {
   if (warnings.length === 0) return null;
-  if (warnings.length === 1) return warnings[0];
-  return COPY[locale].warnMany(warnings.length);
+  const items = warnings.map(asWarning);
+  const hint = items.every((w) => w.suggest) ? ` ${COPY[locale].warnFixAll}` : "";
+  if (items.length === 1) return `${items[0].message}${hint}`;
+  return `${COPY[locale].warnMany(items.length)}${hint}`;
 }
 
-export function warningStripExpandable(warnings: string[]): boolean {
+export function warningStripExpandable(warnings: readonly StripWarning[]): boolean {
   return warnings.length > 1;
 }
 

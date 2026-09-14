@@ -36,11 +36,40 @@ describe("parseArgv", () => {
   });
 
   test("check, export, init", () => {
-    assert.deepEqual(parseArgv(["check"]), { cmd: "check", dir: ".", accept: false });
+    assert.deepEqual(parseArgv(["check"]), {
+      cmd: "check",
+      dir: ".",
+      accept: false,
+      fix: false,
+      dryRun: false,
+    });
     assert.deepEqual(parseArgv(["check", "foo", "--accept"]), {
       cmd: "check",
       dir: "foo",
       accept: true,
+      fix: false,
+      dryRun: false,
+    });
+    assert.deepEqual(parseArgv(["check", "--fix"]), {
+      cmd: "check",
+      dir: ".",
+      accept: false,
+      fix: true,
+      dryRun: false,
+    });
+    assert.deepEqual(parseArgv(["check", ".", "--fix", "--dry-run"]), {
+      cmd: "check",
+      dir: ".",
+      accept: false,
+      fix: true,
+      dryRun: true,
+    });
+    assert.deepEqual(parseArgv(["check", "foo", "--fix", "--accept"]), {
+      cmd: "check",
+      dir: "foo",
+      accept: true,
+      fix: true,
+      dryRun: false,
     });
     assert.deepEqual(parseArgv(["export"]), { cmd: "export", dir: "." });
     assert.deepEqual(parseArgv(["export", "bar", "--out", "/tmp/x"]), {

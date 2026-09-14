@@ -33,10 +33,10 @@ export interface ProjectPayload {
   lang?: string;
   gloss: string;
   files: Record<string, string>;
-  warnings?: string[];
+  warnings?: Array<string | ProjectWarning>;
   rev?: string;
 }
-
+export type ProjectWarning = { message: string; suggest?: { start: number; end: number }; ambiguous?: number };
 export type FetchResult =
   | { unreachable: true }
   | { unreachable?: false; status: number; body: unknown };
@@ -144,4 +144,32 @@ export function afterDetail(
     };
   }
   return { kind: "not-found", id, catalog };
+}
+
+export function parseProjectWarnings(raw: unknown[]): ProjectWarning[] {
+  const out: ProjectWarning[] = [];
+  for (const item of raw) {
+    if (typeof item === "string") {
+      out.push({ message: item });
+      continue;
+    }
+    if (!item || typeof item !== "object") continue;
+    const rec = item as { message?: unknown; suggest?: unknown; ambiguous?: unknown };
+    if (typeof rec.message !== "string") continue;
+    const w: ProjectWarning = { message: rec.message };
+    if (
+      rec.suggest &&
+      typeof rec.suggest === "object" &&
+      typeof (rec.suggest as { start?: unknown }).start === "number" &&
+      typeof (rec.suggest as { end?: unknown }).end === "number"
+    ) {
+      w.suggest = {
+        start: (rec.suggest as { start: number }).start,
+        end: (rec.suggest as { end: number }).end,
+      };
+    }
+    if (typeof rec.ambiguous === "number") w.ambiguous = rec.ambiguous;
+    out.push(w);
+  }
+  return out;
 }

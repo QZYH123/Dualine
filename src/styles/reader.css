@@ -449,7 +449,8 @@ button {
 
 .prose code,
 .rail code,
-.masthead code {
+.masthead code,
+.warn-strip__list code {
   font-family: var(--font-mono);
   font-size: 0.8em;
   color: var(--ink-2);

@@ -8,7 +8,7 @@ import {
   type CodeRef,
   type Project,
 } from "../lib/gloss";
-import { warningStripExpandable, warningStripText } from "../lib/notice";
+import { warningStripExpandable, warningStripText, type ProjectWarning } from "../lib/notice";
 import { COPY, htmlLang, type Copy, type Locale } from "../lib/locale";
 import { LangSwitch, Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
@@ -20,7 +20,7 @@ interface ReaderProps {
   project: Project;
   highlighter: HighlighterCore;
   source: "api" | "sample" | "export";
-  warnings: string[];
+  warnings: ProjectWarning[];
   /** True when the URL has no `?project=` — the catalog's first listed id. */
   catalogDefault?: boolean;
   stale?: boolean;
@@ -340,7 +340,7 @@ function WarnStrip({
   catalogDefault,
   copy,
 }: {
-  warnings: string[];
+  warnings: ProjectWarning[];
   label: string;
   catalogDefault: boolean;
   copy: Copy;
@@ -357,7 +357,7 @@ function WarnStrip({
       ? copy.catalogDefault
       : undefined;
 
-  const warningKey = warnings.join("\n");
+  const warningKey = warnings.map((w) => w.message).join("\n");
   useEffect(() => {
     setOpen(false);
   }, [warningKey]);
@@ -387,7 +387,23 @@ function WarnStrip({
       {open && (
         <ul id="warn-strip-detail" className="warn-strip__list" role="status">
           {warnings.map((w) => (
-            <li key={w}>{w}</li>
+            <li key={w.message}>
+              {w.message}
+              {w.suggest && (
+                <>
+                  {" · "}
+                  {copy.warnMoved(w.suggest.start, w.suggest.end)}
+                  {" · "}
+                  <code>{copy.warnFixCmd}</code>
+                </>
+              )}
+              {w.ambiguous != null && (
+                <>
+                  {" · "}
+                  {copy.warnAmbiguous(w.ambiguous)}
+                </>
+              )}
+            </li>
           ))}
         </ul>
       )}

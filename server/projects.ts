@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { splitFrontmatter } from "../src/lib/gloss.js";
-import { checkLock } from "./lock.js";
+import { checkLock, hintRelocation } from "./lock.js";
 import {
   checkRefs,
   collectRefs,
@@ -41,7 +41,7 @@ export interface ProjectSummary {
 export interface ProjectDetail extends ProjectSummary {
   gloss: string;
   files: Record<string, string>;
-  warnings: string[];
+  warnings: { message: string; suggest?: { start: number; end: number }; ambiguous?: number }[];
   /** Max mtime of gloss.md and the files it faces — for the reader's quiet reload chip. */
   rev: string;
 }
@@ -195,11 +195,15 @@ function loadFromDir(id: string, projectDir: string): ProjectDetail | null {
   for (const p of problems) okLocs.delete(p.loc);
   const lockProblems = checkLock(projectDir, refs, okLocs);
   const seenWarn = new Set<string>();
-  const warnings: string[] = [];
-  for (const p of [...problems, ...lockProblems]) {
+  const warnings: ProjectDetail["warnings"] = [];
+  for (const p of hintRelocation(projectDir, [...problems, ...lockProblems])) {
     if (seenWarn.has(p.message)) continue;
     seenWarn.add(p.message);
-    warnings.push(p.message);
+    warnings.push({
+      message: p.message,
+      ...(p.suggest ? { suggest: p.suggest } : {}),
+      ...(p.ambiguous != null ? { ambiguous: p.ambiguous } : {}),
+    });
   }
 
   const files: Record<string, string> = {};
