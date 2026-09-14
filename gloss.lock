@@ -16,6 +16,27 @@
       "sha256": "528070e84bd6fdd700fcee94450f2dce5af4a562d56042f73971069de2426944"
     },
     {
+      "loc": "c10.p33.a1",
+      "file": "src/lib/load-decision.ts",
+      "start": 104,
+      "end": 109,
+      "sha256": "78cb1eebb114ebf4a258e710982d49d5d80e086f074e8f0c0ac492b3c312b932"
+    },
+    {
+      "loc": "c10.p34.a1",
+      "file": "src/reader/Reader.tsx",
+      "start": 262,
+      "end": 270,
+      "sha256": "6bb70d5202011080a2cf64dfe0d777be416e4d67defe4a51ed65a3cddd56c26e"
+    },
+    {
+      "loc": "c10.p35.a1",
+      "file": "server/index.ts",
+      "start": 137,
+      "end": 140,
+      "sha256": "d003b0c7eced96d2722420baa31c33b9e0195868ea82b987d6dcfffef3ebbe5e"
+    },
+    {
       "loc": "c2.p4.a1",
       "file": "src/lib/load.ts",
       "start": 174,
@@ -45,164 +66,227 @@
     },
     {
       "loc": "c3.p6.a1",
+      "file": "server/cli.ts",
+      "start": 90,
+      "end": 106,
+      "sha256": "94726890913a1f77ba37da55c06b93e55a54f99c0d5d287fdd9ed631fe8e07ab"
+    },
+    {
+      "loc": "c3.p6.a2",
+      "file": "server/validate.ts",
+      "start": 81,
+      "end": 88,
+      "sha256": "507f36d2f02e399c2dba4144d8e848ee494cdcd1cd0aeefa0dd3774c3235a415"
+    },
+    {
+      "loc": "c3.p7.a1",
+      "file": "server/index.ts",
+      "start": 179,
+      "end": 188,
+      "sha256": "bd1bce3b3c9677a09028a66d033a3539e25eec4c95dd91030f8d25c86de833ee"
+    },
+    {
+      "loc": "c3.p7.a2",
+      "file": "server/port.ts",
+      "start": 18,
+      "end": 28,
+      "sha256": "2da3304aba0d4e94b301a6fd6e1eccc41be0bc2b1c007c07de6f7a3ba895fcaa"
+    },
+    {
+      "loc": "c3.p8.a1",
+      "file": "server/init.ts",
+      "start": 227,
+      "end": 247,
+      "sha256": "20106e111f1ad2a37fa3ab78ae4282c820086572248b22a53332536061ca8af8"
+    },
+    {
+      "loc": "c3.p9.a1",
+      "file": "server/notes.ts",
+      "start": 30,
+      "end": 67,
+      "sha256": "6eb76bf276872197a905de9aca04f22285d54be3bd293b54faf2727a1c4fa988"
+    },
+    {
+      "loc": "c4.p10.a1",
       "file": "src/lib/gloss.ts",
       "start": 13,
       "end": 17,
       "sha256": "20c0b57f27b20ba962fe9468e5db5391bb29b8c52aedcb415b2de5690ac3d90f"
     },
     {
-      "loc": "c3.p7.a1",
+      "loc": "c4.p11.a1",
       "file": "src/lib/gloss.ts",
       "start": 229,
       "end": 247,
       "sha256": "5eac1d876b9ee5fa4e06574ecb9ec3e2f5718b1ed631184b24e77a67af170281"
     },
     {
-      "loc": "c3.p7.a2",
+      "loc": "c4.p11.a2",
       "file": "src/lib/gloss.ts",
       "start": 71,
       "end": 77,
       "sha256": "485b6b863de4a30b0eb2dc240fcec6f072f6cbb8aebc5cf7f0a42f6cb0b64b99"
     },
     {
-      "loc": "c3.p9.a1",
+      "loc": "c4.p13.a1",
       "file": "src/lib/gloss.ts",
       "start": 273,
       "end": 281,
       "sha256": "cbdcc85575bc79924b3e2b164e24d935bca4898f8c2c8ccf8fb46a96002321fd"
     },
     {
-      "loc": "c4.p10.a1",
+      "loc": "c5.p14.a1",
       "file": "server/index.ts",
       "start": 44,
       "end": 108,
       "sha256": "3b03f3afde65aed804071936c0c9173356935485f5c38636abf06d15f10a48ed"
     },
     {
-      "loc": "c4.p11.a1",
+      "loc": "c5.p15.a1",
       "file": "server/projects.ts",
       "start": 124,
       "end": 137,
       "sha256": "8070845be68b8c73b1e7072aebb8d4e3262300badb1874615f67d9b97f8d32ad"
     },
     {
-      "loc": "c4.p12.a1",
+      "loc": "c5.p16.a1",
       "file": "server/projects.ts",
       "start": 140,
       "end": 161,
       "sha256": "a01a4857c8d13e556a258ab185ee6d891790d34d7b9d8c4390a64eb7c30a803c"
     },
     {
-      "loc": "c4.p12.a2",
+      "loc": "c5.p16.a2",
       "file": "server/projects.ts",
       "start": 238,
       "end": 259,
       "sha256": "d8e719188a0b9c3f5ecf8c788678fed502478c72384918f5a6f3a5a21613cb1d"
     },
     {
-      "loc": "c4.p12.a3",
+      "loc": "c5.p16.a3",
       "file": "server/validate.ts",
       "start": 202,
       "end": 235,
       "sha256": "33aa354c3b769654acaa6e3efeda0dbff8155aa93f734936477cf91b1b9ec9ed"
     },
     {
-      "loc": "c4.p13.a1",
+      "loc": "c5.p17.a1",
       "file": "server/projects.ts",
       "start": 163,
       "end": 186,
       "sha256": "5496b277580a4929c5511389946a2b37ae78a53afd2e38ad44d328638150e298"
     },
     {
-      "loc": "c5.p14.a1",
+      "loc": "c6.p18.a1",
       "file": "src/reader/useReadingSync.ts",
       "start": 1,
       "end": 8,
       "sha256": "485da1ba618c24ba88031f8a7965c20a70757a05c19362c8b87da6b28c866b11"
     },
     {
-      "loc": "c5.p14.a2",
+      "loc": "c6.p18.a2",
       "file": "src/reader/useReadingSync.ts",
       "start": 85,
       "end": 98,
       "sha256": "e58a2b79533beb5a2a4a364e4aaedaa40e90dd10a2a56a4b0d1220dbd6a78719"
     },
     {
-      "loc": "c5.p15.a1",
+      "loc": "c6.p19.a1",
       "file": "src/reader/useReadingSync.ts",
       "start": 140,
       "end": 146,
       "sha256": "2e8199c8a962a15f921024c98e0ed5e8be5a44d468f7b1e49832d9a6a87de8ee"
     },
     {
-      "loc": "c5.p16.a1",
+      "loc": "c6.p20.a1",
       "file": "src/reader/useReadingSync.ts",
       "start": 174,
       "end": 190,
       "sha256": "e384c9f624cb77db8a7b1fd86e3c28cffa97c8653f97427daaf7572d9879c4f5"
     },
     {
-      "loc": "c6.p17.a1",
+      "loc": "c7.p21.a1",
       "file": "src/reader/Reader.tsx",
       "start": 117,
       "end": 119,
       "sha256": "9cb9fd8ac3e8c2f4518fd6703242816ca39840b24b1b7c563d335b042c40470d"
     },
     {
-      "loc": "c6.p17.a2",
+      "loc": "c7.p21.a2",
       "file": "src/reader/Reader.tsx",
       "start": 123,
       "end": 129,
       "sha256": "cdce076f4cd7b15c9c2c649f78b185cf09a4bd6ba192a86f31106e51eacae1f3"
     },
     {
-      "loc": "c6.p18.a1",
+      "loc": "c7.p22.a1",
       "file": "src/reader/Prose.tsx",
       "start": 111,
       "end": 134,
       "sha256": "57f3a5613dd49bb8c0675804521afcbffade92d3647db6930a10b6b52a961102"
     },
     {
-      "loc": "c7.p20.a1",
+      "loc": "c8.p24.a1",
       "file": "src/lib/gloss.ts",
       "start": 294,
       "end": 312,
       "sha256": "f82113ae3a1f9a83056c63cf30df7a19fa571e815dbdc14d5965d710f455ad37"
     },
     {
-      "loc": "c7.p21.a1",
+      "loc": "c8.p25.a1",
       "file": "src/reader/Reader.tsx",
       "start": 138,
       "end": 175,
       "sha256": "6c07eacbb94c48b84d266a37a1443eb7d167a23a30e128bdf1685e2078f32b92"
     },
     {
-      "loc": "c7.p22.a1",
+      "loc": "c8.p26.a1",
       "file": "src/lib/highlight.ts",
       "start": 165,
       "end": 215,
       "sha256": "0d0b5109e22690801eb49d0a6cc173ce9b83a8edf402320ca603cfcf20c4529b"
     },
     {
-      "loc": "c8.p25.a1",
-      "file": "src/lib/load-decision.ts",
-      "start": 104,
-      "end": 109,
-      "sha256": "78cb1eebb114ebf4a258e710982d49d5d80e086f074e8f0c0ac492b3c312b932"
+      "loc": "c9.p27.a1",
+      "file": "server/lock.ts",
+      "start": 61,
+      "end": 76,
+      "sha256": "fb690aeefb757232e092c0de6ebe3a3987554aee2f10a44ebe11dde178929eb0"
     },
     {
-      "loc": "c8.p26.a1",
-      "file": "src/reader/Reader.tsx",
-      "start": 262,
-      "end": 270,
-      "sha256": "6bb70d5202011080a2cf64dfe0d777be416e4d67defe4a51ed65a3cddd56c26e"
+      "loc": "c9.p27.a2",
+      "file": "scripts/check-gloss.ts",
+      "start": 229,
+      "end": 234,
+      "sha256": "34393402414403fac546307af4f14b23c6c87bc27f9c6a1def23b7a2d563f244"
     },
     {
-      "loc": "c8.p27.a1",
-      "file": "server/index.ts",
-      "start": 137,
-      "end": 140,
-      "sha256": "d003b0c7eced96d2722420baa31c33b9e0195868ea82b987d6dcfffef3ebbe5e"
+      "loc": "c9.p28.a1",
+      "file": "server/relocate.ts",
+      "start": 25,
+      "end": 46,
+      "sha256": "fc105aa8dc4d84197ed70f5bfd4d825eda1091473b60e40b78359386a759396a"
+    },
+    {
+      "loc": "c9.p29.a1",
+      "file": "server/fix.ts",
+      "start": 42,
+      "end": 73,
+      "sha256": "5919e1ee5d82e91f99af329a54fd399addab63fade1e8effe057f6261baf2c5e"
+    },
+    {
+      "loc": "c9.p30.a1",
+      "file": "src/lib/language.ts",
+      "start": 108,
+      "end": 119,
+      "sha256": "a59c969cfb23efd82d8295b9ab39ffe9ce1c961309b706ead5b70f8469c4f5f4"
+    },
+    {
+      "loc": "c9.p30.a2",
+      "file": "src/lib/highlight.ts",
+      "start": 191,
+      "end": 209,
+      "sha256": "50cf6b90218f0cc6427aba66de25c5674ccb53dfd40523c59fa72aad930cae57"
     }
   ]
 }
