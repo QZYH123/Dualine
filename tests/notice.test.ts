@@ -41,7 +41,8 @@ describe("warningStripText", () => {
   test("when every problem has a unique suggest, the summary names --fix", () => {
     const a = { message: "one", suggest: { start: 23, end: 64 } };
     const b = { message: "two", suggest: { start: 8, end: 9 } };
-    assert.equal(warningStripText([a]), "one · dualine check --fix 可全部挪好");
+    assert.equal(warningStripText([a]), "已挪到 L23–L64 · dualine check --fix 可全部挪好");
+    assert.equal(warningStripText([a], "en"), "moved to L23–L64 · dualine check --fix moves them all");
     assert.equal(warningStripText([a, b]), "2 处锚点无法落到代码 · dualine check --fix 可全部挪好");
     assert.equal(
       warningStripText([a, b], "en"),

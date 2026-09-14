@@ -65,7 +65,13 @@ export function warningStripText(
   if (warnings.length === 0) return null;
   const items = warnings.map(asWarning);
   const hint = items.every((w) => w.suggest) ? ` ${COPY[locale].warnFixAll}` : "";
-  if (items.length === 1) return `${items[0].message}${hint}`;
+  if (items.length === 1) {
+    const w = items[0]!;
+    if (w.suggest) {
+      return `${COPY[locale].warnMoved(w.suggest.start, w.suggest.end)}${hint}`;
+    }
+    return `${w.message}${hint}`;
+  }
   return `${COPY[locale].warnMany(items.length)}${hint}`;
 }
 
