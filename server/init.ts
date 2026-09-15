@@ -9,6 +9,7 @@ const SKIP_DIRS = new Set([
   "node_modules",
   "dist",
   "build",
+  "export",
   "target",
   "vendor",
   ".venv",
@@ -295,8 +296,19 @@ export function runInit(dir: string, opts: InitOptions = {}): InitResult {
   }
 
   const glossPath = join(abs, "gloss.md");
-  if (existsSync(glossPath) && !opts.force) {
-    throw new InitError("gloss.md 已存在，加 --force 覆写\ngloss.md already exists; pass --force to overwrite");
+  if (existsSync(glossPath)) {
+    try {
+      if (statSync(glossPath).isDirectory()) {
+        throw new InitError(
+          "gloss.md 是一个目录，没法写起步笔记\ngloss.md is a directory; cannot write the starter note",
+        );
+      }
+    } catch (err) {
+      if (err instanceof InitError) throw err;
+    }
+    if (!opts.force) {
+      throw new InitError("gloss.md 已存在，加 --force 覆写\ngloss.md already exists; pass --force to overwrite");
+    }
   }
 
   const detected = detectProject(abs);

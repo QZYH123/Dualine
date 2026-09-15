@@ -168,6 +168,7 @@ describe("detectProject", () => {
     mkdirSync(join(dir, "node_modules", "dep"), { recursive: true });
     mkdirSync(join(dir, "dist"), { recursive: true });
     mkdirSync(join(dir, "build"), { recursive: true });
+    mkdirSync(join(dir, "export", "assets"), { recursive: true });
     mkdirSync(join(dir, "vendor"), { recursive: true });
     mkdirSync(join(dir, "__pycache__"), { recursive: true });
     mkdirSync(join(dir, ".hidden"), { recursive: true });
@@ -177,6 +178,7 @@ describe("detectProject", () => {
     writeFileSync(join(dir, "node_modules/dep/index.js"), "module.exports = 1;\n");
     writeFileSync(join(dir, "dist/out.js"), "console.log(1);\n");
     writeFileSync(join(dir, "build/out.js"), "console.log(1);\n");
+    writeFileSync(join(dir, "export/assets/app.js"), "console.log(1);\n");
     writeFileSync(join(dir, "vendor/lib.js"), "module.exports = 1;\n");
     writeFileSync(join(dir, "__pycache__/x.py"), "x = 1\n");
     writeFileSync(join(dir, ".hidden/x.py"), "x = 1\n");
@@ -214,6 +216,21 @@ describe("detectProject", () => {
     );
     const got = detectProject(dir);
     assert.equal(got.entry, "src/index.ts");
+  });
+
+  test("skips a frozen export/ tree when picking the entry and language", () => {
+    const dir = join(tmp, "py-after-export");
+    mkdirSync(join(dir, "lib"), { recursive: true });
+    mkdirSync(join(dir, "export", "lib-py", "assets"), { recursive: true });
+    writeFileSync(join(dir, "lib/util.py"), "def greet():\n    return 1\n");
+    writeFileSync(join(dir, "export/lib-py/index.html"), "<html></html>\n");
+    writeFileSync(
+      join(dir, "export/lib-py/assets/app.js"),
+      "console.log(1);\nconsole.log(2);\nconsole.log(3);\n",
+    );
+    const got = detectProject(dir);
+    assert.equal(got.entry, "lib/util.py");
+    assert.equal(got.lang, "python");
   });
 });
 
@@ -269,6 +286,23 @@ describe("runInit e2e", () => {
 
     assert.equal(runCheck([dir]), 0);
     assert.ok(existsSync(join(dir, "gloss.lock")));
+  });
+
+  test("refuses when gloss.md is a directory, even with --force", () => {
+    const dir = join(tmp, "gloss-dir");
+    mkdirSync(dir, { recursive: true });
+    mkdirSync(join(dir, "gloss.md"));
+    writeFileSync(join(dir, "main.py"), "print(1)\n");
+    assert.throws(() => runInit(dir), (err: unknown) => {
+      assert.ok(err instanceof InitError);
+      assert.match(err.message, /gloss\.md 是一个目录/);
+      return true;
+    });
+    assert.throws(() => runInit(dir, { force: true }), (err: unknown) => {
+      assert.ok(err instanceof InitError);
+      assert.match(err.message, /is a directory/);
+      return true;
+    });
   });
 
   test("package.json files lists the write-gloss skill", () => {
