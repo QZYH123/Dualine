@@ -27,13 +27,19 @@ export async function pickFreePort(
   throw new Error(`no free port in ${start}–${end}`);
 }
 
-/** `PORT` env wins when it is a positive integer; otherwise the caller should pick. */
+/** `PORT` env wins when it is a TCP port 1–65535; otherwise the caller should pick. */
 export function portFromEnv(env: NodeJS.ProcessEnv = process.env): number | null {
   const raw = env.PORT?.trim();
-  if (!raw) return null;
+  if (!raw || !/^\d+$/.test(raw)) return null;
   const n = Number(raw);
-  if (!Number.isInteger(n) || n <= 0) return null;
+  if (!Number.isInteger(n) || n < 1 || n > 65535) return null;
   return n;
+}
+
+/** `http://host:port`, with brackets when `host` is bare IPv6. */
+export function formatListenUrl(host: string, port: number): string {
+  const hostPart = host.includes(":") && !host.startsWith("[") ? `[${host}]` : host;
+  return `http://${hostPart}:${port}`;
 }
 
 /** Preferred port, then the next free one — `dualine` 被占时接着往后试. */

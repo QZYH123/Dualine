@@ -6,7 +6,7 @@ import { exportProject } from "../scripts/export-gloss.js";
 import { parseArgv, type CliArgs } from "./args.js";
 import { createApiServer, listenHttp } from "./index.js";
 import { InitError, runInit } from "./init.js";
-import { chooseListenPort } from "./port.js";
+import { chooseListenPort, formatListenUrl } from "./port.js";
 import { packageRoot } from "./root.js";
 import { resolveProjectsDir } from "./validate.js";
 
@@ -100,7 +100,7 @@ async function serve(args: Extract<CliArgs, { cmd: "serve" }>): Promise<number> 
   const server = createApiServer({ root: dir, single: true, distDir });
   try {
     const bound = await listenHttp(server, port, host);
-    const url = `http://${host}:${bound}`;
+    const url = formatListenUrl(host, bound);
     console.log(url);
     if (args.open) openBrowser(url);
   } catch (err) {

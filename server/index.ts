@@ -19,6 +19,7 @@ import {
 } from "./projects.js";
 import { DEFAULT_NOTE_ID } from "./notes.js";
 import { pathHasDotDot, resolveStatic, type StaticResolve } from "./static.js";
+import { chooseListenPort, formatListenUrl } from "./port.js";
 import { serveScope } from "./validate.js";
 
 export interface HandleResult {
@@ -224,29 +225,37 @@ export function listenHttp(
   });
 }
 
-function listenAsMain(server: Server): void {
-  const port = Number(process.env.PORT ?? 8787);
-  const host = process.env.HOST ?? "127.0.0.1";
+async function listenAsMain(server: Server): Promise<void> {
+  const host = process.env.HOST?.trim() || "127.0.0.1";
   const scope = serveScope();
+  let port: number;
+  try {
+    port = await chooseListenPort(process.env, host);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
 
-  server.on("error", (err: NodeJS.ErrnoException) => {
-    if (err.code === "EADDRINUSE") {
+  let bound: number;
+  try {
+    bound = await listenHttp(server, port, host);
+  } catch (err) {
+    const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
+    if (code === "EADDRINUSE") {
       console.error(
         `api: port ${port} is in use — stop the other process or run with PORT=<n>`,
       );
-      process.exit(1);
+    } else {
+      console.error(err instanceof Error ? err.message : String(err));
     }
-    console.error(err.message);
     process.exit(1);
-  });
+  }
 
-  server.listen(port, host, () => {
-    const kind = scope.single ? "project" : "projects";
-    const extra = scope.distDir ? `  dist: ${scope.distDir}` : "";
-    console.log(
-      `api listening on http://${host}:${port}  (${kind}: ${scope.root})${extra}`,
-    );
-  });
+  const kind = scope.single ? "project" : "projects";
+  const extra = scope.distDir ? `  dist: ${scope.distDir}` : "";
+  console.log(
+    `api listening on ${formatListenUrl(host, bound)}  (${kind}: ${scope.root})${extra}`,
+  );
 
   let closing = false;
   const shutdown = () => {
@@ -261,5 +270,5 @@ function listenAsMain(server: Server): void {
 
 const entry = process.argv[1];
 if (entry && resolve(entry) === fileURLToPath(import.meta.url)) {
-  listenAsMain(createApiServer());
+  void listenAsMain(createApiServer());
 }

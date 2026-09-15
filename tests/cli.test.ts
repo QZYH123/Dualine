@@ -4,7 +4,7 @@ import { describe, test } from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv } from "../server/args.js";
-import { chooseListenPort, pickFreePort, portFromEnv } from "../server/port.js";
+import { chooseListenPort, formatListenUrl, pickFreePort, portFromEnv } from "../server/port.js";
 import { packageRoot } from "../server/root.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -111,6 +111,18 @@ describe("parseArgv", () => {
       cmd: "error",
       message: "unexpected argument: b",
     });
+    assert.deepEqual(parseArgv([".", "--out", "/tmp/x"]), {
+      cmd: "error",
+      message: "--out is only valid with export",
+    });
+    assert.deepEqual(parseArgv(["check", "--out", "/tmp/x"]), {
+      cmd: "error",
+      message: "--out is only valid with export",
+    });
+    assert.deepEqual(parseArgv(["init", "--out", "/tmp/x"]), {
+      cmd: "error",
+      message: "--out is only valid with export",
+    });
   });
 });
 
@@ -122,6 +134,14 @@ describe("portFromEnv / pickFreePort", () => {
     assert.equal(portFromEnv({ PORT: " 9000 " }), 9000);
     assert.equal(portFromEnv({ PORT: "nope" }), null);
     assert.equal(portFromEnv({ PORT: "0" }), null);
+    assert.equal(portFromEnv({ PORT: "65536" }), null);
+    assert.equal(portFromEnv({ PORT: "1e3" }), null);
+  });
+
+  test("formatListenUrl brackets bare IPv6 hosts", () => {
+    assert.equal(formatListenUrl("127.0.0.1", 8787), "http://127.0.0.1:8787");
+    assert.equal(formatListenUrl("::1", 8787), "http://[::1]:8787");
+    assert.equal(formatListenUrl("[::1]", 8787), "http://[::1]:8787");
   });
 
   test("pickFreePort skips a bound port", async () => {

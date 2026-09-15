@@ -63,8 +63,9 @@ export function parseArgv(argv: string[]): CliArgs {
 }
 
 function parseServe(argv: string[]): CliArgs {
-  const { rest, flags, error } = positionalAndFlags(argv);
+  const { rest, flags, out, error } = positionalAndFlags(argv);
   if (error) return { cmd: "error", message: error };
+  if (out !== undefined) return { cmd: "error", message: "--out is only valid with export" };
   const unknown = unknownFlag(flags, new Set(["--no-open"]));
   if (unknown) return { cmd: "error", message: unknown };
   if (rest.length > 1) return { cmd: "error", message: `unexpected argument: ${rest[1]}` };
@@ -78,6 +79,7 @@ function parseSub(cmd: string, argv: string[]): CliArgs {
   const dir = rest[0] ?? ".";
 
   if (cmd === "check") {
+    if (out !== undefined) return { cmd: "error", message: "--out is only valid with export" };
     const unknown = unknownFlag(flags, new Set(["--accept", "--fix", "--dry-run"]));
     if (unknown) return { cmd: "error", message: unknown };
     return {
@@ -93,6 +95,7 @@ function parseSub(cmd: string, argv: string[]): CliArgs {
     if (unknown) return { cmd: "error", message: unknown };
     return out === undefined ? { cmd: "export", dir } : { cmd: "export", dir, out };
   }
+  if (out !== undefined) return { cmd: "error", message: "--out is only valid with export" };
   const unknown = unknownFlag(flags, new Set(["--force"]));
   if (unknown) return { cmd: "error", message: unknown };
   return { cmd: "init", dir, force: flags.has("--force") };
