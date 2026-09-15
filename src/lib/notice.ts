@@ -22,8 +22,11 @@ export function noticeShowsBack(kind: NoticeKind): boolean {
 /** Missing / not-a-directory projects folder: prefer an absolute path. */
 export const NOTICE_NO_DIR_TIP = COPY.zh.noDirTip;
 
-/** Empty catalog: run `dualine init` in the project folder. */
+/** Empty single-folder project: run `dualine init` here. */
 export const NOTICE_EMPTY_TIP = COPY.zh.emptyTip;
+
+/** Empty catalog: child folders with gloss.md, not init at the root. */
+export const NOTICE_EMPTY_CATALOG_TIP = COPY.zh.emptyCatalogTip;
 
 /** API down: name the recovery, then refresh this page; 返回 stays home. */
 export const NOTICE_UNREACHABLE_TIP = COPY.zh.unreachableTip;
@@ -129,10 +132,17 @@ export function noticeCopy(
         tip: copy.unreachableTip,
       };
     case "empty":
+      if (result.catalog.single) {
+        return {
+          title: copy.emptySingle,
+          hint: "dualine init",
+          tip: copy.emptyTip,
+        };
+      }
       return {
-        title: result.catalog.single ? copy.emptySingle : copy.empty,
-        hint: "dualine init",
-        tip: copy.emptyTip,
+        title: copy.empty,
+        hint: result.catalog.root ?? "GLOSS_PROJECTS_DIR",
+        tip: copy.emptyCatalogTip,
       };
     case "no-dir":
       return {

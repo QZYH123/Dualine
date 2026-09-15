@@ -154,6 +154,7 @@ export interface Copy {
   notDirectory: string;
   missingDir: string;
   emptyTip: string;
+  emptyCatalogTip: string;
   noDirTip: string;
   windowsTip: string;
   unreachableTip: string;
@@ -201,6 +202,7 @@ export const COPY: Record<Locale, Copy> = {
     missingDir: "找不到项目目录",
     emptyTip:
       "在项目文件夹里跑它，写一份起步的 gloss.md，再让 agent 用 write-gloss 技能起草。",
+    emptyCatalogTip: "每个子文件夹是一个项目，里面要有 gloss.md。",
     noDirTip: "把 GLOSS_PROJECTS_DIR 设成文件夹的绝对路径",
     windowsTip: "这是 Windows 路径；请改成当前系统上的绝对路径",
     unreachableTip: "API 起来后再刷新这一页",
@@ -246,6 +248,7 @@ export const COPY: Record<Locale, Copy> = {
     missingDir: "Cannot find the projects folder",
     emptyTip:
       "Run it in the project folder: it writes a starter gloss.md and installs the write-gloss skill for your agent.",
+    emptyCatalogTip: "Each subfolder is a project and needs a gloss.md.",
     noDirTip: "Set GLOSS_PROJECTS_DIR to the folder's absolute path",
     windowsTip: "This is a Windows path; use an absolute path on this system",
     unreachableTip: "Refresh this page once the API is up",

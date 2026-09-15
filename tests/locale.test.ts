@@ -127,14 +127,17 @@ describe("noticeCopy en", () => {
       "en",
     );
     assert.equal(empty.title, COPY.en.empty);
-    assert.equal(empty.hint, "dualine init");
-    assert.equal(empty.tip, COPY.en.emptyTip);
-    assert.match(COPY.en.emptyTip, /write-gloss/);
+    assert.equal(empty.hint, "/tmp/x");
+    assert.equal(empty.tip, COPY.en.emptyCatalogTip);
+    assert.match(COPY.en.emptyCatalogTip, /subfolder/);
 
     const emptySingle = noticeCopy(
       { kind: "empty", catalog: { root: "/tmp/x", rootStatus: "ok", projects: [], single: true } },
       "en",
     );
     assert.equal(emptySingle.title, COPY.en.emptySingle);
+    assert.equal(emptySingle.hint, "dualine init");
+    assert.equal(emptySingle.tip, COPY.en.emptyTip);
+    assert.match(COPY.en.emptyTip, /write-gloss/);
   });
 });

@@ -4,6 +4,7 @@ import {
   CATALOG_DEFAULT_HINT,
   showCatalogDefaultHint,
   NOTICE_EMPTY_TIP,
+  NOTICE_EMPTY_CATALOG_TIP,
   NOTICE_NO_DIR_TIP,
   NOTICE_UNREACHABLE_TIP,
   NOTICE_WINDOWS_PATH_TIP,
@@ -109,32 +110,35 @@ describe("noticeCopy missing note", () => {
 });
 
 describe("noticeCopy empty", () => {
-  test("points at dualine init, not a fake <id> path", () => {
+  test("catalog empty names the projects folder, not dualine init", () => {
     const copy = noticeCopy({
       kind: "empty",
       catalog: { root: "/tmp/glosses", rootStatus: "ok", projects: [] },
     });
     assert.equal(copy.title, "这个目录下没有项目");
-    assert.equal(copy.hint, "dualine init");
-    assert.equal(copy.tip, NOTICE_EMPTY_TIP);
-    assert.match(NOTICE_EMPTY_TIP, /write-gloss/);
-    assert.match(NOTICE_EMPTY_TIP, /gloss\.md/);
+    assert.equal(copy.hint, "/tmp/glosses");
+    assert.equal(copy.tip, NOTICE_EMPTY_CATALOG_TIP);
+    assert.match(NOTICE_EMPTY_CATALOG_TIP, /子文件夹/);
     assert.doesNotMatch(copy.hint, /<id>/);
+    assert.doesNotMatch(copy.hint, /dualine init/);
   });
 
-  test("still points at init when the catalog has no root", () => {
+  test("catalog empty without a root still names GLOSS_PROJECTS_DIR", () => {
     const copy = noticeCopy({ kind: "empty", catalog: { projects: [] } });
-    assert.equal(copy.hint, "dualine init");
-    assert.equal(copy.tip, NOTICE_EMPTY_TIP);
+    assert.equal(copy.hint, "GLOSS_PROJECTS_DIR");
+    assert.equal(copy.tip, NOTICE_EMPTY_CATALOG_TIP);
   });
 
-  test("single-folder empty names gloss.md, not a catalog of projects", () => {
+  test("single-folder empty names gloss.md and dualine init", () => {
     const copy = noticeCopy({
       kind: "empty",
       catalog: { root: "/tmp/r11-pycli", rootStatus: "ok", projects: [], single: true },
     });
     assert.equal(copy.title, "这里还没有 gloss.md");
     assert.equal(copy.hint, "dualine init");
+    assert.equal(copy.tip, NOTICE_EMPTY_TIP);
+    assert.match(NOTICE_EMPTY_TIP, /write-gloss/);
+    assert.match(NOTICE_EMPTY_TIP, /gloss\.md/);
   });
 });
 
