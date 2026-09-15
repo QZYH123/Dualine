@@ -17,17 +17,24 @@ export function rewriteRefTarget(
   raw: string,
   to: { start: number; end: number },
 ): string {
-  const hash = raw.indexOf("#");
+  const start = raw.search(/\S/);
+  if (start === -1) return raw;
+  let end = raw.length;
+  while (end > start && /\s/.test(raw.charAt(end - 1))) end -= 1;
+  const trimmed = raw.slice(start, end);
+  const hash = trimmed.indexOf("#");
   if (hash === -1) return raw;
-  const path = raw.slice(0, hash);
-  const spec = raw.slice(hash);
+  const path = trimmed.slice(0, hash);
+  const spec = trimmed.slice(hash);
   const m = /^#L(\d+)(?:(-L?)(\d+))?$/.exec(spec);
   if (!m) return raw;
-  if (m[2] == null) {
-    if (to.start === to.end) return `${path}#L${to.start}`;
-    return `${path}#L${to.start}-L${to.end}`;
-  }
-  return `${path}#L${to.start}${m[2]}${to.end}`;
+  const next =
+    m[2] == null
+      ? to.start === to.end
+        ? `${path}#L${to.start}`
+        : `${path}#L${to.start}-L${to.end}`
+      : `${path}#L${to.start}${m[2]}${to.end}`;
+  return `${raw.slice(0, start)}${next}${raw.slice(end)}`;
 }
 
 function refKey(ref: CodeRef): string {
@@ -43,7 +50,22 @@ export function rewriteGlossRefs(
   src: string,
   moves: ReadonlyArray<{ from: CodeRef; to: { start: number; end: number } }>,
 ): string {
+  return planGlossRefRewrites(src, moves).text;
+}
+
+/**
+ * Rewrite matching anchors and report which unique moves actually
+ * changed a destination. Conflicting suggestions stay untouched.
+ */
+export function planGlossRefRewrites(
+  src: string,
+  moves: ReadonlyArray<{ from: CodeRef; to: { start: number; end: number } }>,
+): {
+  text: string;
+  applied: Array<{ from: CodeRef; to: { start: number; end: number } }>;
+} {
   const map = new Map<string, { start: number; end: number } | "conflict">();
+  const fromByKey = new Map<string, CodeRef>();
   for (const m of moves) {
     const k = refKey(m.from);
     const prev = map.get(k);
@@ -53,21 +75,35 @@ export function rewriteGlossRefs(
       continue;
     }
     map.set(k, m.to);
+    fromByKey.set(k, m.from);
   }
 
+  const appliedKeys = new Set<string>();
   const rewrite = (raw: string): string => {
     const parsed = parseRef(raw);
     if (!parsed) return raw;
-    const to = map.get(refKey(parsed));
+    const k = refKey(parsed);
+    const to = map.get(k);
     if (!to || to === "conflict") return raw;
-    return rewriteRefTarget(raw, to);
+    const next = rewriteRefTarget(raw, to);
+    if (next !== raw) appliedKeys.add(k);
+    return next;
   };
 
-  return src.replace(
-    /(@\[)([^#\s\]]+#L\d+(?:-L?\d+)?)(\])|(\]\()([^#\s)]+#L\d+(?:-L?\d+)?)(\))/g,
+  const text = src.replace(
+    /(@\[)(\s*[^#\s\]]+#L\d+(?:-L?\d+)?\s*)(\])|(\]\()(\s*[^#\s)]+#L\d+(?:-L?\d+)?\s*)(\))/g,
     (_all, aOpen: string, aRef: string, aClose: string, lOpen: string, lRef: string, lClose: string) => {
       if (aRef != null) return `${aOpen}${rewrite(aRef)}${aClose}`;
       return `${lOpen}${rewrite(lRef)}${lClose}`;
     },
   );
+
+  const applied: Array<{ from: CodeRef; to: { start: number; end: number } }> = [];
+  for (const k of appliedKeys) {
+    const from = fromByKey.get(k);
+    const to = map.get(k);
+    if (!from || !to || to === "conflict") continue;
+    applied.push({ from, to });
+  }
+  return { text, applied };
 }

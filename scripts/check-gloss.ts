@@ -15,7 +15,8 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { basename, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packageRoot } from "../server/root.js";
-import { relocatedLine, rewriteGlossRefs } from "../server/fix.js";
+import { sameRef } from "../src/lib/gloss.js";
+import { planGlossRefRewrites, relocatedLine } from "../server/fix.js";
 import {
   buildLock,
   checkGloss,
@@ -124,33 +125,34 @@ function applyFix(
       p.suggest != null,
   );
   if (moves.length === 0) return { src, moved: 0 };
-  for (const p of moves) {
+  const planned = planGlossRefRewrites(
+    src,
+    moves.map((p) => ({ from: p.ref, to: p.suggest })),
+  );
+  const applied = moves.filter((p) => planned.applied.some((a) => sameRef(a.from, p.ref)));
+  for (const p of applied) {
     const line = relocatedLine(p.ref, p.suggest);
     console.log(label ? `${label}: ${line}` : line);
   }
   if (dryRun) {
-    const n = moves.length;
+    const n = applied.length;
     console.log(`${n} ${n === 1 ? "anchor" : "anchors"} would be relocated`);
     return { src, moved: n };
   }
-  const next = rewriteGlossRefs(
-    src,
-    moves.map((p) => ({ from: p.ref, to: p.suggest })),
-  );
-  if (next !== src) writeFileSync(glossPath, next);
+  if (planned.text !== src) writeFileSync(glossPath, planned.text);
   const lock = readLock(projectDir);
-  if (lock) {
+  if (lock && applied.length > 0) {
     writeLock(
       projectDir,
       relocateLockSpans(
         lock,
-        moves.map((p) => ({ loc: p.loc, ref: p.ref, start: p.suggest.start, end: p.suggest.end })),
+        applied.map((p) => ({ loc: p.loc, ref: p.ref, start: p.suggest.start, end: p.suggest.end })),
       ),
     );
   }
-  const n = moves.length;
+  const n = applied.length;
   console.log(`${n} ${n === 1 ? "anchor" : "anchors"} relocated`);
-  return { src: next, moved: n };
+  return { src: planned.text, moved: n };
 }
 
 export function runCheck(argv: string[] = process.argv.slice(2)): number {

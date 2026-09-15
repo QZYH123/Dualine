@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, test } from "node:test";
-import { rewriteGlossRefs, rewriteRefTarget } from "../server/fix.js";
+import { planGlossRefRewrites, rewriteGlossRefs, rewriteRefTarget } from "../server/fix.js";
 import { buildLock, checkGloss, writeLock } from "../server/lock.js";
 import { relocate } from "../server/relocate.js";
 import { collectRefs, fileLines } from "../server/validate.js";
@@ -85,6 +85,26 @@ describe("rewriteGlossRefs", () => {
     ]);
     assert.equal(out, "x [a](src/a.ts#L23-64)\r\n");
     assert.equal(rewriteRefTarget("src/a.ts#L18-L59", { start: 23, end: 64 }), "src/a.ts#L23-L64");
+  });
+
+  test("rewrites destinations with surrounding spaces and keeps the padding", () => {
+    const src = "See [a]( src/a.ts#L1-L2 ) and @[ src/b.ts#L4 ].\n";
+    const planned = planGlossRefRewrites(src, [
+      { from: { file: "src/a.ts", start: 1, end: 2 }, to: { start: 5, end: 6 } },
+      { from: { file: "src/b.ts", start: 4, end: 4 }, to: { start: 9, end: 9 } },
+    ]);
+    assert.equal(planned.text, "See [a]( src/a.ts#L5-L6 ) and @[ src/b.ts#L9 ].\n");
+    assert.equal(planned.applied.length, 2);
+  });
+
+  test("conflicting suggestions apply nothing", () => {
+    const src = "See [a](src/a.ts#L1-L2).\n";
+    const planned = planGlossRefRewrites(src, [
+      { from: { file: "src/a.ts", start: 1, end: 2 }, to: { start: 5, end: 6 } },
+      { from: { file: "src/a.ts", start: 1, end: 2 }, to: { start: 9, end: 10 } },
+    ]);
+    assert.equal(planned.text, src);
+    assert.deepEqual(planned.applied, []);
   });
 });
 

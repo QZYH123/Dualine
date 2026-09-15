@@ -197,6 +197,24 @@ describe("runCheck --fix", () => {
     assert.match(got.out, /text found 2 times/);
   });
 
+  test("rewrites a dest with spaces and keeps lock and note in sync", () => {
+    const dir = join(tmp, "fix-spaces");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "keep\nmove-me\n");
+    writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a]( src/a.ts#L2 ).\n");
+    assert.equal(runCheck([dir, "--accept"]), 0);
+    const lockBefore = readLock(dir);
+    assert.ok(lockBefore?.spans.some((s) => s.loc === "src/a.ts#L2-L2"));
+    writeFileSync(join(dir, "src/a.ts"), "pad\nkeep\nmove-me\n");
+    const got = capture(() => runCheck([dir, "--fix"]));
+    assert.equal(got.code, 0);
+    assert.match(readFileSync(join(dir, "gloss.md"), "utf8"), /\[a\]\( src\/a\.ts#L3 \)/);
+    const lock = readLock(dir);
+    assert.ok(lock);
+    assert.ok(lock.spans.some((s) => s.loc === "src/a.ts#L3-L3"));
+    assert.ok(!lock.spans.some((s) => s.loc === "src/a.ts#L2-L2"));
+  });
+
   test("inserting a chapter only reports the new anchors as unlocked", () => {
     const dest = join(tmp, "shortly-insert");
     cpSync(join(REPO, "examples/shortly"), dest, { recursive: true });
