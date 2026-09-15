@@ -24,11 +24,11 @@ dualine 只做一件事：让人读完一篇短文，觉得自己摸清了一个
 
 ## 一条命令
 
-读自己的项目不应该先 clone 一个阅读器。`dualine .` 把当前文件夹当成唯一的项目，[一个进程、一个端口](server/cli.ts#L90-L106)，页面和 API 一起出去，然后打开浏览器。文件夹叫什么都行：[id 是名字的 slug](server/validate.ts#L81-L88)，`MyApp` 变成 `myapp`。
+读自己的项目不应该先 clone 一个阅读器。`dualine .` 把当前文件夹当成唯一的项目，[一个进程、一个端口](server/cli.ts#L90-L105)，页面和 API 一起出去，然后打开浏览器。文件夹叫什么都行：[id 是名字的 slug](server/validate.ts#L81-L88)，`MyApp` 变成 `myapp`。
 
-静态文件从 `dist/` 里出。[`/api` 先判，其余落到 `index.html`](server/index.ts#L179-L188)，`..` 不得越界。端口从 8787 往上[找第一个空的](server/port.ts#L18-L28)。
+静态文件从 `dist/` 里出。[`/api` 先判，其余落到 `index.html`](server/index.ts#L180-L189)，`..` 不得越界。端口从 8787 往上[找第一个空的](server/port.ts#L18-L28)。
 
-没有 `gloss.md` 的文件夹不是死路。[`dualine init`](server/init.ts#L286-L306) 看一眼源文件，猜语言和入口，写一份只有一枚真锚点的起步笔记，再把 `write-gloss` 技能装进你的 `.cursor/skills/`。散文仍由你或你的 agent 来写；Dualine 不生成它。
+没有 `gloss.md` 的文件夹不是死路。[`dualine init`](server/init.ts#L287-L317) 看一眼源文件，猜语言和入口，写一份只有一枚真锚点的起步笔记，再把 `write-gloss` 技能装进你的 `.cursor/skills/`。散文仍由你或你的 agent 来写；Dualine 不生成它。
 
 一个项目可以有好几篇笔记。`gloss.md` 是主篇，[`gloss/` 下每个合法 id 的 `.md` 是一篇](server/notes.ts#L30-L67)，用 `?note=` 打开。目录里它们排在章前；只有一篇时，什么都不多显示。
 
@@ -44,7 +44,7 @@ dualine 只做一件事：让人读完一篇短文，觉得自己摸清了一个
 
 ## 从磁盘读进来
 
-浏览器不碰文件系统。本地 API 是一个 [只回答 GET 的小接口](server/index.ts#L44-L108)：目录、健康检查、项目正文，以及给「已更新」用的 `rev`，都走这里。
+浏览器不碰文件系统。本地 API 是一个 [只回答 GET 的小接口](server/index.ts#L45-L109)：目录、健康检查、项目正文，以及给「已更新」用的 `rev`，都走这里。
 
 [`listProjects`](server/projects.ts#L124-L137) 先看子文件夹里有没有 `gloss.md`。一个都没有、而这个文件夹自己就有，并且文件夹名是合法 id，就把它当成唯一的项目。两者都有时，子项目赢——目录还是目录。
 
@@ -78,11 +78,11 @@ dualine 只做一件事：让人读完一篇短文，觉得自己摸清了一个
 
 ## 锚点会老
 
-代码会动，行号不会自己跟上。`gloss.lock` [记下每枚锚点面对的那几行的指纹](server/lock.ts#L61-L76)。第一次 `dualine check` 干净通过时[就把它写下](scripts/check-gloss.ts#L229-L234)：基线不是门槛，新项目没有什么可以漂移的。
+代码会动，行号不会自己跟上。`gloss.lock` [记下每枚锚点面对的那几行的指纹](server/lock.ts#L61-L76)。第一次 `dualine check` 干净通过时[就把它写下](scripts/check-gloss.ts#L231-L236)：基线不是门槛，新项目没有什么可以漂移的。
 
 以后再查，有三种结果。落不到文件里，是坏了。行号还合法但指纹变了，是代码真的改了，散文得重读。第三种最常见：代码没变，只是挖了窝。这时[在文件里找那一块原文](server/relocate.ts#L25-L46)：唯一一处，就是新位置；好几处，就说模糊，让人来定。
 
-`dualine check --fix` [只改行号](server/fix.ts#L42-L73)，字不碰，换行符也不碰，然后更新锁。阅读器自己不写磁盘：那条警示条里只说「已挪到 L23–L64」，改是你在命令行里做的、能 diff 能提交的事。这份笔记自己就被它挪过五枚锚点。
+`dualine check --fix` [只改行号](server/fix.ts#L49-L109)，字不碰，换行符也不碰，然后更新锁。阅读器自己不写磁盘：那条警示条里只说「已挪到 L23–L64」，改是你在命令行里做的、能 diff 能提交的事。这份笔记自己就被它挪过五枚锚点。
 
 高亮也不再只认 TypeScript。[扩展名决定语法](src/lib/language.ts#L108-L119)，语法用到时才[按需装进来](src/lib/highlight.ts#L191-L209)；装好之前先排素文本，行高不变，对齐不抖。
 
@@ -96,4 +96,4 @@ dualine 只做一件事：让人读完一篇短文，觉得自己摸清了一个
 
 窄窗口不硬叠。[低于约 1000px 只说需要更宽的窗口](src/reader/Reader.tsx#L262-L270)，对照仪式保持诚实。
 
-API 默认绑在 [127.0.0.1](server/index.ts#L137-L140)。这是给本机读磁盘用的；要暴露出去，得显式改 `HOST`。
+API 默认绑在 [127.0.0.1](server/index.ts#L138-L141)。这是给本机读磁盘用的；要暴露出去，得显式改 `HOST`。

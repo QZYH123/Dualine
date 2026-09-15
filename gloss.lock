@@ -2,53 +2,53 @@
   "version": 2,
   "spans": [
     {
-      "loc": "scripts/check-gloss.ts#L229-L234",
+      "loc": "scripts/check-gloss.ts#L231-L236",
       "file": "scripts/check-gloss.ts",
-      "start": 229,
-      "end": 234,
+      "start": 231,
+      "end": 236,
       "sha256": "34393402414403fac546307af4f14b23c6c87bc27f9c6a1def23b7a2d563f244"
     },
     {
-      "loc": "server/cli.ts#L90-L106",
+      "loc": "server/cli.ts#L90-L105",
       "file": "server/cli.ts",
       "start": 90,
-      "end": 106,
-      "sha256": "6901f207f8ca4fd8a6bb5de534ab0ca019745707afa36b4c124ccdfb94a9549e"
+      "end": 105,
+      "sha256": "a0b502ee7a700d26a66796b1f0525ef8588dada70139b4ce78f708423ff41361"
     },
     {
-      "loc": "server/fix.ts#L42-L73",
+      "loc": "server/fix.ts#L49-L109",
       "file": "server/fix.ts",
-      "start": 42,
-      "end": 73,
-      "sha256": "5919e1ee5d82e91f99af329a54fd399addab63fade1e8effe057f6261baf2c5e"
+      "start": 49,
+      "end": 109,
+      "sha256": "4af5aaf7e834942cca5b70d774bb7481285afaaaf6408cc6ae6c32c972f0735d"
     },
     {
-      "loc": "server/index.ts#L137-L140",
+      "loc": "server/index.ts#L138-L141",
       "file": "server/index.ts",
-      "start": 137,
-      "end": 140,
+      "start": 138,
+      "end": 141,
       "sha256": "d003b0c7eced96d2722420baa31c33b9e0195868ea82b987d6dcfffef3ebbe5e"
     },
     {
-      "loc": "server/index.ts#L179-L188",
+      "loc": "server/index.ts#L180-L189",
       "file": "server/index.ts",
-      "start": 179,
-      "end": 188,
+      "start": 180,
+      "end": 189,
       "sha256": "bd1bce3b3c9677a09028a66d033a3539e25eec4c95dd91030f8d25c86de833ee"
     },
     {
-      "loc": "server/index.ts#L44-L108",
+      "loc": "server/index.ts#L45-L109",
       "file": "server/index.ts",
-      "start": 44,
-      "end": 108,
+      "start": 45,
+      "end": 109,
       "sha256": "3b03f3afde65aed804071936c0c9173356935485f5c38636abf06d15f10a48ed"
     },
     {
-      "loc": "server/init.ts#L286-L306",
+      "loc": "server/init.ts#L287-L317",
       "file": "server/init.ts",
-      "start": 286,
-      "end": 306,
-      "sha256": "20106e111f1ad2a37fa3ab78ae4282c820086572248b22a53332536061ca8af8"
+      "start": 287,
+      "end": 317,
+      "sha256": "232701618064a96fab7580e334eca6933327bda2a9b7c9dc4b4962b68549cc13"
     },
     {
       "loc": "server/lock.ts#L61-L76",
