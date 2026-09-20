@@ -5,6 +5,7 @@ import { runCheck } from "../scripts/check-gloss.js";
 import { exportProject } from "../scripts/export-gloss.js";
 import { parseArgv, type CliArgs } from "./args.js";
 import { createApiServer, listenHttp } from "./index.js";
+import { writeGlossPrompt } from "../src/lib/agent-prompt.js";
 import { InitError, runInit } from "./init.js";
 import { chooseListenPort, formatListenUrl } from "./port.js";
 import { packageRoot } from "./root.js";
@@ -24,6 +25,7 @@ dualine init [dir]        写起步 gloss.md，装上 write-gloss
   --accept                check 通过后重写锁
   --fix                   按锁里的原文改写行号
   --dry-run               只打印 --fix 将要改的，不写盘
+  --json                  check 把结果打成 JSON（含给助手的 prompt）
   --force                 覆写已有的 gloss.md 和技能
   --help, --version
 `;
@@ -146,9 +148,14 @@ export async function runCli(argv: string[]): Promise<number> {
       try {
         const result = runInit(args.dir, { force: args.force });
         console.log(result.glossPath);
-        console.log(result.skillStatus === "skipped" ? "已存在，跳过" : "已安装");
+        for (const s of result.skills) {
+          console.log(`${s.rel}: ${s.status === "installed" ? "已安装" : "已存在，跳过"}`);
+        }
         console.log("");
-        console.log("下一步：让 agent 读 .cursor/skills/write-gloss/SKILL.md，为这个项目写 gloss.md。");
+        console.log("把下面这段交给助手：");
+        console.log("");
+        console.log(writeGlossPrompt());
+        console.log("");
         console.log("写完：dualine .");
         return 0;
       } catch (err) {
@@ -166,6 +173,7 @@ export async function runCli(argv: string[]): Promise<number> {
         ...(args.accept ? ["--accept"] : []),
         ...(args.fix ? ["--fix"] : []),
         ...(args.dryRun ? ["--dry-run"] : []),
+        ...(args.json ? ["--json"] : []),
       ]);
     case "export":
       try {

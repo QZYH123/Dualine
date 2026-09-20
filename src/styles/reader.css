@@ -437,6 +437,15 @@ button {
   text-decoration: none;
 }
 
+.rail__mark {
+  margin-left: 8px;
+  font-family: var(--font-cjk-ui);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-4);
+  font-weight: 400;
+}
+
 .rail__notes .rail__item {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1050,6 +1059,31 @@ html:has(.warn-strip) {
   -webkit-backdrop-filter: blur(12px) saturate(1.1);
 }
 
+.warn-strip-wrap:has(.warn-strip__copy) .warn-strip {
+  padding-right: 11rem;
+}
+
+.warn-strip__copy {
+  position: absolute;
+  right: 28px;
+  top: 0;
+  height: var(--warn-strip-h);
+  z-index: 20;
+  font-family: var(--font-cjk-ui);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-4);
+}
+
+.warn-strip__copy:hover {
+  color: var(--ink-2);
+}
+
+.warn-strip__copy:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: -3px;
+}
+
 .warn-strip {
   position: sticky;
   top: var(--mast-h);
@@ -1196,6 +1230,26 @@ html:has(.warn-strip) {
   font-size: 12.5px;
   letter-spacing: 0.04em;
   color: var(--ink-3);
+}
+
+.notice__copy {
+  display: inline-block;
+  margin: 16px 0 0;
+  font-family: var(--font-cjk-ui);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-4);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 1px;
+}
+
+.notice__copy:hover {
+  color: var(--ink);
+}
+
+.notice__copy:focus-visible {
+  outline: 1.5px solid var(--zhu);
+  outline-offset: 3px;
 }
 
 .notice__projects {

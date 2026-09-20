@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { HighlighterCore } from "shiki/core";
 import {
   allPassages,
@@ -8,9 +8,17 @@ import {
   type CodeRef,
   type Project,
 } from "../lib/gloss";
+import { maintainGlossPrompt } from "../lib/agent-prompt";
+import { copyText } from "../lib/clipboard";
 import { warningStripExpandable, warningStripText, type ProjectWarning } from "../lib/notice";
 import { chapterHref, COPY, htmlLang, type Copy, type Locale } from "../lib/locale";
 import { DEFAULT_NOTE_ID, type NoteSummary } from "../lib/notes";
+import {
+  loadLastNote,
+  loadNoteChapter,
+  markLastNote,
+  saveNoteChapter,
+} from "../lib/reading-position";
 import { LangSwitch, Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
@@ -75,6 +83,8 @@ export function Reader({
   const [currentPassageId, setCurrentPassageId] = useState<string | null>(null);
   const [hoverAnchorId, setHoverAnchorId] = useState<string | null>(null);
   const [pinnedAnchorId, setPinnedAnchorId] = useState<string | null>(null);
+  const [resumeChapterId, setResumeChapterId] = useState<string | null>(null);
+  const [lastNoteId, setLastNoteId] = useState<string | null>(null);
 
   const scrollRef: CodeRef | null = currentPassageId ? (refById.get(currentPassageId) ?? null) : null;
   const pinnedRef = pinnedAnchorId ? (anchorById.get(pinnedAnchorId)?.ref ?? null) : null;
@@ -220,14 +230,34 @@ export function Reader({
     if (booted.current) return;
     booted.current = true;
     jumping.current = true;
-    const id = window.location.hash.replace(/^#/, "");
-    if (id && doc.chapters.some((c) => c.id === id)) {
-      scrollChapter(id, "auto");
+    const hashId = window.location.hash.replace(/^#/, "");
+    const saved = loadNoteChapter(project.id, note);
+    const prevNote = loadLastNote(project.id);
+    if (prevNote && prevNote !== note) setLastNoteId(prevNote);
+    if (hashId && doc.chapters.some((c) => c.id === hashId)) {
+      scrollChapter(hashId, "auto");
+    } else if (saved && doc.chapters.some((c) => c.id === saved)) {
+      setResumeChapterId(saved);
+      if (window.location.hash !== `#${saved}`) {
+        history.replaceState(null, "", chapterUrl(saved));
+      }
+      scrollChapter(saved, "auto");
     }
     holdY.current = window.scrollY;
     followHash.current = false;
     jumping.current = false;
-  }, [doc, scrollChapter]);
+  }, [doc, scrollChapter, project.id, note]);
+
+  useEffect(() => {
+    if (!currentChapterId) return;
+    saveNoteChapter(project.id, note, currentChapterId);
+  }, [project.id, note, currentChapterId]);
+
+  useEffect(() => {
+    return () => {
+      markLastNote(project.id, note);
+    };
+  }, [project.id, note]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -294,12 +324,15 @@ export function Reader({
             label={warnText}
             catalogDefault={catalogDefault}
             copy={copy}
+            copyPrompt={source === "api" ? maintainGlossPrompt() : null}
           />
         )}
         <main className="reader">
           <Rail
             chapters={doc.chapters}
             currentChapterId={currentChapterId}
+            lastChapterId={resumeChapterId}
+            lastNoteId={lastNoteId}
             locale={locale}
             noteLocale={noteLocale}
             note={note}
@@ -352,13 +385,17 @@ function WarnStrip({
   label,
   catalogDefault,
   copy,
+  copyPrompt,
 }: {
   warnings: ProjectWarning[];
   label: string;
   catalogDefault: boolean;
   copy: Copy;
+  copyPrompt: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
   const expandable = warningStripExpandable(warnings);
   const why = catalogDefault ? <span className="warn-strip__why">{copy.catalogDefault}</span> : null;
   const expandTitle = copy.warnExpand;
@@ -375,29 +412,57 @@ function WarnStrip({
     setOpen(false);
   }, [warningKey]);
 
-  if (!expandable) {
-    return (
-      <p className="warn-strip" role="status" title={title}>
-        {label}
-        {why}
-      </p>
-    );
-  }
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
+    };
+  }, []);
+
+  const onCopy = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (!copyPrompt) return;
+    void copyText(copyPrompt).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
+      copiedTimer.current = window.setTimeout(() => setCopied(false), 1600);
+    });
+  };
+
+  const copyBtn = copyPrompt ? (
+    <button
+      type="button"
+      className="warn-strip__copy"
+      onClick={onCopy}
+    >
+      {copied ? copy.copied : copy.copyForAgent}
+    </button>
+  ) : null;
+
+  const body = expandable ? (
+    <button
+      type="button"
+      className={"warn-strip warn-strip--many" + (open ? " is-open" : "")}
+      aria-expanded={open}
+      aria-controls="warn-strip-detail"
+      title={title}
+      onClick={() => setOpen((v) => !v)}
+    >
+      {label}
+      {why}
+    </button>
+  ) : (
+    <p className="warn-strip" role="status" title={title}>
+      {label}
+      {why}
+    </p>
+  );
 
   return (
     <div className="warn-strip-wrap">
-      <button
-        type="button"
-        className={"warn-strip warn-strip--many" + (open ? " is-open" : "")}
-        aria-expanded={open}
-        aria-controls="warn-strip-detail"
-        title={title}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {label}
-        {why}
-      </button>
-      {open && (
+      {body}
+      {copyBtn}
+      {expandable && open && (
         <ul id="warn-strip-detail" className="warn-strip__list" role="status">
           {warnings.map((w) => (
             <li key={w.message}>

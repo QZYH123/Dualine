@@ -1,5 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+import { WRITE_GLOSS_SKILL_RELS } from "../src/lib/agent-prompt.js";
 import { languageForPath } from "../src/lib/language.js";
 import { packageRoot } from "./root.js";
 import { fileLines, lineCount, readTextFile, resolveProjectsDir, slugifyProjectId } from "./validate.js";
@@ -40,10 +41,18 @@ export interface InitOptions {
   pkgRoot?: string;
 }
 
+export interface SkillInstall {
+  rel: string;
+  status: "installed" | "skipped";
+}
+
 export interface InitResult {
   glossPath: string;
   skillStatus: "installed" | "skipped";
+  skills: SkillInstall[];
 }
+
+export { WRITE_GLOSS_SKILL_RELS };
 
 export function skillSourcePath(pkgRoot = packageRoot()): string {
   return join(pkgRoot, ".cursor", "skills", "write-gloss", "SKILL.md");
@@ -267,21 +276,27 @@ export function detectProject(dir: string): DetectedProject {
   return { slug, lang, entry, lines };
 }
 
-function installWriteGlossSkill(
+function installWriteGlossSkills(
   projectDir: string,
   force: boolean,
   pkgRoot: string,
-): "installed" | "skipped" {
+): SkillInstall[] {
   const src = skillSourcePath(pkgRoot);
   if (!existsSync(src)) {
     throw new InitError(`找不到 write-gloss 技能：${src}\nwrite-gloss skill not found at ${src}`);
   }
-  const destDir = join(projectDir, ".cursor", "skills", "write-gloss");
-  const dest = join(destDir, "SKILL.md");
-  if (existsSync(dest) && !force) return "skipped";
-  mkdirSync(destDir, { recursive: true });
-  copyFileSync(src, dest);
-  return "installed";
+  const out: SkillInstall[] = [];
+  for (const rel of WRITE_GLOSS_SKILL_RELS) {
+    const dest = join(projectDir, rel);
+    if (existsSync(dest) && !force) {
+      out.push({ rel, status: "skipped" });
+      continue;
+    }
+    mkdirSync(dirname(dest), { recursive: true });
+    copyFileSync(src, dest);
+    out.push({ rel, status: "installed" });
+  }
+  return out;
 }
 
 export function runInit(dir: string, opts: InitOptions = {}): InitResult {
@@ -313,6 +328,7 @@ export function runInit(dir: string, opts: InitOptions = {}): InitResult {
 
   const detected = detectProject(abs);
   writeFileSync(glossPath, renderStarter(detected), "utf8");
-  const skillStatus = installWriteGlossSkill(abs, opts.force === true, opts.pkgRoot ?? packageRoot());
-  return { glossPath, skillStatus };
+  const skills = installWriteGlossSkills(abs, opts.force === true, opts.pkgRoot ?? packageRoot());
+  const skillStatus = skills.some((s) => s.status === "installed") ? "installed" : "skipped";
+  return { glossPath, skillStatus, skills };
 }

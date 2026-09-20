@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { HighlighterCore } from "shiki/core";
+import { writeGlossPrompt } from "./lib/agent-prompt";
+import { copyText } from "./lib/clipboard";
 import { getHighlighter } from "./lib/highlight";
 import {
   loadProject,
@@ -131,6 +133,24 @@ function Notice({
   const { title, hint, tip } = noticeCopy(result, locale);
   const copy = COPY[locale];
   const projects = catalog?.projects ?? [];
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
+  const showWriteCopy = result.kind === "empty" && result.catalog.single === true;
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
+    };
+  }, []);
+
+  const onCopyPrompt = () => {
+    void copyText(writeGlossPrompt()).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
+      copiedTimer.current = window.setTimeout(() => setCopied(false), 1600);
+    });
+  };
 
   return (
     <div className="loading notice" role="status">
@@ -142,6 +162,11 @@ function Notice({
         <p className="notice__title">{title}</p>
         <p className="notice__hint">{hint}</p>
         {tip && <p className="notice__tip">{tip}</p>}
+        {showWriteCopy && (
+          <button type="button" className="notice__copy" onClick={onCopyPrompt}>
+            {copied ? copy.copied : copy.copyForAgent}
+          </button>
+        )}
         {result.kind === "not-found" && result.notes && result.notes.length > 0 && (
           <ul className="notice__projects">
             {result.notes.map((n) => (

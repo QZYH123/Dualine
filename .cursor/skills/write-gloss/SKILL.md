@@ -95,7 +95,7 @@ Follow a request or data path, not the directory listing. Name real structures, 
 3. **Draft** `gloss.md`. For each claim, read the file, then write the sentence with an accurate anchor.
 4. **Check.**
    - `dualine check .` (or `npm run check:gloss -- <folder>` from a Dualine checkout). Fix every `file has N lines` / missing-file line. The first clean run writes `gloss.lock`. Stop at `0 problems`.
-   - Later, when the code has moved: `dualine check . --fix` rewrites line numbers for spans whose text is found intact elsewhere. `code changed since gloss.lock` means the faced code itself changed — re-read it, fix the prose, then `dualine check . --accept`.
+   - Later, when the code has moved: `dualine check . --fix` rewrites line numbers for spans whose text is found intact elsewhere. `code changed since gloss.lock` means the faced code itself changed — re-read it, fix the prose, then `dualine check . --accept`. `dualine check . --json` prints the same problems plus a `prompt` of what to re-read — follow that when maintaining an existing note.
    - Without the CLI: for each `path#Lstart-Lend`, the file exists under the project folder, `1 ≤ start ≤ end ≤ line count`.
 5. **Handoff** (see below). Do not start Dualine unless the user asked you to.
 

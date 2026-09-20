@@ -6,6 +6,8 @@ import type { NoteSummary } from "../lib/notes";
 interface RailProps {
   chapters: Chapter[];
   currentChapterId: string | null;
+  lastChapterId?: string | null;
+  lastNoteId?: string | null;
   locale: Locale;
   noteLocale: Locale;
   note: string;
@@ -19,6 +21,8 @@ interface RailProps {
 export const Rail = memo(function Rail({
   chapters,
   currentChapterId,
+  lastChapterId = null,
+  lastNoteId = null,
   locale,
   noteLocale,
   note,
@@ -39,10 +43,14 @@ export const Rail = memo(function Rail({
             {notes.map((n) => (
               <li key={n.id}>
                 {n.id === note ? (
-                  <span className="rail__item is-current">{n.title}</span>
+                  <span className="rail__item is-current">
+                    {n.title}
+                    {lastNoteId === n.id ? <span className="rail__mark">{copy.lastRead}</span> : null}
+                  </span>
                 ) : (
                   <a className="rail__item" href={noteHref(locale, projectId, n.id, { frozen })}>
                     {n.title}
+                    {lastNoteId === n.id ? <span className="rail__mark">{copy.lastRead}</span> : null}
                   </a>
                 )}
               </li>
@@ -61,7 +69,10 @@ export const Rail = memo(function Rail({
               onClick={() => onSelect(c.id)}
             >
               <span className="rail__num">{chapterNum(c.index, noteLocale)}</span>
-              <span>{c.title}</span>
+              <span>
+                {c.title}
+                {c.id === lastChapterId ? <span className="rail__mark">{copy.lastRead}</span> : null}
+              </span>
             </button>
           </li>
         ))}

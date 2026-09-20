@@ -57,7 +57,19 @@ Grammar chosen by file extension, loaded on demand (Shiki dynamic import). Unkno
 
 ## What would make it indispensable next (not started)
 
-- **`npx dualine`.** Everything else is in place; only `private: true` and an npm account stand between the README and a one-liner.
-- **A maintenance prompt for agents.** `dualine check` output is already precise; a `--json` flag would let an agent rewrite stale passages (the `code changed since` case) without parsing prose.
-- **Reading position across notes** and a "last read" mark in the rail — small, but this is what makes a reader feel like yours.
+- **`npx dualine`.** Everything else is in place; only `private: true` and an npm account stand between the README and a one-liner. Publishing waits on the owner.
 - **Windows smoke.** The CLI opens the browser via `start`; untested on a real Windows box.
+
+## D7 — Agent handoff: skills, `--json`, copy
+
+`dualine init` copies `write-gloss` into `.cursor/skills/`, `.claude/skills/`, and `.agents/skills/`. It prints a copyable prompt. The no-gloss notice has **复制给助手**.
+
+`dualine check --json` prints the same problems as a JSON object plus a `prompt` field: unique moves → `--fix`; `code changed since` → re-read those spans; missing paths listed. The reader's warn strip copies a static instruction to run `--json` and follow that prompt. UI stays read-only.
+
+- Not doing: generating prose, writing `gloss.md` from the browser, a fourth skill path unless an agent actually reads it.
+
+## D8 — Last-read place
+
+Per project, localStorage keeps the last chapter per note. Opening without `#c…` restores that chapter. The rail marks **上次** on the chapter you resumed at this session, and on the note you just left when there is more than one note.
+
+- Not doing: a first-open tour, syncing position to disk, stacking the panes.

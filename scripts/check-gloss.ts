@@ -15,6 +15,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { basename, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packageRoot } from "../server/root.js";
+import { checkFollowupPrompt, type CheckPromptItem } from "../src/lib/agent-prompt.js";
 import { sameRef } from "../src/lib/gloss.js";
 import { planGlossRefRewrites, relocatedLine } from "../server/fix.js";
 import {
@@ -36,6 +37,30 @@ import {
   type LocatedRef,
   type RefProblem,
 } from "../server/validate.js";
+
+export interface CheckJson {
+  ok: boolean;
+  error?: string;
+  glosses: number;
+  refs: number;
+  problems: number;
+  items: CheckPromptItem[];
+  relocated: { note: string; line: string }[];
+  prompt: string;
+}
+
+function emptyJson(error: string, problems = 0): CheckJson {
+  return {
+    ok: false,
+    error,
+    glosses: 0,
+    refs: 0,
+    problems,
+    items: [],
+    relocated: [],
+    prompt: error,
+  };
+}
 
 const REPO_ROOT = packageRoot();
 const DEFAULT_EXAMPLES = resolve(REPO_ROOT, "examples");
@@ -118,6 +143,7 @@ function applyFix(
   src: string,
   problems: RefProblem[],
   dryRun: boolean,
+  onLine: (line: string) => void,
   label?: string,
 ): { src: string; moved: number } {
   const moves = problems.filter(
@@ -132,11 +158,11 @@ function applyFix(
   const applied = moves.filter((p) => planned.applied.some((a) => sameRef(a.from, p.ref)));
   for (const p of applied) {
     const line = relocatedLine(p.ref, p.suggest);
-    console.log(label ? `${label}: ${line}` : line);
+    onLine(label ? `${label}: ${line}` : line);
   }
   if (dryRun) {
     const n = applied.length;
-    console.log(`${n} ${n === 1 ? "anchor" : "anchors"} would be relocated`);
+    onLine(`${n} ${n === 1 ? "anchor" : "anchors"} would be relocated`);
     return { src, moved: n };
   }
   if (planned.text !== src) writeFileSync(glossPath, planned.text);
@@ -151,29 +177,38 @@ function applyFix(
     );
   }
   const n = applied.length;
-  console.log(`${n} ${n === 1 ? "anchor" : "anchors"} relocated`);
+  onLine(`${n} ${n === 1 ? "anchor" : "anchors"} relocated`);
   return { src: planned.text, moved: n };
+}
+
+function emitJson(report: CheckJson): void {
+  console.log(JSON.stringify(report, null, 2));
 }
 
 export function runCheck(argv: string[] = process.argv.slice(2)): number {
   const accept = argv.includes("--accept");
   const fix = argv.includes("--fix");
   const dryRun = argv.includes("--dry-run");
+  const json = argv.includes("--json");
   const { root, status } = inspectRoot(resolveRoot(argv));
   if (status === "missing") {
-    console.error(`check:gloss: projects dir not found: ${root}`);
+    const msg = `check:gloss: projects dir not found: ${root}`;
+    if (json) emitJson(emptyJson(msg));
+    else console.error(msg);
     return 2;
   }
   if (status === "not-directory") {
-    console.error(`check:gloss: not a directory: ${root}`);
+    const msg = `check:gloss: not a directory: ${root}`;
+    if (json) emitJson(emptyJson(msg));
+    else console.error(msg);
     return 2;
   }
 
   const entries = projectEntries(root);
   if (entries.length === 0) {
-    console.log(
-      `0 glosses checked under ${root} — expected ${root}/<id>/gloss.md or ${root}/gloss.md`,
-    );
+    const msg = `0 glosses checked under ${root} — expected ${root}/<id>/gloss.md or ${root}/gloss.md`;
+    if (json) emitJson(emptyJson(msg, 1));
+    else console.log(msg);
     return 1;
   }
 
@@ -183,13 +218,26 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
   let warnings = 0;
   let refsChecked = 0;
   let glossN = 0;
+  const items: CheckPromptItem[] = [];
+  const relocated: { note: string; line: string }[] = [];
+  const say = (line: string) => {
+    if (!json) console.log(line);
+  };
 
   for (const { id, dir: projectDir } of entries) {
     if (!isValidProjectId(id)) {
       const rel = displayPath(join(projectDir, "gloss.md"), root);
-      console.log(
-        `${rel}: id "${id}" is not servable (use lowercase letters, digits, - or _)`,
-      );
+      const message = `id "${id}" is not servable (use lowercase letters, digits, - or _)`;
+      items.push({
+        note: rel,
+        loc: id,
+        message,
+        reason: "id",
+        file: "",
+        start: 0,
+        end: 0,
+      });
+      say(`${rel}: ${message}`);
       problems += 1;
     }
 
@@ -203,7 +251,18 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
 
       if (fix) {
         const preview = checkGloss(projectDir, located);
-        const applied = applyFix(projectDir, note.path, src, preview, dryRun, rel);
+        const applied = applyFix(
+          projectDir,
+          note.path,
+          src,
+          preview,
+          dryRun,
+          (line) => {
+            relocated.push({ note: rel, line });
+            say(line);
+          },
+          rel,
+        );
         src = applied.src;
         if (!dryRun && applied.moved > 0) {
           located = prefixNoteRefs(note.id, collectRefs(src));
@@ -236,7 +295,7 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
     }
     if (doEstablish) {
       const rel = displayPath(join(projectDir, "gloss.md"), root);
-      console.log(`${rel}: gloss.lock 已生成 · 以后 check 会拥有对照的代码正文作基线`);
+      say(`${rel}: gloss.lock 已生成 · 以后 check 会拥有对照的代码正文作基线`);
     }
 
     for (const { rel, found } of foundByNote) {
@@ -245,7 +304,18 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
           ? found.filter((p) => p.reason !== "drift" && p.reason !== "lock" && p.reason !== "unlocked")
           : found;
       for (const problem of remaining) {
-        console.log(`${rel}: ${formatProblem(problem)}`);
+        items.push({
+          note: rel,
+          loc: problem.loc,
+          message: problem.message,
+          reason: problem.reason,
+          file: problem.ref.file,
+          start: problem.ref.start,
+          end: problem.ref.end,
+          suggest: problem.suggest,
+          ambiguous: problem.ambiguous,
+        });
+        say(`${rel}: ${formatProblem(problem)}`);
         problems += 1;
       }
     }
@@ -254,9 +324,7 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
       for (const { rel, located } of locatedByNote) {
         for (const { loc, ref } of located) {
           if (fixturePaths.has(ref.file)) continue;
-          console.log(
-            `${rel}: ${loc} → ${refLabel(ref)} (warning: not in shortly fixture)`,
-          );
+          say(`${rel}: ${loc} → ${refLabel(ref)} (warning: not in shortly fixture)`);
           warnings += 1;
         }
       }
@@ -266,9 +334,21 @@ export function runCheck(argv: string[] = process.argv.slice(2)): number {
   const problemWord = problems === 1 ? "problem" : "problems";
   const warnPart =
     warnings > 0 ? `, ${warnings} warning${warnings === 1 ? "" : "s"}` : "";
-  console.log(
-    `${glossN} ${glossWord} checked, ${refsChecked} refs, ${problems} ${problemWord}${warnPart}`,
-  );
+  if (json) {
+    emitJson({
+      ok: problems === 0,
+      glosses: glossN,
+      refs: refsChecked,
+      problems,
+      items,
+      relocated,
+      prompt: checkFollowupPrompt(items),
+    });
+  } else {
+    console.log(
+      `${glossN} ${glossWord} checked, ${refsChecked} refs, ${problems} ${problemWord}${warnPart}`,
+    );
+  }
   return problems > 0 ? 1 : 0;
 }
 

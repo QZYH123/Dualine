@@ -2,7 +2,7 @@ export type CliArgs =
   | { cmd: "help" }
   | { cmd: "version" }
   | { cmd: "serve"; dir: string; open: boolean }
-  | { cmd: "check"; dir: string; accept: boolean; fix: boolean; dryRun: boolean }
+  | { cmd: "check"; dir: string; accept: boolean; fix: boolean; dryRun: boolean; json: boolean }
   | { cmd: "export"; dir: string; out?: string }
   | { cmd: "init"; dir: string; force: boolean }
   | { cmd: "error"; message: string };
@@ -80,7 +80,7 @@ function parseSub(cmd: string, argv: string[]): CliArgs {
 
   if (cmd === "check") {
     if (out !== undefined) return { cmd: "error", message: "--out is only valid with export" };
-    const unknown = unknownFlag(flags, new Set(["--accept", "--fix", "--dry-run"]));
+    const unknown = unknownFlag(flags, new Set(["--accept", "--fix", "--dry-run", "--json"]));
     if (unknown) return { cmd: "error", message: unknown };
     return {
       cmd: "check",
@@ -88,6 +88,7 @@ function parseSub(cmd: string, argv: string[]): CliArgs {
       accept: flags.has("--accept"),
       fix: flags.has("--fix"),
       dryRun: flags.has("--dry-run"),
+      json: flags.has("--json"),
     };
   }
   if (cmd === "export") {

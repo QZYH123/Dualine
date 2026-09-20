@@ -29,9 +29,9 @@ dualine init    # 还没有 gloss.md 时：写一份起步笔记，装上 write-
 dualine .       # 一个端口，浏览器自己打开
 ```
 
-`init` 之后把它打印的那句话交给你的 agent，让它读 `.cursor/skills/write-gloss/SKILL.md`、为这个项目写 `gloss.md`。Dualine 只负责读，不生成散文。
+`init` 把 `write-gloss` 装到 `.cursor/skills/`、`.claude/skills/` 和 `.agents/skills/`，并打印一段可复制的话。把那段交给助手，让它为这个项目写 `gloss.md`。没有笔记时，说明页上也有「复制给助手」。Dualine 只负责读，不生成散文。
 
-改 `gloss.md` 时桅头会出现 **已更新**，点了才重载，不抢阅读位置。章节在 URL 里是 `#c3`。
+改 `gloss.md` 时桅头会出现 **已更新**，点了才重载，不抢阅读位置。章节在 URL 里是 `#c3`。没有 `#` 时，阅读器会回到你上次读到的章；目录里「上次」标的是这次打开时停过的地方。多篇笔记时，另一篇上也会标你刚离开的那篇。
 
 ## 写出对照笔记
 
@@ -63,11 +63,12 @@ lang: typescript
 dualine check .          # 锚点是否落在文件里，正文是否还对得上 gloss.lock
 dualine check . --fix    # 原文还在、只是行号挪了：改 gloss.md 和锁
 dualine check . --accept # 你有意改写了散文或范围之后，重写锁
+dualine check . --json   # 同一批问题，外加一段给助手的 prompt
 ```
 
 `gloss.lock` 记住每枚锚点面对的那几行代码的指纹。第一次干净通过的 `check` 写下它作基线；之后行号合法但指纹变了，说明代码真的改了，散文得重读。找不到原文或出现多处，仍算问题。锁按锚点目标记，不按段落位置——插一章、调个顺序，锁不动。和 `gloss.md` 一起提交。
 
-阅读器里的警示条只说「已挪到 L23–L64」，改是你在命令行里做的、能 diff 能提交的事。
+阅读器里的警示条只说「已挪到 L23–L64」，改是你在命令行里做的、能 diff 能提交的事。条上有「复制给助手」时，会把维护说明放进剪贴板；阅读器自己不写磁盘。
 
 ## 带走一张对照页
 

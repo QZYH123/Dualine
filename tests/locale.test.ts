@@ -108,6 +108,10 @@ describe("warn strip relocation copy", () => {
     assert.equal(COPY.zh.warnFixAll, "· dualine check --fix 可全部挪好");
     assert.equal(COPY.en.warnFixAll, "· dualine check --fix moves them all");
     assert.equal(COPY.zh.warnFixCmd, "dualine check --fix");
+    assert.equal(COPY.zh.copyForAgent, "复制给助手");
+    assert.equal(COPY.en.copyForAgent, "Copy for your agent");
+    assert.equal(COPY.zh.lastRead, "上次");
+    assert.equal(COPY.en.lastRead, "last");
   });
 });
 

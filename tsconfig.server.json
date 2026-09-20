@@ -19,5 +19,10 @@
     "types": ["node"]
   },
   "include": ["server", "scripts", "src/lib/*.ts"],
-  "exclude": ["src/lib/highlight.ts", "src/lib/load.ts"]
+  "exclude": [
+    "src/lib/highlight.ts",
+    "src/lib/load.ts",
+    "src/lib/clipboard.ts",
+    "src/lib/reading-position.ts"
+  ]
 }

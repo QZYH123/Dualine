@@ -145,6 +145,9 @@ export interface Copy {
   warnAmbiguous: (n: number) => string;
   warnFixAll: string;
   warnFixCmd: string;
+  copyForAgent: string;
+  copied: string;
+  lastRead: string;
   catalogDefault: string;
   notFound: (id: string) => string;
   notFoundNote: (id: string) => string;
@@ -192,6 +195,9 @@ export const COPY: Record<Locale, Copy> = {
     warnAmbiguous: (n) => `原文出现 ${n} 处，需手改`,
     warnFixAll: "· dualine check --fix 可全部挪好",
     warnFixCmd: "dualine check --fix",
+    copyForAgent: "复制给助手",
+    copied: "已复制",
+    lastRead: "上次",
     catalogDefault: "目录第一项 · 用 ?project=<id> 指定",
     notFound: (id) => `找不到项目 “${id}”`,
     notFoundNote: (id) => `找不到笔记 “${id}”`,
@@ -238,6 +244,9 @@ export const COPY: Record<Locale, Copy> = {
     warnAmbiguous: (n) => `text found ${n} times, fix by hand`,
     warnFixAll: "· dualine check --fix moves them all",
     warnFixCmd: "dualine check --fix",
+    copyForAgent: "Copy for your agent",
+    copied: "Copied",
+    lastRead: "last",
     catalogDefault: "First in the catalog · use ?project=<id>",
     notFound: (id) => `No project “${id}”`,
     notFoundNote: (id) => `No note “${id}”`,

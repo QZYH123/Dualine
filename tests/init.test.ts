@@ -21,6 +21,7 @@ import {
   renderStarter,
   runInit,
   skillSourcePath,
+  WRITE_GLOSS_SKILL_RELS,
 } from "../server/init.js";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -258,8 +259,11 @@ describe("runInit e2e", () => {
     assert.match(gloss, /app\/main\.py#L1-L20/);
     assert.doesNotMatch(gloss, /\r/);
 
+    const skillSrc = readFileSync(skillSourcePath(REPO), "utf8");
+    for (const rel of WRITE_GLOSS_SKILL_RELS) {
+      assert.equal(readFileSync(join(dir, rel), "utf8"), skillSrc);
+    }
     const skillDest = join(dir, ".cursor/skills/write-gloss/SKILL.md");
-    assert.equal(readFileSync(skillDest, "utf8"), readFileSync(skillSourcePath(REPO), "utf8"));
 
     assert.throws(() => runInit(dir), (err: unknown) => {
       assert.ok(err instanceof InitError);
@@ -273,6 +277,8 @@ describe("runInit e2e", () => {
     writeFileSync(skillDest, "stale skill\n");
     const again = runInit(dir, { force: true });
     assert.equal(again.skillStatus, "installed");
+    assert.equal(again.skills.length, WRITE_GLOSS_SKILL_RELS.length);
+    assert.ok(again.skills.every((s) => s.status === "installed"));
     assert.equal(
       readFileSync(again.glossPath, "utf8"),
       renderStarter({
@@ -286,6 +292,21 @@ describe("runInit e2e", () => {
 
     assert.equal(runCheck([dir]), 0);
     assert.ok(existsSync(join(dir, "gloss.lock")));
+  });
+
+  test("installs missing skill copies even if Cursor already has one", () => {
+    const dir = join(tmp, "partial-skills");
+    mkdirSync(join(dir, ".cursor/skills/write-gloss"), { recursive: true });
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/index.ts"), "export const n = 1;\n");
+    writeFileSync(join(dir, ".cursor/skills/write-gloss/SKILL.md"), "keep me\n");
+    const got = runInit(dir);
+    assert.equal(got.skillStatus, "installed");
+    const byRel = Object.fromEntries(got.skills.map((s) => [s.rel, s.status]));
+    assert.equal(byRel[".cursor/skills/write-gloss/SKILL.md"], "skipped");
+    assert.equal(byRel[".claude/skills/write-gloss/SKILL.md"], "installed");
+    assert.equal(byRel[".agents/skills/write-gloss/SKILL.md"], "installed");
+    assert.equal(readFileSync(join(dir, ".cursor/skills/write-gloss/SKILL.md"), "utf8"), "keep me\n");
   });
 
   test("refuses when gloss.md is a directory, even with --force", () => {

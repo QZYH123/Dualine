@@ -61,6 +61,61 @@ describe("runCheck", () => {
     assert.equal(runCheck([root]), 1);
   });
 
+  test("--json on a clean project is ok and has a prompt", () => {
+    const dir = join(tmp, "json-clean");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\n");
+    writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n");
+    const first = capture(() => runCheck([dir]));
+    assert.equal(first.code, 0);
+    const got = capture(() => runCheck([dir, "--json"]));
+    assert.equal(got.code, 0);
+    const report = JSON.parse(got.out) as {
+      ok: boolean;
+      problems: number;
+      items: unknown[];
+      prompt: string;
+    };
+    assert.equal(report.ok, true);
+    assert.equal(report.problems, 0);
+    assert.deepEqual(report.items, []);
+    assert.match(report.prompt, /没有要改的/);
+    assert.doesNotMatch(got.out, /glosses checked/);
+  });
+
+  test("--json lists drifted spans for an agent to re-read", () => {
+    const dir = join(tmp, "json-drift");
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src/a.ts"), "export const a = 1;\n");
+    writeFileSync(join(dir, "gloss.md"), "# T\n\nLead.\n\n## One\n\nSee [a](src/a.ts#L1).\n");
+    assert.equal(runCheck([dir]), 0);
+    writeFileSync(join(dir, "src/a.ts"), "export const a = 2;\n");
+    const got = capture(() => runCheck([dir, "--json"]));
+    assert.equal(got.code, 1);
+    const report = JSON.parse(got.out) as {
+      ok: boolean;
+      problems: number;
+      items: { reason: string; file: string; message: string }[];
+      prompt: string;
+    };
+    assert.equal(report.ok, false);
+    assert.equal(report.problems, 1);
+    assert.equal(report.items[0]?.reason, "drift");
+    assert.equal(report.items[0]?.file, "src/a.ts");
+    assert.match(report.items[0]?.message ?? "", /code changed since/);
+    assert.match(report.prompt, /代码正文已经变了/);
+    assert.match(report.prompt, /src\/a\.ts#L1/);
+  });
+
+  test("--json on a missing dir is exit 2 with an error object", () => {
+    const missing = join(tmp, "json-no-such");
+    const got = capture(() => runCheck([missing, "--json"]));
+    assert.equal(got.code, 2);
+    const report = JSON.parse(got.out) as { ok: boolean; error: string };
+    assert.equal(report.ok, false);
+    assert.match(report.error, /not found/);
+  });
+
   test("--dry-run on a fresh project writes nothing", () => {
     const dir = join(tmp, "fresh-dry");
     mkdirSync(join(dir, "src"), { recursive: true });
