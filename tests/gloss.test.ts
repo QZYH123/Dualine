@@ -290,7 +290,7 @@ describe("examples/shortly/gloss.md", () => {
   test("parses end-to-end", () => {
     const src = readFileSync(join(REPO, "examples/shortly/gloss.md"), "utf8");
     const { doc } = parseGloss(src);
-    assert.equal(doc.chapters.length, 8);
+    assert.equal(doc.chapters.length, 7);
     const anchors = allPassages(doc).flatMap((p) => p.anchors);
     assert.ok(anchors.length >= 30, `expected ≥30 anchors, got ${anchors.length}`);
     const allowed = new Set([

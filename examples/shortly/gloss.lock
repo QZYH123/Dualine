@@ -2,13 +2,6 @@
   "version": 2,
   "spans": [
     {
-      "loc": "src/index.ts#L11-L13",
-      "file": "src/index.ts",
-      "start": 11,
-      "end": 13,
-      "sha256": "02c120e2026e16b1100f190045b0b1688039a960fcffe5684916f5ad7675b4ee"
-    },
-    {
       "loc": "src/index.ts#L15-L23",
       "file": "src/index.ts",
       "start": 15,
@@ -58,11 +51,18 @@
       "sha256": "df29ac81f976716de506a6a83edd763f2caaed5fee01684035c03134ca174ffd"
     },
     {
-      "loc": "src/server.ts#L20-L22",
+      "loc": "src/server.ts#L20-L26",
       "file": "src/server.ts",
       "start": 20,
-      "end": 22,
-      "sha256": "c2bc67d1e15b9a031fbac165d3d4973bb4d6838ebcadec37e95412e30e4184e8"
+      "end": 26,
+      "sha256": "b2ec2fdfb2150cc84cd2e9ae860a9207a4e2a06b70ff51a989e6bcb7c72887ca"
+    },
+    {
+      "loc": "src/server.ts#L22-L26",
+      "file": "src/server.ts",
+      "start": 22,
+      "end": 26,
+      "sha256": "7bcff865b82ef67457339c8dc31a4ca17a0d9bcf6edc5991da6a37c4a432188a"
     },
     {
       "loc": "src/server.ts#L27-L29",
@@ -72,18 +72,11 @@
       "sha256": "b7c64d0da92f1824e89f8407de95c1f968736ac4f205a4b77615af8674425e00"
     },
     {
-      "loc": "src/server.ts#L32-L44",
-      "file": "src/server.ts",
-      "start": 32,
-      "end": 44,
-      "sha256": "65ebe3f9088c8cbb7356d9502f883f2abf09b39a5dcc0bdb2b8a828c13aaba15"
-    },
-    {
-      "loc": "src/server.ts#L46-L46",
+      "loc": "src/server.ts#L46-L59",
       "file": "src/server.ts",
       "start": 46,
-      "end": 46,
-      "sha256": "70aea7311c30a72a8838a61b62e078ebd9bd4f81fa574cecbaf62276aadb37f4"
+      "end": 59,
+      "sha256": "b75c62ea2c3f8004d30ba5c1b9c2f3bf05547a7d3328ed695f61e5dcadca373f"
     },
     {
       "loc": "src/server.ts#L47-L51",
@@ -100,11 +93,18 @@
       "sha256": "063878b50853f8fcb5e7c0883ac546ceeca111b05fe762cdde9c050b93a63167"
     },
     {
-      "loc": "src/server.ts#L57-L58",
+      "loc": "src/server.ts#L57-L57",
       "file": "src/server.ts",
       "start": 57,
+      "end": 57,
+      "sha256": "63af269f6aa727357b13ff6614e704ebedf99a2cdd7b63d06ba6702d6acf61be"
+    },
+    {
+      "loc": "src/server.ts#L58-L58",
+      "file": "src/server.ts",
+      "start": 58,
       "end": 58,
-      "sha256": "1d845bb5f54a0b82a2d6c9506040fd44bbc11dcdea19dd17058ac9b789bcd42e"
+      "sha256": "396530edc75e9d34c64f8eceb498e1e7c2dd6131db0aa3222daa9aa44c1cd390"
     },
     {
       "loc": "src/server.ts#L65-L73",
@@ -114,6 +114,13 @@
       "sha256": "faec384907cb50a74416676d79c7bd75adb06696d290dcc7d7eb309ed0c23efd"
     },
     {
+      "loc": "src/server.ts#L66-L71",
+      "file": "src/server.ts",
+      "start": 66,
+      "end": 71,
+      "sha256": "fb5b417b43b7a1f305fd1d0a631b7aa4565d4a6daba9263dbe7361d3883cf3ed"
+    },
+    {
       "loc": "src/server.ts#L75-L87",
       "file": "src/server.ts",
       "start": 75,
@@ -121,11 +128,11 @@
       "sha256": "9ce5e53b6567dcbd9b1cf72e4d79a773226d12abefc866dce1e878efbbb06325"
     },
     {
-      "loc": "src/slug.ts#L1-L1",
+      "loc": "src/slug.ts#L14-L15",
       "file": "src/slug.ts",
-      "start": 1,
-      "end": 1,
-      "sha256": "c5432ef24c5cb393df24bbe9fb66fba10aac14a22348307550e0ef16ae4cba73"
+      "start": 14,
+      "end": 15,
+      "sha256": "1a9e96e466824604d12f539be01187ba0aaa59e1d1e866bd497657f676c8a210"
     },
     {
       "loc": "src/slug.ts#L16-L19",
@@ -177,11 +184,11 @@
       "sha256": "79b3284c0eb6a6d01c0b02e781b6c67be39fcab831b53dc973d3642f9992486f"
     },
     {
-      "loc": "src/store.ts#L29-L29",
+      "loc": "src/store.ts#L20-L25",
       "file": "src/store.ts",
-      "start": 29,
-      "end": 29,
-      "sha256": "d7d1e1c735684cc1da5f97f6bf97755253ab94723ab6179c74648dc62f4a226e"
+      "start": 20,
+      "end": 25,
+      "sha256": "1f840be16fdb062f284b259ab7784680432378f1b68fc8b1b3784d97076e618f"
     },
     {
       "loc": "src/store.ts#L32-L32",
@@ -203,6 +210,20 @@
       "start": 46,
       "end": 54,
       "sha256": "cadad35c715c22cffd03ea25277dfbb6ee9e1c18a94ab7e11ed0774e272f8183"
+    },
+    {
+      "loc": "src/store.ts#L56-L58",
+      "file": "src/store.ts",
+      "start": 56,
+      "end": 58,
+      "sha256": "b9d0410e9794779dd245edc83814854b94a1f1601faab12f5f435b5c206f7953"
+    },
+    {
+      "loc": "src/store.ts#L60-L62",
+      "file": "src/store.ts",
+      "start": 60,
+      "end": 62,
+      "sha256": "cdc3f9bc5bbac04b5533ed72061200b8184a2a0c7d57547a748e92c523f6c9fe"
     },
     {
       "loc": "src/store.ts#L70-L76",

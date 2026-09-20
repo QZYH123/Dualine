@@ -223,8 +223,8 @@ describe("runCheck --fix", () => {
     writeFileSync(
       join(dest, "gloss.md"),
       gloss.replace(
-        "## 它做什么",
-        "## 插进来\n\nSee [boot](src/server.ts#L1) and [entry](src/index.ts#L1).\n\n## 它做什么",
+        "## 这是什么",
+        "## 插进来\n\nSee [boot](src/server.ts#L1) and [entry](src/index.ts#L1).\n\n## 这是什么",
       ),
     );
     const got = capture(() => runCheck([dest]));
@@ -241,8 +241,8 @@ describe("runCheck --fix", () => {
     cpSync(join(REPO, "examples/shortly"), dest, { recursive: true });
     assert.equal(runCheck([dest, "--accept"]), 0);
     const gloss = readFileSync(join(dest, "gloss.md"), "utf8");
-    const start = gloss.indexOf("## 启动");
-    const next = gloss.indexOf("## 一次缩短请求");
+    const start = gloss.indexOf("## 启动与退出");
+    const next = gloss.indexOf("## 还没做的事");
     assert.ok(start >= 0 && next > start);
     const chapter = gloss.slice(start, next);
     const parts = chapter.split("\n\n");
