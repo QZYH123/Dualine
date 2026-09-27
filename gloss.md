@@ -62,13 +62,13 @@ Dualine 只做一件事：让人读完一篇短笔记，觉得自己摸清了一
 
 ## 对照怎么对齐
 
-视口（你看到的这一屏）大约三分之一处有一条阅读线。[刚越过这条线的那段话是当前段](src/reader/useReadingSync.ts#L85-L98)。规则写在 `useReadingSync` 里。
+视口（你看到的这一屏）大约三分之一处有一条阅读线。[刚越过这条线的那段话是当前段](src/reader/useReadingSync.ts#L105-L118)。规则写在 `useReadingSync` 里。
 
-代码栏改元素距顶部的距离（CSS 的 `top`），把该段面对的第一行[送到和这段话第一行齐平的位置](src/reader/useReadingSync.ts#L136-L151)。换段时代码不是瞬移，而是[滑过去](src/reader/useReadingSync.ts#L63-L70)。不用 `transform`（只在画面上挪、布局仍在原地），是为了让行号能粘在窗格左边。
+代码栏改元素距顶部的距离（CSS 的 `top`），把该段面对的第一行[送到和这段话第一行齐平的位置](src/reader/useReadingSync.ts#L156-L171)。换段时代码不是瞬移，而是[滑过去](src/reader/useReadingSync.ts#L83-L90)。不用 `transform`（只在画面上挪、布局仍在原地），是为了让行号能粘在窗格左边。
 
-对齐有两道限制：[长段往上读时，正在对齐的那几行不要滑出代码栏顶](src/reader/useReadingSync.ts#L140-L146)；文件第一行也不要掉到阅读线下面。栏间那根朱红细线，连的是这段话和它面对的行。固定某一句之后你若继续滚左边，[短语已经离开，细线就收起来](src/reader/useReadingSync.ts#L108-L117)，避免还连着已经滚走的句子。
+对齐有两道限制：[长段往上读时，正在对齐的那几行不要滑出代码栏顶](src/reader/useReadingSync.ts#L160-L166)；文件第一行也不要掉到阅读线下面。栏间那根朱红细线，连的是这段话和它面对的行。固定某一句之后你若继续滚左边，[短语已经离开，细线就收起来](src/reader/useReadingSync.ts#L128-L137)，避免还连着已经滚走的句子。
 
-指针在代码栏上滚动时，[滚的是代码，不是整页](src/reader/useReadingSync.ts#L174-L190)。再滚左边的笔记，它对齐会弹回来。
+指针在代码栏上滚动时，滚的是整页笔记，代码跟着走。要看面对的那几行之外，[拖右缘的滚动条](src/reader/CodePane.tsx#L146-L170)。再滚笔记，对齐会弹回来。
 
 ## 锚点与固定
 
@@ -76,13 +76,13 @@ Dualine 只做一件事：让人读完一篇短笔记，觉得自己摸清了一
 
 锚点在笔记里是一条 [`<a>`](src/reader/Prose.tsx#L111-L134) 链接：地址 `href` 只是占位，点击被拦住，真正发生的是固定。悬停时能看到文件和行号；悬停或聚焦都会把对面的行标成朱红。
 
-章的位置写在地址栏的 `#c3` 里。[点左侧目录](src/reader/Reader.tsx#L219-L226)会在浏览器里留下一格「后退」，能回到上一章；[自己往下滚](src/reader/Reader.tsx#L272-L276)只改地址栏，按后退不会一章章倒回去。
+章的位置写在地址栏的 `#c3` 里。[点左侧目录](src/reader/Reader.tsx#L248-L254)会在浏览器里留下一格「后退」，能回到上一章；[自己往下滚](src/reader/Reader.tsx#L299-L303)只改地址栏，按后退不会一章章倒回去。
 
 ## 代码回指
 
 笔记能指到行，行也能指回笔记。被左边某句点到过的代码行，会去反查[覆盖它的最窄锚点](src/lib/gloss.ts#L296-L309)。宽的教学跨度不要再被后来的一行 `#L18` 抢走——后来的句子应该指到更里面。
 
-点这样一行，[`jumpToAnchor`](src/reader/Reader.tsx#L148-L185) 把解释它的那段话送到阅读线；滚动停稳之后再固定，代码才稳住。[拖过一行选中文字](src/reader/CodePane.tsx#L188-L197)，不会误固定。
+点行号，[`jumpToAnchor`](src/reader/Reader.tsx#L148-L195) 把解释它的那段话送到阅读线；滚动停稳之后再固定，代码才稳住。[拖过一行选中文字](src/reader/CodePane.tsx#L309-L318)，不会误固定。
 
 代码上色是 Shiki 做的——一套把代码拆成词的库。Dualine 再[把词标成样式类](src/lib/highlight.ts#L223-L236)，朱红、墨色、纸色都写在样式里，不跟编辑器主题走。某一种语言的高亮规则还没装好时，先[按纯文本排](src/lib/highlight.ts#L219-L221)，行高不变，对齐不抖。[文件后缀决定用哪套规则](src/lib/language.ts#L108-L119)，规则[用到时才装进来](src/lib/highlight.ts#L191-L209)。
 
@@ -102,6 +102,6 @@ Dualine 只做一件事：让人读完一篇短笔记，觉得自己摸清了一
 
 它不做项目选择器。换项目改地址栏里的 `?project=`。接口挂了、你又点了别的 id，[不会假装 shortly 就是你要的那个](src/lib/load-decision.ts#L108-L113)。shortly 是 Dualine 自带的短链接示例；只有你没点名项目、接口又连不上时，才用它。
 
-窄窗口不硬叠。[低于约 1000px 只说需要更宽的窗口](src/reader/Reader.tsx#L292-L300)，两栏对照保持原样，绝不叠成手机页。
+窄窗口不硬叠。[低于约 1000px 只说需要更宽的窗口](src/reader/Reader.tsx#L318-L326)，两栏对照保持原样，绝不叠成手机页。
 
 本机接口默认只绑在 [127.0.0.1](server/index.ts#L228-L229)。这是本机回环地址，只有这台电脑能连；要让别的机器也连上，得显式改 `HOST`。

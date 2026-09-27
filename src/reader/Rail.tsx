@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { Chapter } from "../lib/gloss";
 import { chapterNum, noteHref, type Copy, type Locale } from "../lib/locale";
 import type { NoteSummary } from "../lib/notes";
@@ -33,9 +33,26 @@ export const Rail = memo(function Rail({
   onSelect,
 }: RailProps) {
   const showNotes = notes.length > 1;
+  const railRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail || !currentChapterId) return;
+    const railRect = rail.getBoundingClientRect();
+    if (railRect.width < 1 || railRect.height < 1) return;
+    const el = rail.querySelector<HTMLElement>(".rail__list:not(.rail__notes) .rail__item.is-current");
+    if (!el) return;
+    const itemRect = el.getBoundingClientRect();
+    const pad = 12;
+    if (itemRect.top < railRect.top + pad) {
+      rail.scrollTop -= railRect.top + pad - itemRect.top;
+    } else if (itemRect.bottom > railRect.bottom - pad) {
+      rail.scrollTop += itemRect.bottom - (railRect.bottom - pad);
+    }
+  }, [currentChapterId]);
 
   return (
-    <nav className="rail" aria-label={copy.chapters}>
+    <nav className="rail" ref={railRef} aria-label={copy.chapters}>
       {showNotes && (
         <>
           <p className="rail__label">{copy.notes}</p>

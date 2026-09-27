@@ -9,6 +9,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import type { CodeRef } from "../lib/gloss";
+import { codeScrollBounds } from "./code-scroll";
 
 export interface SyncRefs {
   prose: RefObject<HTMLElement | null>;
@@ -29,13 +30,32 @@ export interface SyncOptions {
   onCurrentPassage: (id: string | null) => void;
 }
 
+export interface ReadingSync {
+  /** Park the code at this CSS top until the essay scrolls again. */
+  setTranslate: (px: number) => void;
+  /** Bring a 1-based line into the pane without moving the essay. */
+  revealLine: (line: number) => void;
+}
+
 function cssPx(el: Element, prop: string): number {
   return parseFloat(getComputedStyle(el).getPropertyValue(prop)) || 0;
 }
 
-export function useReadingSync(refs: SyncRefs, opts: SyncOptions) {
+export function useReadingSync(refs: SyncRefs, opts: SyncOptions): ReadingSync {
   const optsRef = useRef(opts);
   optsRef.current = opts;
+
+  const api = useRef<ReadingSync>({
+    setTranslate: () => {},
+    revealLine: () => {},
+  });
+  const stable = useRef<ReadingSync | null>(null);
+  if (!stable.current) {
+    stable.current = {
+      setTranslate: (px) => api.current.setTranslate(px),
+      revealLine: (line) => api.current.revealLine(line),
+    };
+  }
 
   const manualOffset = useRef(0);
   const lastTransform = useRef(0);
@@ -171,26 +191,34 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions) {
       schedule();
     };
 
-    // Wheel over the code pane scrolls the code, not the page.
-    const onWheel = (e: WheelEvent) => {
+    // Wheel advances the essay wherever the pointer sits. Peeking the file
+    // is the scrollbar (setTranslate), so a resting cursor cannot steal the read.
+    const setTranslate = (px: number) => {
       const viewport = refs.codeViewport.current;
       const code = refs.code.current;
       if (!viewport || !code) return;
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // let horizontal scroll through
-      e.preventDefault();
-      const vh = viewport.clientHeight;
-      const contentH = code.scrollHeight;
+      const { minTop, maxTop } = codeScrollBounds(code.scrollHeight, viewport.clientHeight);
+      const clamped = Math.min(maxTop, Math.max(minTop, px));
       const base = lastTransform.current - manualOffset.current;
-      const next = manualOffset.current - e.deltaY;
-      const total = base + next;
-      const clampedTotal = Math.min(vh * 0.4, Math.max(-(contentH - vh * 0.5), total));
-      manualOffset.current = clampedTotal - base;
+      const next = clamped - base;
+      if (next === manualOffset.current && Math.abs(lastTransform.current - clamped) < 0.5) return;
+      manualOffset.current = next;
       code.classList.remove("is-aligning");
       schedule();
     };
 
-    const viewport = refs.codeViewport.current;
-    viewport?.addEventListener("wheel", onWheel, { passive: false });
+    const revealLine = (line: number) => {
+      const viewport = refs.codeViewport.current;
+      if (!viewport) return;
+      const lineH = optsRef.current.codeLineHeight;
+      const vh = viewport.clientHeight;
+      const y = lastTransform.current + (line - 1) * lineH;
+      if (y >= 12 && y + lineH <= vh - 12) return;
+      setTranslate(vh * 0.38 - (line - 1) * lineH);
+    };
+
+    api.current = { setTranslate, revealLine };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", schedule);
     const ro = new ResizeObserver(schedule);
@@ -198,7 +226,6 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions) {
     schedule();
 
     return () => {
-      viewport?.removeEventListener("wheel", onWheel);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", schedule);
       ro.disconnect();
@@ -213,4 +240,6 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions) {
     pinnedY.current = null;
     window.dispatchEvent(new Event("resize"));
   }, [opts.activeRef?.file, opts.activeRef?.start, opts.activeRef?.end, opts.pinnedAnchorId]);
+
+  return stable.current!;
 }

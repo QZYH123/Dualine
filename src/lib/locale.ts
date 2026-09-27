@@ -59,11 +59,14 @@ export function chromeLocale(
 export function langHref(
   next: Locale,
   loc: { pathname: string; search: string; hash: string },
+  /** The chapter on screen. Wins over `loc.hash`, which can still be the previous one. */
+  chapterId?: string | null,
 ): string {
   const p = new URLSearchParams(loc.search);
   p.set("lang", next);
   const q = p.toString();
-  return `${loc.pathname}?${q}${loc.hash}`;
+  const hash = chapterId ? `#${chapterId}` : loc.hash;
+  return `${loc.pathname}?${q}${hash}`;
 }
 
 export function homeHref(
@@ -132,6 +135,7 @@ export interface Copy {
   code: string;
   backToNote: string;
   lines: (n: number) => string;
+  fileEnd: (name: string) => string;
   emptyCode: string;
   lineBackTitle: string;
   lineBackAria: (n: number) => string;
@@ -182,6 +186,7 @@ export const COPY: Record<Locale, Copy> = {
     code: "代码",
     backToNote: "回到正文",
     lines: (n) => `${n} 行`,
+    fileEnd: (name) => `${name} 结束`,
     emptyCode: "没有可对照的文件",
     lineBackTitle: "回到解释这段代码的正文",
     lineBackAria: (n) => `第 ${n} 行，回到正文`,
@@ -231,6 +236,7 @@ export const COPY: Record<Locale, Copy> = {
     code: "Code",
     backToNote: "back to the note",
     lines: (n) => `${n} lines`,
+    fileEnd: (name) => `end of ${name}`,
     emptyCode: "Nothing to face",
     lineBackTitle: "Back to the note that explains this",
     lineBackAria: (n) => `Line ${n}, back to the note`,

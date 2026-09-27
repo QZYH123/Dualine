@@ -29,12 +29,18 @@ export function Wordmark({ as = "a", href = "/" }: { as?: "a" | "p"; href?: stri
   );
 }
 
-export function LangSwitch({ locale }: { locale: Locale }) {
+export function LangSwitch({
+  locale,
+  chapterId = null,
+}: {
+  locale: Locale;
+  chapterId?: string | null;
+}) {
   const next: Locale = locale === "zh" ? "en" : "zh";
   return (
     <a
       className="lang-switch"
-      href={langHref(next, window.location)}
+      href={langHref(next, window.location, chapterId)}
       hrefLang={next === "zh" ? "zh-CN" : "en"}
     >
       {COPY[locale].otherLang}
@@ -103,7 +109,7 @@ export const Masthead = memo(function Masthead({
     <header className="masthead">
       <div className="masthead__brand">
         <Wordmark href={homeHref(locale, null, frozen)} />
-        <LangSwitch locale={locale} />
+        <LangSwitch locale={locale} chapterId={chapter?.id ?? null} />
       </div>
 
       <div className="masthead__project">

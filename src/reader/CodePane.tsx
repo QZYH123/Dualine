@@ -1,8 +1,18 @@
-import { memo, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from "react";
 import type { HighlighterCore } from "shiki/core";
 import { hitAtLine, type CodeRef, type GlossHit, type ProjectFile } from "../lib/gloss";
 import { ensureLanguage, tokenize, type TokenLine } from "../lib/highlight";
 import type { Copy } from "../lib/locale";
+import { thumbGeometry, translateForThumb } from "./code-scroll";
 
 interface CodePaneProps {
   file: ProjectFile | null;
@@ -17,6 +27,8 @@ interface CodePaneProps {
   onUnpin: () => void;
   onLineHover: (anchorId: string | null) => void;
   onLineClick: (anchorId: string) => void;
+  setTranslate: (px: number) => void;
+  revealLine: (line: number) => void;
   copy: Copy;
 }
 
@@ -41,6 +53,8 @@ export const CodePane = memo(function CodePane({
   onUnpin,
   onLineHover,
   onLineClick,
+  setTranslate,
+  revealLine,
   copy,
 }: CodePaneProps) {
   const lang = file?.lang ?? "";
@@ -71,7 +85,11 @@ export const CodePane = memo(function CodePane({
 
   // Whether the current hover originated on the code side (drives the hint).
   const [codeHover, setCodeHover] = useState<GlossHit | null>(null);
+  const [moreRight, setMoreRight] = useState(false);
+  const [roving, setRoving] = useState<number | null>(null);
   const dragOrigin = useRef<{ x: number; y: number } | null>(null);
+  const barRef = useRef<HTMLDivElement | null>(null);
+  const thumbRef = useRef<HTMLDivElement | null>(null);
 
   const [dir, name] = splitPath(file?.path ?? "");
   const inFocus = focus && file && focus.file === file.path ? focus : null;
@@ -84,6 +102,101 @@ export const CodePane = memo(function CodePane({
   const leave = () => {
     setCodeHover(null);
     onLineHover(null);
+  };
+
+  useEffect(() => {
+    setRoving(preferredGlossLine(hitByLine, inFocus?.start ?? 1, inFocus?.end ?? null));
+  }, [file?.path, inFocus?.start, inFocus?.end, hitByLine]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const code = codeRef.current;
+    const bar = barRef.current;
+    const thumb = thumbRef.current;
+    if (!viewport || !code || !bar || !thumb) return;
+
+    const apply = () => {
+      const contentH = code.scrollHeight;
+      const vh = viewport.clientHeight;
+      const top = parseFloat(code.style.top) || 0;
+      const trackH = bar.clientHeight || vh;
+      const g = thumbGeometry(trackH, contentH, vh, top);
+      bar.classList.toggle("is-idle", g.range < 1);
+      thumb.style.height = `${g.thumbH}px`;
+      thumb.style.top = `${g.thumbTop}px`;
+      const overflowX = viewport.scrollWidth - viewport.clientWidth > 1;
+      const remains = viewport.scrollLeft + viewport.clientWidth < viewport.scrollWidth - 1;
+      setMoreRight(overflowX && remains);
+    };
+
+    apply();
+    const mo = new MutationObserver(apply);
+    mo.observe(code, { attributes: true, attributeFilter: ["style"] });
+    const ro = new ResizeObserver(apply);
+    ro.observe(viewport);
+    ro.observe(code);
+    viewport.addEventListener("scroll", apply, { passive: true });
+    return () => {
+      mo.disconnect();
+      ro.disconnect();
+      viewport.removeEventListener("scroll", apply);
+    };
+  }, [file?.path, lines.length, viewportRef, codeRef]);
+
+  const onBarPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const viewport = viewportRef.current;
+    const code = codeRef.current;
+    const bar = barRef.current;
+    const thumb = thumbRef.current;
+    if (!viewport || !code || !bar || !thumb) return;
+    e.preventDefault();
+    e.stopPropagation();
+    bar.setPointerCapture(e.pointerId);
+    bar.classList.add("is-active");
+    const onThumb = e.target === thumb;
+    const startY = e.clientY;
+    const startThumb = parseFloat(thumb.style.top) || 0;
+    const applyAt = (clientY: number) => {
+      const trackH = bar.clientHeight;
+      const contentH = code.scrollHeight;
+      const vh = viewport.clientHeight;
+      const g = thumbGeometry(trackH, contentH, vh, parseFloat(code.style.top) || 0);
+      const travel = Math.max(1, trackH - g.thumbH);
+      let thumbTop = onThumb
+        ? startThumb + (clientY - startY)
+        : clientY - bar.getBoundingClientRect().top - g.thumbH / 2;
+      thumbTop = Math.min(travel, Math.max(0, thumbTop));
+      setTranslate(translateForThumb(contentH, vh, thumbTop, g.thumbH, trackH));
+    };
+    const move = (ev: PointerEvent) => applyAt(ev.clientY);
+    const up = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      bar.removeEventListener("pointermove", move);
+      bar.removeEventListener("pointerup", up);
+      bar.classList.remove("is-active");
+    };
+    bar.addEventListener("pointermove", move);
+    bar.addEventListener("pointerup", up);
+    if (!onThumb) applyAt(e.clientY);
+  };
+
+  const onNumKey = (line: number, e: ReactKeyboardEvent<HTMLSpanElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      const hit = hitByLine[line - 1];
+      if (hit) onLineClick(hit.anchorId);
+      return;
+    }
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    const next = adjacentGlossLine(hitByLine, line, e.key === "ArrowDown" ? 1 : -1);
+    if (next == null) return;
+    setRoving(next);
+    revealLine(next);
+    codeRef.current
+      ?.querySelector<HTMLElement>(`[data-line="${next}"] .line__num`)
+      ?.focus({ preventScroll: true });
   };
 
   return (
@@ -108,7 +221,10 @@ export const CodePane = memo(function CodePane({
         </span>
       </div>
 
-      <div className="code-pane__viewport" ref={viewportRef}>
+      <div
+        className={"code-pane__viewport" + (moreRight ? " has-more-x" : "")}
+        ref={viewportRef}
+      >
         {!file && <p className="code-pane__empty">{copy.emptyCode}</p>}
         {file && (
           <div
@@ -133,35 +249,32 @@ export const CodePane = memo(function CodePane({
                   key={n}
                   className={cls}
                   data-line={n}
-                  role={hit ? "button" : undefined}
-                  tabIndex={hit ? 0 : undefined}
-                  title={hit ? copy.lineBackTitle : undefined}
-                  aria-label={hit ? copy.lineBackAria(n) : undefined}
-                  onMouseEnter={() => enter(hit)}
-                  onMouseDown={
-                    hit
-                      ? (e) => {
-                          dragOrigin.current = { x: e.clientX, y: e.clientY };
-                        }
-                      : undefined
-                  }
-                  onClick={
-                    hit
-                      ? (e) => clickGlossLine(hit.anchorId, onLineClick, dragOrigin.current, e)
-                      : undefined
-                  }
-                  onKeyDown={
-                    hit
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            onLineClick(hit.anchorId);
-                          }
-                        }
-                      : undefined
-                  }
+                  onMouseEnter={() => onLineHover(hit?.anchorId ?? null)}
                 >
-                  <span className="line__num">{n}</span>
+                  <span
+                    className="line__num"
+                    role={hit ? "button" : undefined}
+                    tabIndex={hit ? (n === roving ? 0 : -1) : undefined}
+                    title={hit ? copy.lineBackTitle : undefined}
+                    aria-label={hit ? copy.lineBackAria(n) : undefined}
+                    onMouseEnter={hit ? () => enter(hit) : undefined}
+                    onMouseLeave={hit ? () => setCodeHover(null) : undefined}
+                    onMouseDown={
+                      hit
+                        ? (e) => {
+                            dragOrigin.current = { x: e.clientX, y: e.clientY };
+                          }
+                        : undefined
+                    }
+                    onClick={
+                      hit
+                        ? (e) => clickGlossLine(hit.anchorId, onLineClick, dragOrigin.current, e)
+                        : undefined
+                    }
+                    onKeyDown={hit ? (e) => onNumKey(n, e) : undefined}
+                  >
+                    {n}
+                  </span>
                   <span className="line__text">
                     {tokens.length === 0
                       ? " "
@@ -176,10 +289,18 @@ export const CodePane = memo(function CodePane({
             })}
             <div className="code__end" aria-hidden="true">
               <span>∎</span>
-              <span>end of {name}</span>
+              <span>{copy.fileEnd(name)}</span>
             </div>
           </div>
         )}
+        <div
+          className="code-scroll is-idle"
+          ref={barRef}
+          aria-hidden="true"
+          onPointerDown={onBarPointerDown}
+        >
+          <div className="code-scroll__thumb" ref={thumbRef} />
+        </div>
       </div>
     </aside>
   );
@@ -204,4 +325,27 @@ function rangeLabel(ref: CodeRef): string {
 function splitPath(path: string): [string, string] {
   const i = path.lastIndexOf("/");
   return i === -1 ? ["", path] : [path.slice(0, i), path.slice(i + 1)];
+}
+
+function preferredGlossLine(
+  hits: (GlossHit | null)[],
+  start: number,
+  end: number | null,
+): number | null {
+  const from = Math.max(1, start);
+  const to = end ?? start;
+  for (let n = from; n <= to && n <= hits.length; n++) {
+    if (hits[n - 1]) return n;
+  }
+  for (let n = 1; n <= hits.length; n++) {
+    if (hits[n - 1]) return n;
+  }
+  return null;
+}
+
+function adjacentGlossLine(hits: (GlossHit | null)[], line: number, dir: 1 | -1): number | null {
+  for (let n = line + dir; n >= 1 && n <= hits.length; n += dir) {
+    if (hits[n - 1]) return n;
+  }
+  return null;
 }

@@ -111,7 +111,7 @@ export function Reader({
     [warnText],
   );
 
-  useReadingSync(
+  const sync = useReadingSync(
     { prose: proseRef, gutter: gutterRef, bridge: bridgeRef, codeViewport: viewportRef, code: codeRef },
     {
       activeRef,
@@ -158,9 +158,19 @@ export function Reader({
       const delta = passageEl.getBoundingClientRect().top - (lineY - 6);
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      if (Math.abs(delta) < 2 || reduced) {
-        window.scrollBy({ top: delta, behavior: "auto" });
+      const arrive = () => {
+        const chapterId = passageEl.closest<HTMLElement>("[data-chapter]")?.dataset.chapter;
+        followHash.current = true;
+        if (chapterId && window.location.hash !== `#${chapterId}`) {
+          history.replaceState(null, "", chapterUrl(chapterId));
+        }
+        holdY.current = window.scrollY;
         setPinnedAnchorId(anchorId);
+      };
+
+      if (Math.abs(delta) < 2 || reduced) {
+        window.scrollBy({ top: delta, behavior: "instant" });
+        arrive();
         return;
       }
 
@@ -171,7 +181,7 @@ export function Reader({
         window.removeEventListener("scrollend", finish);
         window.removeEventListener("scroll", bump);
         if (settleTimer.current) window.clearTimeout(settleTimer.current);
-        setPinnedAnchorId(anchorId);
+        arrive();
       };
       // Fallback for browsers without `scrollend`: pin once scrolling goes quiet.
       const bump = () => {
@@ -191,57 +201,74 @@ export function Reader({
   const jumping = useRef(false);
 
   const scrollChapter = useCallback(
-    (chapterId: string, behavior: ScrollBehavior) => {
+    (chapterId: string, behavior: ScrollBehavior): number => {
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       const el = document.getElementById(chapterId);
-      if (!el) return;
+      if (!el) return Math.min(max, window.scrollY);
       const first =
         el.querySelector<HTMLElement>("[data-passage]") ??
         el.querySelector<HTMLElement>(".chapter__head") ??
         el;
       const lineY = tokens.header + (window.innerHeight - tokens.header) * tokens.readingLine;
       const delta = first.getBoundingClientRect().top - (lineY - 8);
-      window.scrollBy({ top: delta, behavior: Math.abs(delta) < 2 ? "auto" : behavior });
+      const target = Math.max(0, Math.min(max, window.scrollY + delta));
+      // `auto` follows `scroll-behavior: smooth` and glides through every chapter.
+      window.scrollBy({ top: delta, behavior: Math.abs(delta) < 2 ? "instant" : behavior });
+      return target;
     },
     [tokens],
   );
 
-  const holdHashUntilScroll = useCallback(() => {
+  const holdGen = useRef(0);
+  const armHashHold = useCallback((targetY: number) => {
+    const gen = ++holdGen.current;
     followHash.current = false;
     jumping.current = true;
-    const done = () => {
+    let settled = false;
+    const release = (force: boolean) => {
+      if (holdGen.current !== gen) {
+        window.removeEventListener("scroll", onScroll);
+        return;
+      }
+      if (!force && Math.abs(window.scrollY - targetY) > 2) return;
+      settled = true;
+      holdGen.current++;
+      window.removeEventListener("scroll", onScroll);
       jumping.current = false;
       holdY.current = window.scrollY;
     };
-    window.addEventListener("scrollend", done, { once: true });
-    window.setTimeout(done, 800);
+    const onScroll = () => release(false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.setTimeout(() => {
+      if (!settled) release(true);
+    }, 1200);
+    release(false);
   }, []);
 
   const onSelectChapter = useCallback((chapterId: string) => {
     unpin();
-    holdHashUntilScroll();
     if (window.location.hash !== `#${chapterId}`) {
       history.pushState(null, "", chapterUrl(chapterId));
     }
-    scrollChapter(chapterId, "auto");
-  }, [unpin, holdHashUntilScroll, scrollChapter]);
+    armHashHold(scrollChapter(chapterId, "instant"));
+  }, [unpin, armHashHold, scrollChapter]);
 
   const booted = useRef(false);
   useLayoutEffect(() => {
     if (booted.current) return;
     booted.current = true;
-    jumping.current = true;
     const hashId = window.location.hash.replace(/^#/, "");
     const saved = loadNoteChapter(project.id, note);
     const prevNote = loadLastNote(project.id);
     if (prevNote && prevNote !== note) setLastNoteId(prevNote);
     if (hashId && doc.chapters.some((c) => c.id === hashId)) {
-      scrollChapter(hashId, "auto");
+      scrollChapter(hashId, "instant");
     } else if (saved && doc.chapters.some((c) => c.id === saved)) {
       setResumeChapterId(saved);
       if (window.location.hash !== `#${saved}`) {
         history.replaceState(null, "", chapterUrl(saved));
       }
-      scrollChapter(saved, "auto");
+      scrollChapter(saved, "instant");
     }
     holdY.current = window.scrollY;
     followHash.current = false;
@@ -280,12 +307,11 @@ export function Reader({
       const id = window.location.hash.replace(/^#/, "");
       if (!id || !doc.chapters.some((c) => c.id === id)) return;
       unpin();
-      holdHashUntilScroll();
-      scrollChapter(id, "auto");
+      armHashHold(scrollChapter(id, "instant"));
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [doc, unpin, holdHashUntilScroll, scrollChapter]);
+  }, [doc, unpin, armHashHold, scrollChapter]);
 
   return (
     <>
@@ -372,6 +398,8 @@ export function Reader({
             onUnpin={unpin}
             onLineHover={setHoverAnchorId}
             onLineClick={jumpToAnchor}
+            setTranslate={sync.setTranslate}
+            revealLine={sync.revealLine}
             copy={copy}
           />
         </main>

@@ -126,6 +126,9 @@ function Inlines({ inlines, hoverAnchorId, pinnedAnchorId, onAnchorHover, onAnch
             onBlur={() => onAnchorHover?.(null)}
             onClick={(e) => {
               e.preventDefault();
+              if (e.detail > 1) return;
+              const sel = window.getSelection();
+              if (sel && !sel.isCollapsed) return;
               onAnchorClick?.(x.id);
             }}
           >

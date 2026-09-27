@@ -8,6 +8,7 @@ import {
   glossLocale,
   chapterHref,
   homeHref,
+  langHref,
   jumpValue,
   noteHref,
   parseJumpValue,
@@ -64,6 +65,16 @@ describe("homeHref", () => {
   });
 });
 
+describe("langHref", () => {
+  test("the chapter on screen wins over a stale hash", () => {
+    assert.equal(
+      langHref("en", { pathname: "/", search: "?project=dualine", hash: "#c2" }, "c3"),
+      "/?project=dualine&lang=en#c3",
+    );
+    assert.equal(langHref("zh", { pathname: "/", search: "", hash: "#c4" }), "/?lang=zh#c4");
+  });
+});
+
 describe("chapterHref / noteHref", () => {
   test("chapter change keeps ?note=", () => {
     assert.equal(
@@ -112,6 +123,8 @@ describe("warn strip relocation copy", () => {
     assert.equal(COPY.en.copyForAgent, "Copy for your agent");
     assert.equal(COPY.zh.lastRead, "上次");
     assert.equal(COPY.en.lastRead, "last");
+    assert.equal(COPY.zh.fileEnd("App.tsx"), "App.tsx 结束");
+    assert.equal(COPY.en.fileEnd("App.tsx"), "end of App.tsx");
   });
 });
 
