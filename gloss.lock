@@ -296,17 +296,17 @@
       "sha256": "528070e84bd6fdd700fcee94450f2dce5af4a562d56042f73971069de2426944"
     },
     {
-      "loc": "src/reader/CodePane.tsx#L146-L170",
+      "loc": "src/reader/CodePane.tsx#L142-L175",
       "file": "src/reader/CodePane.tsx",
-      "start": 146,
-      "end": 170,
-      "sha256": "31d428dcdb038dd9dee9522a160f477db0e676af4b6ee9e44b15e66dc9bc0554"
+      "start": 142,
+      "end": 175,
+      "sha256": "9ea187f6c992a424781426fb84e98fbc34580f72485613382a1ff373a87b6447"
     },
     {
-      "loc": "src/reader/CodePane.tsx#L309-L318",
+      "loc": "src/reader/CodePane.tsx#L302-L311",
       "file": "src/reader/CodePane.tsx",
-      "start": 309,
-      "end": 318,
+      "start": 302,
+      "end": 311,
       "sha256": "171e3efdd47e65467f39259c5c7f411156703224713885cf84bfe9e4483ee5c0"
     },
     {
@@ -317,80 +317,80 @@
       "sha256": "4b165eb5c9345d65aa20b6eea08838ca43d8da2905fc8162f39a1f672f27c3c7"
     },
     {
-      "loc": "src/reader/Reader.tsx#L127-L129",
+      "loc": "src/reader/Reader.tsx#L133-L135",
       "file": "src/reader/Reader.tsx",
-      "start": 127,
-      "end": 129,
+      "start": 133,
+      "end": 135,
       "sha256": "9cb9fd8ac3e8c2f4518fd6703242816ca39840b24b1b7c563d335b042c40470d"
     },
     {
-      "loc": "src/reader/Reader.tsx#L133-L139",
+      "loc": "src/reader/Reader.tsx#L139-L145",
       "file": "src/reader/Reader.tsx",
-      "start": 133,
-      "end": 139,
+      "start": 139,
+      "end": 145,
       "sha256": "cdce076f4cd7b15c9c2c649f78b185cf09a4bd6ba192a86f31106e51eacae1f3"
     },
     {
-      "loc": "src/reader/Reader.tsx#L148-L195",
+      "loc": "src/reader/Reader.tsx#L154-L203",
       "file": "src/reader/Reader.tsx",
-      "start": 148,
-      "end": 195,
-      "sha256": "dfe6bb6d4579d05b434a09a260ad03c27bba7b4e3eb7960fc2f67d246378a3df"
+      "start": 154,
+      "end": 203,
+      "sha256": "13949bd973cd25828a68daa1fc0592beeeed138a549477afa921d03dd9a2ab16"
     },
     {
-      "loc": "src/reader/Reader.tsx#L248-L254",
+      "loc": "src/reader/Reader.tsx#L223-L230",
       "file": "src/reader/Reader.tsx",
-      "start": 248,
-      "end": 254,
-      "sha256": "a165e7554e939383b1ec74a4aa059407d116ee3a13ab1770bbe8b0925f5d7383"
+      "start": 223,
+      "end": 230,
+      "sha256": "46ddd455673cd498513dd022a27d1039271cc64b557a628f55bdc3175e7463a8"
     },
     {
-      "loc": "src/reader/Reader.tsx#L299-L303",
+      "loc": "src/reader/Reader.tsx#L273-L277",
       "file": "src/reader/Reader.tsx",
-      "start": 299,
-      "end": 303,
+      "start": 273,
+      "end": 277,
       "sha256": "0cf98c36dfd9628066307f251320cda83129b19e45da4ac653555b93190345aa"
     },
     {
-      "loc": "src/reader/Reader.tsx#L318-L326",
+      "loc": "src/reader/Reader.tsx#L293-L301",
       "file": "src/reader/Reader.tsx",
-      "start": 318,
-      "end": 326,
+      "start": 293,
+      "end": 301,
       "sha256": "6bb70d5202011080a2cf64dfe0d777be416e4d67defe4a51ed65a3cddd56c26e"
     },
     {
-      "loc": "src/reader/useReadingSync.ts#L105-L118",
+      "loc": "src/reader/useReadingSync.ts#L101-L114",
       "file": "src/reader/useReadingSync.ts",
-      "start": 105,
-      "end": 118,
+      "start": 101,
+      "end": 114,
       "sha256": "e58a2b79533beb5a2a4a364e4aaedaa40e90dd10a2a56a4b0d1220dbd6a78719"
     },
     {
-      "loc": "src/reader/useReadingSync.ts#L128-L137",
+      "loc": "src/reader/useReadingSync.ts#L124-L133",
       "file": "src/reader/useReadingSync.ts",
-      "start": 128,
-      "end": 137,
+      "start": 124,
+      "end": 133,
       "sha256": "a8efb7554d6140ac05f501ab493c55fd4af4d5309770cbc6c8abb07cf3a83b5d"
     },
     {
-      "loc": "src/reader/useReadingSync.ts#L156-L171",
+      "loc": "src/reader/useReadingSync.ts#L152-L167",
       "file": "src/reader/useReadingSync.ts",
-      "start": 156,
-      "end": 171,
+      "start": 152,
+      "end": 167,
       "sha256": "1ee0e799fa41dc85a3cc819f3373552beb2ea320cc1712208fc47f657e4e07a7"
     },
     {
-      "loc": "src/reader/useReadingSync.ts#L160-L166",
+      "loc": "src/reader/useReadingSync.ts#L156-L162",
       "file": "src/reader/useReadingSync.ts",
-      "start": 160,
-      "end": 166,
+      "start": 156,
+      "end": 162,
       "sha256": "2e8199c8a962a15f921024c98e0ed5e8be5a44d468f7b1e49832d9a6a87de8ee"
     },
     {
-      "loc": "src/reader/useReadingSync.ts#L83-L90",
+      "loc": "src/reader/useReadingSync.ts#L79-L86",
       "file": "src/reader/useReadingSync.ts",
-      "start": 83,
-      "end": 90,
+      "start": 79,
+      "end": 86,
       "sha256": "9343a1bb90b9c0e800195c419b2bb97d91b85d641925b479c9f878425e87d6a9"
     }
   ]

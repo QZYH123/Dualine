@@ -49,17 +49,13 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions): ReadingSync {
     setTranslate: () => {},
     revealLine: () => {},
   });
-  const stable = useRef<ReadingSync | null>(null);
-  if (!stable.current) {
-    stable.current = {
-      setTranslate: (px) => api.current.setTranslate(px),
-      revealLine: (line) => api.current.revealLine(line),
-    };
-  }
+  const stable = useRef<ReadingSync>({
+    setTranslate: (px) => api.current.setTranslate(px),
+    revealLine: (line) => api.current.revealLine(line),
+  });
 
   const manualOffset = useRef(0);
   const lastTransform = useRef(0);
-  const lastBridgeY = useRef(0);
   const lastKey = useRef<string>("");
   const alignTimer = useRef<number | null>(null);
   const currentId = useRef<string | null>(null);
@@ -173,7 +169,6 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions): ReadingSync {
       // 3. The bridge: a hairline from the passage to its lines.
       const spanCentreY = viewportRect.top + translate + spanTopInCode + o.codeLineHeight / 2;
       const bridgeY = Math.round(spanCentreY - gutterRect.top);
-      lastBridgeY.current = bridgeY;
       bridge.style.transform = `translate3d(0, ${bridgeY}px, 0)`;
       const visible = spanCentreY > viewportRect.top + 4 && spanCentreY < viewportRect.bottom - 4;
       bridge.classList.toggle("is-visible", visible && bridgeAllowed && manualOffset.current === 0);
@@ -241,5 +236,5 @@ export function useReadingSync(refs: SyncRefs, opts: SyncOptions): ReadingSync {
     window.dispatchEvent(new Event("resize"));
   }, [opts.activeRef?.file, opts.activeRef?.start, opts.activeRef?.end, opts.pinnedAnchorId]);
 
-  return stable.current!;
+  return stable.current;
 }

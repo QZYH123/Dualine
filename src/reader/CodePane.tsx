@@ -116,11 +116,7 @@ export const CodePane = memo(function CodePane({
     if (!viewport || !code || !bar || !thumb) return;
 
     const apply = () => {
-      const contentH = code.scrollHeight;
-      const vh = viewport.clientHeight;
-      const top = parseFloat(code.style.top) || 0;
-      const trackH = bar.clientHeight || vh;
-      const g = thumbGeometry(trackH, contentH, vh, top);
+      const g = readScroll(viewport, code, bar);
       bar.classList.toggle("is-idle", g.range < 1);
       thumb.style.height = `${g.thumbH}px`;
       thumb.style.top = `${g.thumbTop}px`;
@@ -158,16 +154,13 @@ export const CodePane = memo(function CodePane({
     const startY = e.clientY;
     const startThumb = parseFloat(thumb.style.top) || 0;
     const applyAt = (clientY: number) => {
-      const trackH = bar.clientHeight;
-      const contentH = code.scrollHeight;
-      const vh = viewport.clientHeight;
-      const g = thumbGeometry(trackH, contentH, vh, parseFloat(code.style.top) || 0);
-      const travel = Math.max(1, trackH - g.thumbH);
+      const g = readScroll(viewport, code, bar);
+      const travel = Math.max(1, g.trackH - g.thumbH);
       let thumbTop = onThumb
         ? startThumb + (clientY - startY)
         : clientY - bar.getBoundingClientRect().top - g.thumbH / 2;
       thumbTop = Math.min(travel, Math.max(0, thumbTop));
-      setTranslate(translateForThumb(contentH, vh, thumbTop, g.thumbH, trackH));
+      setTranslate(translateForThumb(g.contentH, g.viewportH, thumbTop, g.thumbH, g.trackH));
     };
     const move = (ev: PointerEvent) => applyAt(ev.clientY);
     const up = (ev: PointerEvent) => {
@@ -327,20 +320,32 @@ function splitPath(path: string): [string, string] {
   return i === -1 ? ["", path] : [path.slice(0, i), path.slice(i + 1)];
 }
 
+function readScroll(viewport: HTMLElement, code: HTMLElement, bar: HTMLElement) {
+  const contentH = code.scrollHeight;
+  const viewportH = viewport.clientHeight;
+  const trackH = bar.clientHeight || viewportH;
+  return {
+    contentH,
+    viewportH,
+    trackH,
+    ...thumbGeometry(trackH, contentH, viewportH, parseFloat(code.style.top) || 0),
+  };
+}
+
 function preferredGlossLine(
   hits: (GlossHit | null)[],
   start: number,
   end: number | null,
 ): number | null {
   const from = Math.max(1, start);
-  const to = end ?? start;
-  for (let n = from; n <= to && n <= hits.length; n++) {
-    if (hits[n - 1]) return n;
-  }
+  const to = end ?? from;
+  let first: number | null = null;
   for (let n = 1; n <= hits.length; n++) {
-    if (hits[n - 1]) return n;
+    if (!hits[n - 1]) continue;
+    if (first == null) first = n;
+    if (n >= from && n <= to) return n;
   }
-  return null;
+  return first;
 }
 
 function adjacentGlossLine(hits: (GlossHit | null)[], line: number, dir: 1 | -1): number | null {

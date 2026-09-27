@@ -9,7 +9,6 @@ import {
   type Project,
 } from "../lib/gloss";
 import { maintainGlossPrompt } from "../lib/agent-prompt";
-import { copyText } from "../lib/clipboard";
 import { warningStripExpandable, warningStripText, type ProjectWarning } from "../lib/notice";
 import { chapterHref, COPY, htmlLang, type Copy, type Locale } from "../lib/locale";
 import { DEFAULT_NOTE_ID, type NoteSummary } from "../lib/notes";
@@ -23,6 +22,7 @@ import { LangSwitch, Masthead, Wordmark } from "./Masthead";
 import { Rail } from "./Rail";
 import { Prose } from "./Prose";
 import { CodePane } from "./CodePane";
+import { useCopiedFlag } from "./useCopied";
 import { useReadingSync } from "./useReadingSync";
 
 interface ReaderProps {
@@ -43,6 +43,10 @@ interface ReaderProps {
 function readToken(name: string, fallback: number): number {
   const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
   return Number.isFinite(v) ? v : fallback;
+}
+
+function readingLineY(header: number, fraction: number): number {
+  return header + (window.innerHeight - header) * fraction;
 }
 
 function chapterUrl(chapterId: string): string {
@@ -100,6 +104,8 @@ export function Reader({
   const bridgeRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const codeRef = useRef<HTMLDivElement | null>(null);
+  const followHash = useRef(false);
+  const holdY = useRef(0);
 
   const tokens = useMemo(
     () => ({
@@ -154,7 +160,7 @@ export function Reader({
 
       setHoverAnchorId(null);
 
-      const lineY = tokens.header + (window.innerHeight - tokens.header) * tokens.readingLine;
+      const lineY = readingLineY(tokens.header, tokens.readingLine);
       const delta = passageEl.getBoundingClientRect().top - (lineY - 6);
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -196,53 +202,22 @@ export function Reader({
     [tokens],
   );
 
-  const followHash = useRef(false);
-  const holdY = useRef(0);
-  const jumping = useRef(false);
+  const scrollChapter = useCallback((chapterId: string) => {
+    const el = document.getElementById(chapterId);
+    if (!el) return;
+    const first =
+      el.querySelector<HTMLElement>("[data-passage]") ??
+      el.querySelector<HTMLElement>(".chapter__head") ??
+      el;
+    const lineY = readingLineY(tokens.header, tokens.readingLine);
+    const delta = first.getBoundingClientRect().top - (lineY - 8);
+    window.scrollBy({ top: delta, behavior: "instant" });
+  }, [tokens]);
 
-  const scrollChapter = useCallback(
-    (chapterId: string, behavior: ScrollBehavior): number => {
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const el = document.getElementById(chapterId);
-      if (!el) return Math.min(max, window.scrollY);
-      const first =
-        el.querySelector<HTMLElement>("[data-passage]") ??
-        el.querySelector<HTMLElement>(".chapter__head") ??
-        el;
-      const lineY = tokens.header + (window.innerHeight - tokens.header) * tokens.readingLine;
-      const delta = first.getBoundingClientRect().top - (lineY - 8);
-      const target = Math.max(0, Math.min(max, window.scrollY + delta));
-      // `auto` follows `scroll-behavior: smooth` and glides through every chapter.
-      window.scrollBy({ top: delta, behavior: Math.abs(delta) < 2 ? "instant" : behavior });
-      return target;
-    },
-    [tokens],
-  );
-
-  const holdGen = useRef(0);
-  const armHashHold = useCallback((targetY: number) => {
-    const gen = ++holdGen.current;
+  /** Instant jumps must not let the hash chase them. */
+  const holdChapter = useCallback(() => {
+    holdY.current = window.scrollY;
     followHash.current = false;
-    jumping.current = true;
-    let settled = false;
-    const release = (force: boolean) => {
-      if (holdGen.current !== gen) {
-        window.removeEventListener("scroll", onScroll);
-        return;
-      }
-      if (!force && Math.abs(window.scrollY - targetY) > 2) return;
-      settled = true;
-      holdGen.current++;
-      window.removeEventListener("scroll", onScroll);
-      jumping.current = false;
-      holdY.current = window.scrollY;
-    };
-    const onScroll = () => release(false);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.setTimeout(() => {
-      if (!settled) release(true);
-    }, 1200);
-    release(false);
   }, []);
 
   const onSelectChapter = useCallback((chapterId: string) => {
@@ -250,8 +225,9 @@ export function Reader({
     if (window.location.hash !== `#${chapterId}`) {
       history.pushState(null, "", chapterUrl(chapterId));
     }
-    armHashHold(scrollChapter(chapterId, "instant"));
-  }, [unpin, armHashHold, scrollChapter]);
+    scrollChapter(chapterId);
+    holdChapter();
+  }, [unpin, scrollChapter, holdChapter]);
 
   const booted = useRef(false);
   useLayoutEffect(() => {
@@ -262,18 +238,16 @@ export function Reader({
     const prevNote = loadLastNote(project.id);
     if (prevNote && prevNote !== note) setLastNoteId(prevNote);
     if (hashId && doc.chapters.some((c) => c.id === hashId)) {
-      scrollChapter(hashId, "instant");
+      scrollChapter(hashId);
     } else if (saved && doc.chapters.some((c) => c.id === saved)) {
       setResumeChapterId(saved);
       if (window.location.hash !== `#${saved}`) {
         history.replaceState(null, "", chapterUrl(saved));
       }
-      scrollChapter(saved, "instant");
+      scrollChapter(saved);
     }
-    holdY.current = window.scrollY;
-    followHash.current = false;
-    jumping.current = false;
-  }, [doc, scrollChapter, project.id, note]);
+    holdChapter();
+  }, [doc, scrollChapter, holdChapter, project.id, note]);
 
   useEffect(() => {
     if (!currentChapterId) return;
@@ -288,7 +262,7 @@ export function Reader({
 
   useEffect(() => {
     const onScroll = () => {
-      if (jumping.current || followHash.current) return;
+      if (followHash.current) return;
       if (Math.abs(window.scrollY - holdY.current) < 32) return;
       followHash.current = true;
     };
@@ -307,11 +281,12 @@ export function Reader({
       const id = window.location.hash.replace(/^#/, "");
       if (!id || !doc.chapters.some((c) => c.id === id)) return;
       unpin();
-      armHashHold(scrollChapter(id, "instant"));
+      scrollChapter(id);
+      holdChapter();
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [doc, unpin, armHashHold, scrollChapter]);
+  }, [doc, unpin, holdChapter, scrollChapter]);
 
   return (
     <>
@@ -422,8 +397,7 @@ function WarnStrip({
   copyPrompt: string | null;
 }) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copiedTimer = useRef<number | null>(null);
+  const clip = useCopiedFlag();
   const expandable = warningStripExpandable(warnings);
   const why = catalogDefault ? <span className="warn-strip__why">{copy.catalogDefault}</span> : null;
   const expandTitle = copy.warnExpand;
@@ -440,21 +414,9 @@ function WarnStrip({
     setOpen(false);
   }, [warningKey]);
 
-  useEffect(() => {
-    return () => {
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-    };
-  }, []);
-
   const onCopy = (e: MouseEvent) => {
     e.stopPropagation();
-    if (!copyPrompt) return;
-    void copyText(copyPrompt).then((ok) => {
-      if (!ok) return;
-      setCopied(true);
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-      copiedTimer.current = window.setTimeout(() => setCopied(false), 1600);
-    });
+    if (copyPrompt) clip.copy(copyPrompt);
   };
 
   const copyBtn = copyPrompt ? (
@@ -463,7 +425,7 @@ function WarnStrip({
       className="warn-strip__copy"
       onClick={onCopy}
     >
-      {copied ? copy.copied : copy.copyForAgent}
+      {clip.copied ? copy.copied : copy.copyForAgent}
     </button>
   ) : null;
 

@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { HighlighterCore } from "shiki/core";
 import { writeGlossPrompt } from "./lib/agent-prompt";
-import { copyText } from "./lib/clipboard";
 import { getHighlighter } from "./lib/highlight";
 import {
   loadProject,
@@ -14,6 +13,7 @@ import { COPY, chromeLocale, glossLocale, homeHref, htmlLang, noteHref, type Loc
 import { noticeCopy, noticeShowsBack, showCatalogDefaultHint } from "./lib/notice";
 import { Reader } from "./reader/Reader";
 import { LangSwitch, Wordmark } from "./reader/Masthead";
+import { useCopiedFlag } from "./reader/useCopied";
 
 export default function App() {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
@@ -133,24 +133,10 @@ function Notice({
   const { title, hint, tip } = noticeCopy(result, locale);
   const copy = COPY[locale];
   const projects = catalog?.projects ?? [];
-  const [copied, setCopied] = useState(false);
-  const copiedTimer = useRef<number | null>(null);
+  const clip = useCopiedFlag();
   const showWriteCopy = result.kind === "empty" && result.catalog.single === true;
 
-  useEffect(() => {
-    return () => {
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-    };
-  }, []);
-
-  const onCopyPrompt = () => {
-    void copyText(writeGlossPrompt()).then((ok) => {
-      if (!ok) return;
-      setCopied(true);
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-      copiedTimer.current = window.setTimeout(() => setCopied(false), 1600);
-    });
-  };
+  const onCopyPrompt = () => clip.copy(writeGlossPrompt());
 
   return (
     <div className="loading notice" role="status">
@@ -164,7 +150,7 @@ function Notice({
         {tip && <p className="notice__tip">{tip}</p>}
         {showWriteCopy && (
           <button type="button" className="notice__copy" onClick={onCopyPrompt}>
-            {copied ? copy.copied : copy.copyForAgent}
+            {clip.copied ? copy.copied : copy.copyForAgent}
           </button>
         )}
         {result.kind === "not-found" && result.notes && result.notes.length > 0 && (
