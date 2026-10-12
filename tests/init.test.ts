@@ -330,6 +330,7 @@ describe("runInit e2e", () => {
     const pkg = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8")) as {
       files: string[];
     };
-    assert.ok(pkg.files.includes(".cursor/skills/write-gloss"));
+    assert.ok(pkg.files.includes("skills/write-gloss"));
+    assert.equal(skillSourcePath(REPO), join(REPO, "skills", "write-gloss", "SKILL.md"));
   });
 });

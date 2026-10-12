@@ -55,7 +55,7 @@ export interface InitResult {
 export { WRITE_GLOSS_SKILL_RELS };
 
 export function skillSourcePath(pkgRoot = packageRoot()): string {
-  return join(pkgRoot, ".cursor", "skills", "write-gloss", "SKILL.md");
+  return join(pkgRoot, "skills", "write-gloss", "SKILL.md");
 }
 
 /** Shiki id for a source path; docs, gloss.md, and unknown extensions are out. */

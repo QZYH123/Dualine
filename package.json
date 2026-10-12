@@ -30,7 +30,7 @@
     "scripts",
     "examples",
     "tests",
-    ".cursor/skills/write-gloss"
+    "skills/write-gloss"
   ],
   "scripts": {
     "dev": "vite",
